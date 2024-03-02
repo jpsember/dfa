@@ -1,0 +1,17 @@
+_WHITESPACE: [\f\r\s\t\n]+
+
+_JAVACOMMENT:  ( // [^\n]* \n? )    \
+             | ( /\*  ((\** [^*/] ) \
+             | [^*])*  \*+ / )
+
+_HASHCOMMENT:   \#\# [^\n]* \n?
+
+_ID:  [_a-zA-Z][_a-zA-Z0-9]*
+
+_SIGNEDINT:  \-? \d+
+
+_UNSIGNEDINT: \d+
+
+_STRING:      "  ([^\0x0a\0x0d\0x09"] | \\")* "
+
+_SINGLESTRING: '  ([^\0x0a\0x0d\0x09'] | \\')* '

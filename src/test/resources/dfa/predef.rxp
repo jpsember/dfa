@@ -1,0 +1,18 @@
+WS: $_WHITESPACE | $_JAVACOMMENT
+
+# This is an 'anonymous' expression.  It doesn't generate a token definition of its own,
+# but can be included within others as $_DIG  (or {_DIG})
+
+_DIG: \d+
+
+ID:  {_ID}
+
+_OPEN: \[\[
+_CLOSE: \]\]
+
+INT: $_SIGNEDINT
+DBL: \-? ( [0] | [1-9]\d* ) . \d*
+
+EXPR: $_OPEN ( {_DIG} | $ID ) $_CLOSE
+
+STR: {_STRING}

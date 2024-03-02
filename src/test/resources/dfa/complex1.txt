@@ -1,0 +1,23 @@
+// Some tokens
+
+/* this is a c-style comment
+
+  */
+
+-1234 // int
+1234 // int
+-123.34 // dbl
+'hello' // lbl
+abc_123_DEF // id
+= // assign
+== // equiv
+
+if // if
+do // do
+{ // brop
+} // brcl
+ifdo // combined?
+
+abc123DEF
+
+

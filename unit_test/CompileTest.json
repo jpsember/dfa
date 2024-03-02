@@ -1,0 +1,13 @@
+{                    "alpha" : 7173,
+                   "complex" : 8735,
+                  "complex1" : 2939,
+                "identifier" : 8746,
+      "normalizeMergeLabels" : 9744,
+  "normalizeOmitEmptyLabels" : 1109,
+                 "partition" : 7808,
+                   "predef1" : 2663,
+         "printStateMachine" : 2680,
+                "reverseDFA" : 3300,
+                    "simple" : 6156,
+                    "string" : 2008
+}
