@@ -17,10 +17,9 @@ public class DfaOper extends AppOper {
     return null;
   }
 
- 
-
+  
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "compile ." + OBJECT_EXT + " file from an ." + SOURCE_EXT + " file";
   }
 
