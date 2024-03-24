@@ -7,6 +7,8 @@ import java.util.List;
 
 import js.app.AppOper;
 import js.app.CmdLineArgs;
+import js.app.HelpFormatter;
+import js.base.BasePrinter;
 import js.file.Files;
 import js.json.JSMap;
 
@@ -17,18 +19,18 @@ public class DfaOper extends AppOper {
     return null;
   }
 
-  
   @Override
   public String shortHelp() {
     return "compile ." + OBJECT_EXT + " file from an ." + SOURCE_EXT + " file";
   }
 
   @Override
-  protected List<Object> getAdditionalArgs() {
-    return arrayList(//
-        "<." + SOURCE_EXT + " input>", //
-        "[<." + OBJECT_EXT + " output>]", //
-        "[ids <source file>]");
+  protected void longHelp(BasePrinter b) {
+    var hf = new HelpFormatter();
+    hf.addItem("<." + SOURCE_EXT + " input>", "source file");
+    hf.addItem("[<." + OBJECT_EXT + " output>]", "object file");
+    hf.addItem("[ids <source file>]", "output file for ids");
+    b.pr(hf);
   }
 
   @Override
@@ -147,7 +149,7 @@ public class DfaOper extends AppOper {
         tag = existingText.substring(j + tag.length()).trim();
         j = tag.indexOf('\n');
         if (j > 0)
-          tag = tag.substring(0,j);
+          tag = tag.substring(0, j);
         j = tag.indexOf('_');
         if (j < 0)
           symbolPrefix = "";
