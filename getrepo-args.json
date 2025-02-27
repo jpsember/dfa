@@ -1,0 +1,12 @@
+{
+
+  "entries" : [
+    {
+      "repo_name":"jpsember/java-core",
+    },
+    {
+      "repo_name":"jpsember/java-testutil",
+    },
+  ]
+
+}
