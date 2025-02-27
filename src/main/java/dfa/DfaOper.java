@@ -16,7 +16,7 @@ public class DfaOper extends AppOper {
 
   @Override
   public String userCommand() {
-    return null;
+    return "dfa";
   }
 
   @Override
