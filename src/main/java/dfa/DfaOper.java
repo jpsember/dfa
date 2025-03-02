@@ -92,6 +92,8 @@ public class DfaOper extends AppOper {
     procIdsFile(compiler.tokenNames());
   }
 
+  private static final int FTYPE_JAVA = 0, FTYPE_RUST = 1;
+
   /**
    * If an ids source file argument was given, write the token ids to it
    */
@@ -100,6 +102,14 @@ public class DfaOper extends AppOper {
       return;
 
     File idFile = Files.addExtension(mIdSourceFile, "java");
+
+    int ftype = FTYPE_JAVA;
+    {
+      var ext = Files.getExtension(idFile);
+      if (ext.equals("rs")) {
+        ftype = FTYPE_RUST;
+      }
+    }
 
     // Look for markers denoting the section of the file containing the token id constants.
     // If not found, append to the end of the file.
@@ -142,7 +152,22 @@ public class DfaOper extends AppOper {
       do {
         // Look to existing first symbol to infer prefix
         existingText = content.substring(m0 + marker0.length(), m1);
-        String tag = "static final int";
+        String tag;
+        switch (ftype) {
+        case FTYPE_JAVA: {
+          tag = "static final int";
+        }
+          break;
+        case FTYPE_RUST: {
+          tag = "const";
+        }
+          break;
+
+        default:
+          throw badArg("Unsupported file type");
+        }
+
+        //String tag = "static final int";
         int j = existingText.indexOf(tag);
         if (j < 0)
           break;
@@ -173,12 +198,27 @@ public class DfaOper extends AppOper {
     for (String tokenName : tokenNames) {
       index++;
       sb.append(tab);
-      sb.append("public static final int ");
-      sb.append(symbolPrefix);
-      sb.append(tokenName);
-      sb.append(" = ");
-      sb.append(index);
-      sb.append(";\n");
+
+      switch (ftype) {
+      case FTYPE_JAVA:
+        sb.append("public static final int ");
+        sb.append(symbolPrefix);
+        sb.append(tokenName);
+        sb.append(" = ");
+        sb.append(index);
+        sb.append(";\n");
+        break;
+      case FTYPE_RUST:
+        sb.append("const ");
+        sb.append(symbolPrefix);
+        sb.append(tokenName);
+        sb.append(": i32 = ");
+        sb.append(index);
+        sb.append(";\n");
+        break;
+      default:
+        throw notSupported();
+      }
     }
     sb.append(tab);
     sb.append(marker1);
