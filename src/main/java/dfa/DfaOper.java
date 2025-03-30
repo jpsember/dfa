@@ -5,12 +5,13 @@ import static js.base.Tools.*;
 import java.io.File;
 import java.util.List;
 
+import dfa.gen.DfaConfig;
 import js.app.AppOper;
-import js.app.CmdLineArgs;
-import js.app.HelpFormatter;
 import js.base.BasePrinter;
+import js.data.AbstractData;
 import js.file.Files;
 import js.json.JSMap;
+import static dfa.Util.*;
 
 public class DfaOper extends AppOper {
 
@@ -21,72 +22,47 @@ public class DfaOper extends AppOper {
 
   @Override
   public String shortHelp() {
-    return "compile ." + OBJECT_EXT + " file from an ." + SOURCE_EXT + " file";
+    return "Compile .rxp file to .dfa";
+  }
+
+  @Override
+  public AbstractData defaultArgs() {
+    return DfaConfig.DEFAULT_INSTANCE;
   }
 
   @Override
   protected void longHelp(BasePrinter b) {
-    var hf = new HelpFormatter();
-    hf.addItem("<." + SOURCE_EXT + " input>", "source file");
-    hf.addItem("[<." + OBJECT_EXT + " output>]", "object file");
-    hf.addItem("[ids <source file>]", "output file for ids");
-    b.pr(hf);
-    b.pr(" \n","\n\nExisting tokens can be included in regular expressions as $NAME or {NAME}, and");
+    b.pr(" \n", "\n\nExisting tokens can be included in regular expressions as $NAME or {NAME}, and");
     b.pr("can include these predefined anonymous tokens:");
-    b.pr(" \n","\n\n");
+    b.pr(" \n", "\n\n");
     b.pr(Files.readString(RegParse.class, "predef_expr.txt"));
   }
 
   @Override
-  protected void processAdditionalArgs() {
-    CmdLineArgs args = app().cmdLineArgs();
-    int i = 0;
-    while (args.hasNextArg()) {
-      String a = args.nextArg();
-      if (a.equals("ids")) {
-        File relPath = new File(args.nextArg());
-        if (!relPath.isAbsolute()) {
-          relPath = new File(Files.currentDirectory(), relPath.toString());
-        }
-        mIdSourceFile = relPath;
-        continue;
-      }
-      if (i >= 2)
-        break;
-      File relPath = new File(a);
-      if (!relPath.isAbsolute()) {
-        relPath = new File(Files.currentDirectory(), relPath.toString());
-      }
-      mFiles.add(relPath);
-      i++;
+  public void perform() {
+    var sourceFile = config().input();
+    if (Files.empty(sourceFile)) {
+      app().setError("Please specify a source file (xxx.rxp)");
     }
 
-    args.assertArgsDone();
-  }
+    {
+      var v = config().version();
+      if (v != DFA_VERSION_3 && v != DFA_VERSION_4)
+        app().setError("Unsupported version:", versionString(config().version()));
+    }
 
-  @Override
-  public void perform() {
-    if (mFiles.isEmpty())
-      pr("(please specify an ." + SOURCE_EXT + " files)");
-    File sourceFile = mFiles.get(0);
-    File targetFile = null;
-    if (mFiles.size() >= 2)
-      targetFile = mFiles.get(1);
-    processSourceFile(sourceFile, targetFile);
+    processSourceFile(sourceFile, config().output());
   }
-
-  private static final String SOURCE_EXT = "rxp";
-  private static final String OBJECT_EXT = "dfa";
 
   private void processSourceFile(File sourceFile, File targetFile) {
-    sourceFile = assertExt(Files.addExtension(sourceFile, SOURCE_EXT), SOURCE_EXT);
+    sourceFile = assertExt(Files.addExtension(sourceFile, EXT_RXP), EXT_RXP);
 
     if (!sourceFile.exists())
       setError("No such file:", sourceFile);
 
     if (Files.empty(targetFile))
-      targetFile = Files.setExtension(sourceFile, OBJECT_EXT);
-    assertExt(targetFile, OBJECT_EXT);
+      targetFile = Files.setExtension(sourceFile, EXT_DFA);
+    assertExt(targetFile, EXT_DFA);
 
     DFACompiler compiler = new DFACompiler();
     compiler.setVerbose(verbose());
@@ -96,12 +72,17 @@ public class DfaOper extends AppOper {
     procIdsFile(compiler.tokenNames());
   }
 
-  private static final int FTYPE_JAVA = 0, FTYPE_RUST = 1;
+  @Override
+  public DfaConfig config() {
+    return super.config();
+  }
 
   /**
    * If an ids source file argument was given, write the token ids to it
    */
   private void procIdsFile(List<String> tokenNames) {
+    var mIdSourceFile = config().ids();
+
     if (Files.empty(mIdSourceFile))
       return;
 
@@ -236,8 +217,5 @@ public class DfaOper extends AppOper {
       setError("Not a ." + ext + " file:", file);
     return file;
   }
-
-  private List<File> mFiles = arrayList();
-  private File mIdSourceFile;
 
 }

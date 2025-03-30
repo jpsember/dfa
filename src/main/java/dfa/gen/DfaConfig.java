@@ -1,12 +1,26 @@
 package dfa.gen;
 
+import java.io.File;
 import js.data.AbstractData;
+import js.file.Files;
 import js.json.JSMap;
 
 public class DfaConfig implements AbstractData {
 
-  public String notUsedYet() {
-    return mNotUsedYet;
+  public File input() {
+    return mInput;
+  }
+
+  public File output() {
+    return mOutput;
+  }
+
+  public File ids() {
+    return mIds;
+  }
+
+  public float version() {
+    return mVersion;
   }
 
   @Override
@@ -14,7 +28,10 @@ public class DfaConfig implements AbstractData {
     return new Builder(this);
   }
 
-  protected static final String _0 = "not_used_yet";
+  protected static final String _0 = "input";
+  protected static final String _1 = "output";
+  protected static final String _2 = "ids";
+  protected static final String _3 = "version";
 
   @Override
   public String toString() {
@@ -24,7 +41,10 @@ public class DfaConfig implements AbstractData {
   @Override
   public JSMap toJson() {
     JSMap m = new JSMap();
-    m.putUnsafe(_0, mNotUsedYet);
+    m.putUnsafe(_0, mInput.toString());
+    m.putUnsafe(_1, mOutput.toString());
+    m.putUnsafe(_2, mIds.toString());
+    m.putUnsafe(_3, mVersion);
     return m;
   }
 
@@ -39,7 +59,28 @@ public class DfaConfig implements AbstractData {
   }
 
   private DfaConfig(JSMap m) {
-    mNotUsedYet = m.opt(_0, "");
+    {
+      mInput = Files.DEFAULT;
+      String x = m.opt(_0, (String) null);
+      if (x != null) {
+        mInput = new File(x);
+      }
+    }
+    {
+      mOutput = Files.DEFAULT;
+      String x = m.opt(_1, (String) null);
+      if (x != null) {
+        mOutput = new File(x);
+      }
+    }
+    {
+      mIds = Files.DEFAULT;
+      String x = m.opt(_2, (String) null);
+      if (x != null) {
+        mIds = new File(x);
+      }
+    }
+    mVersion = m.opt(_3, 3.0f);
   }
 
   public static Builder newBuilder() {
@@ -55,7 +96,13 @@ public class DfaConfig implements AbstractData {
     DfaConfig other = (DfaConfig) object;
     if (other.hashCode() != hashCode())
       return false;
-    if (!(mNotUsedYet.equals(other.mNotUsedYet)))
+    if (!(mInput.equals(other.mInput)))
+      return false;
+    if (!(mOutput.equals(other.mOutput)))
+      return false;
+    if (!(mIds.equals(other.mIds)))
+      return false;
+    if (!(mVersion == other.mVersion))
       return false;
     return true;
   }
@@ -65,19 +112,28 @@ public class DfaConfig implements AbstractData {
     int r = m__hashcode;
     if (r == 0) {
       r = 1;
-      r = r * 37 + mNotUsedYet.hashCode();
+      r = r * 37 + mInput.hashCode();
+      r = r * 37 + mOutput.hashCode();
+      r = r * 37 + mIds.hashCode();
+      r = r * 37 + (int)mVersion;
       m__hashcode = r;
     }
     return r;
   }
 
-  protected String mNotUsedYet;
+  protected File mInput;
+  protected File mOutput;
+  protected File mIds;
+  protected float mVersion;
   protected int m__hashcode;
 
   public static final class Builder extends DfaConfig {
 
     private Builder(DfaConfig m) {
-      mNotUsedYet = m.mNotUsedYet;
+      mInput = m.mInput;
+      mOutput = m.mOutput;
+      mIds = m.mIds;
+      mVersion = m.mVersion;
     }
 
     @Override
@@ -94,12 +150,30 @@ public class DfaConfig implements AbstractData {
     @Override
     public DfaConfig build() {
       DfaConfig r = new DfaConfig();
-      r.mNotUsedYet = mNotUsedYet;
+      r.mInput = mInput;
+      r.mOutput = mOutput;
+      r.mIds = mIds;
+      r.mVersion = mVersion;
       return r;
     }
 
-    public Builder notUsedYet(String x) {
-      mNotUsedYet = (x == null) ? "" : x;
+    public Builder input(File x) {
+      mInput = (x == null) ? Files.DEFAULT : x;
+      return this;
+    }
+
+    public Builder output(File x) {
+      mOutput = (x == null) ? Files.DEFAULT : x;
+      return this;
+    }
+
+    public Builder ids(File x) {
+      mIds = (x == null) ? Files.DEFAULT : x;
+      return this;
+    }
+
+    public Builder version(float x) {
+      mVersion = x;
       return this;
     }
 
@@ -108,7 +182,10 @@ public class DfaConfig implements AbstractData {
   public static final DfaConfig DEFAULT_INSTANCE = new DfaConfig();
 
   private DfaConfig() {
-    mNotUsedYet = "";
+    mInput = Files.DEFAULT;
+    mOutput = Files.DEFAULT;
+    mIds = Files.DEFAULT;
+    mVersion = 3.0f;
   }
 
 }

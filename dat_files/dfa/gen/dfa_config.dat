@@ -1,3 +1,15 @@
 fields {
-  string not_used_yet;
+  // Source file, e.g. foo.rxp
+  //
+  File input;
+
+  // Output file, e.g. foo.dfa
+  //
+  File output;
+
+  // If nonempty, source file where ids will be written
+  //
+  File ids;
+
+  float version = 3.0;
 }

@@ -15,6 +15,7 @@ import js.parsing.RegExp;
 import js.parsing.State;
 
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
@@ -174,7 +175,7 @@ public final class DFACompiler extends BaseObject {
   private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
     JSMap m = map();
 
-    m.put("version", 3.0);
+    m.put("version", DFA_VERSION_3);
 
     JSList list = list();
     mTokenIds = arrayList();
