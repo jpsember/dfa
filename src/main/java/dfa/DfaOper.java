@@ -31,6 +31,10 @@ public class DfaOper extends AppOper {
     hf.addItem("[<." + OBJECT_EXT + " output>]", "object file");
     hf.addItem("[ids <source file>]", "output file for ids");
     b.pr(hf);
+    b.pr(" \n","\n\nExisting tokens can be included in regular expressions as $NAME or {NAME}, and");
+    b.pr("can include these predefined anonymous tokens:");
+    b.pr(" \n","\n\n");
+    b.pr(Files.readString(RegParse.class, "predef_expr.txt"));
   }
 
   @Override
