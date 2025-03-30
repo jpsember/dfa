@@ -1,17 +1,4 @@
-# Whitespace includes space, linefeed, tab, and comments
-#
-
-#_WHITESPACE: [\f\r\s\t\n]+
-
-#_JAVACOMMENT:  ( // [^\n]* \n? )    \
-#             | ( /\*  ((\** [^*/] ) \
-#             | [^*])*  \*+ / )
-
-#_HASHCOMMENT:   \#\# [^\n]* \n?
-
-#WS:  ( (_WHITESPACE) | (_JAVACOMMENT) | (_HASHCOMMENT))
-
-WS: ([\f\r\s\t\n]+  |  (  ( // [^\n]* \n? )    | ( /\*  ((\** [^*/] )      | [^*])*  \*+ / ))   |  (\#\# [^\n]* \n?) )
+WS:  ( ($_WHITESPACE) | ($_JAVACOMMENT) | ($_HASHCOMMENT))
 
 BROP: \[
 BRCL: \]
@@ -23,21 +10,13 @@ CBROP: \{
 CBRCL: \}
 COMMA: \,
 COLON: \:
-STRING: "  ([^\0x0a\0x0d\0x09"] | \\")* "
-#_STRING
-SINGLESTRING: '  ([^\0x0a\0x0d\0x09'] | \\')* '
-# _SINGLESTRING
 
-#_STRING:      "  ([^\0x0a\0x0d\0x09"] | \\")* "
-
-#_SINGLESTRING: '  ([^\0x0a\0x0d\0x09'] | \\')* '
+STRING:    $_STRING
 
 # For numbers, see https://www.json.org/img/number.png
 
-#_NUMINTEGER: \-? (0 | ([1-9] \d*))
-#_NUMFRAC: (\. \d+ )
-#_EXP: [eE] (\- | \+)? \d+
+_NUMINTEGER: (\-? (0 | ([1-9] \d*)))
+_NUMFRAC: (\. \d+ )
+_EXP: ( [eE] (\- | \+)? \d+ )
 
-NUMBER: (\-? (0 | ([1-9] \d*)))   ((\. \d+ ))?  ([eE] (\- | \+)? \d+)?
-
-
+NUMBER: $_NUMINTEGER $_NUMFRAC? $_EXP?
