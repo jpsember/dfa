@@ -511,10 +511,8 @@ final class RegParse {
         badState("unexpected final state");
 
       if (x.finalState()) {
-        // x.finalState(false);
         continue;
       }
-      //todo("should this be CODEMIN, or 0?");
       CodeSet codeset = CodeSet.withRange(State.CODEMIN, State.CODEMAX);
       for (Edge e : x.edges()) {
         codeset = codeset.difference(CodeSet.with(e.codeSets()));
@@ -528,7 +526,6 @@ final class RegParse {
     states.add(f);
 
     // Build a map of old to new states for the NFA
-    todo("can we use state renamer class?");
     Map<State, State> new_state_map = hashMap();
     for (State x : states) {
       State x_new = new State();

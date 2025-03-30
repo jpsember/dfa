@@ -11,5 +11,9 @@ fields {
   //
   File ids;
 
+  // If not null, reads the text file and attempts to parse it with the generated dfa
+  //
+  File example_text;
+
   float version = 3.0;
 }

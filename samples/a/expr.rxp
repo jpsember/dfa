@@ -2,36 +2,28 @@
 #
 _DIG: \d+
 
+
+WS: $_WHITESPACE
+
 # Double has higher priority than int, since we don't want the prefix of the double
 # to be intpreted as an int
 
-# 1
 INT: \-?$_DIG
 
-# 2
-#
 DBL: \-?([0] | ([1-9]\d*)) . \d+
 
-# 3
 LBL: '([^'\n]|\\')*'
 
-# 4
-ID:  [_a-zA-Z][_a-zA-Z1-9]*
+ID:  [_a-zA-Z][_a-zA-Z0-9]*
 
-# 5
 ASSIGN: =
 
-# 6
 EQUIV: ==
 
-# 7
 IF: if
 
-# 8
 DO: do
 
-# 9
 BROP: \{
 
-# 10
 BRCL: \}

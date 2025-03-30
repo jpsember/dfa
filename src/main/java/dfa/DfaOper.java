@@ -11,6 +11,9 @@ import js.base.BasePrinter;
 import js.data.AbstractData;
 import js.file.Files;
 import js.json.JSMap;
+import js.parsing.DFA;
+import js.parsing.Scanner;
+
 import static dfa.Util.*;
 
 public class DfaOper extends AppOper {
@@ -70,6 +73,7 @@ public class DfaOper extends AppOper {
     String str = jsonMap.toString();
     files().writeIfChanged(targetFile, str);
     procIdsFile(compiler.tokenNames());
+    processExampleText(jsonMap);
   }
 
   @Override
@@ -216,6 +220,26 @@ public class DfaOper extends AppOper {
     if (!Files.getExtension(file).equals(ext))
       setError("Not a ." + ext + " file:", file);
     return file;
+  }
+
+  private void processExampleText(JSMap dfaJson) {
+    var f = config().exampleText();
+    if (Files.empty(f))
+      return;
+
+    var text = Files.readString(Files.assertExists(f, "example_text"));
+    var dfa = new DFA(dfaJson);
+    var firstToken = dfa.tokenName(0);
+    int skip = -1;
+    if (firstToken.equals("WS"))
+      skip = 0;
+    var s = new Scanner(dfa, text, skip);
+
+    while (s.hasNext()) {
+      var t = s.read();
+      pr(t);
+    }
+
   }
 
 }
