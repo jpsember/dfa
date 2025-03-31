@@ -17,7 +17,7 @@ _JAVACOMMENT: ( ( // [^\n]* $_NEWLINE? )    \
              | ( /\*  ((\** [^*/] ) \
              | [^*])*  \*+ / ) )
 
-_HASHCOMMENT:  ( $_HASH$_HASH [^\n\r]* $_NEWLINE? )
+_HASHCOMMENT:  ( $_HASH [^\n\r]* $_NEWLINE? )
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
