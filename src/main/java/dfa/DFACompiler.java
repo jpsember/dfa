@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import js.app.App;
 import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
@@ -100,7 +99,8 @@ public final class DFACompiler extends BaseObject {
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
     NFAToDFA builder = new NFAToDFA();
-    builder.setVerbose(verbose());
+    if (false) // takes too long on sizeable token files
+      builder.setVerbose(verbose());
     State dfa = builder.convertNFAToDFA(combined);
     if (verbose())
       log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));
@@ -176,6 +176,12 @@ public final class DFACompiler extends BaseObject {
   private static Pattern TOKENNAME_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*\\s*:\\s*.*");
 
   private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
+   
+    var withOpts = dfaConfig().version() == DFA_VERSION_4;
+    
+    var withOptA = withOpts;
+    var withOptB = withOpts;
+
     JSMap m = map();
 
     m.put("version", DFA_VERSION_3);
@@ -226,7 +232,7 @@ public final class DFACompiler extends BaseObject {
 
           // Optimization:  if b==a+1, represent ...a,b,... as ...(double)a,....
 
-          if (b == a + 1)
+          if (withOptA && b == a + 1)
             out.add((double) a);
           else {
             out.add(a);
@@ -235,7 +241,7 @@ public final class DFACompiler extends BaseObject {
         }
 
         // Optimization: if resulting list has only one element, store that as a scalar
-        if (out.size() == 1)
+        if (withOptB && out.size() == 1)
           stateDesc.addUnsafe(out.getUnsafe(0));
         else
           stateDesc.add(out);

@@ -25,6 +25,6 @@ _SIGNEDINT: ( \-? \d+ )
 
 _UNSIGNEDINT:  ( \d+ )
 
-_STRING:      ("  ([^\0x0a\0x0d\0x09"] | $_ESCAPE" )* ")
+_STRING:      ("  ([^\0x00-\0x1f"] | $_ESCAPE" )* ")
 
-_SINGLESTRING: ('  ([^\0x0a\0x0d\0x09'] | $_ESCAPE' )* ')
+_SINGLESTRING: ('  ([^\0x00-\0x1f'] | $_ESCAPE' )* ')

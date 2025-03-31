@@ -100,7 +100,7 @@ public class DfaConfig implements AbstractData {
       }
     }
     mExampleVerify = m.opt(_4, false);
-    mVersion = m.opt(_5, 3.0f);
+    mVersion = m.opt(_5, 4.0f);
   }
 
   public static Builder newBuilder() {
@@ -228,7 +228,7 @@ public class DfaConfig implements AbstractData {
     mOutput = Files.DEFAULT;
     mIds = Files.DEFAULT;
     mExampleText = Files.DEFAULT;
-    mVersion = 3.0f;
+    mVersion = 4.0f;
   }
 
 }

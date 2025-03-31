@@ -19,5 +19,5 @@ fields {
   // If true, and example text file exists, verifies its contents haven't changed
   bool example_verify;
 
-  float version = 4.0;
+  float version = 3.0;
 }

@@ -44,6 +44,8 @@ public class DfaOper extends AppOper {
 
   @Override
   public void perform() {
+    setConfig(config());
+
     var sourceFile = config().input();
     if (Files.empty(sourceFile)) {
       app().setError("Please specify a source file (xxx.rxp)");
@@ -72,6 +74,7 @@ public class DfaOper extends AppOper {
     compiler.setVerbose(verbose());
     JSMap jsonMap = compiler.parse(Files.readString(sourceFile));
     String str = jsonMap.toString();
+    log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
     procIdsFile(compiler.tokenNames());
     processExampleText(jsonMap);
