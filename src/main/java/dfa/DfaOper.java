@@ -8,6 +8,7 @@ import java.util.List;
 import dfa.gen.DfaConfig;
 import js.app.AppOper;
 import js.base.BasePrinter;
+import js.base.SystemCall;
 import js.data.AbstractData;
 import js.file.Files;
 import js.json.JSMap;
@@ -223,11 +224,13 @@ public class DfaOper extends AppOper {
   }
 
   private void processExampleText(JSMap dfaJson) {
-    var f = config().exampleText();
-    if (Files.empty(f))
+    var sampleTextFile = config().exampleText();
+    if (Files.empty(sampleTextFile))
       return;
 
-    var text = Files.readString(Files.assertExists(f, "example_text"));
+    sampleTextFile = sampleTextFile.getAbsoluteFile();
+
+    var text = Files.readString(Files.assertExists(sampleTextFile, "example_text"));
     var dfa = new DFA(dfaJson);
     var firstToken = dfa.tokenName(0);
     int skip = -1;
@@ -235,11 +238,36 @@ public class DfaOper extends AppOper {
       skip = 0;
     var s = new Scanner(dfa, text, skip);
 
+    var sb = new BasePrinter();
     while (s.hasNext()) {
       var t = s.read();
-      pr(t);
+      sb.pr(t);
     }
-
+    var results = sb.toString();
+    if (verbose())
+      pr("Example text tokenization results:", DASHES, CR, results);
+    var sampleResultsValidFile = new File(sampleTextFile.toString() + ".verify");
+    if (!sampleResultsValidFile.exists()) {
+      files().writeString(sampleResultsValidFile, results);
+    } else {
+      var expectedResults = Files.readString(sampleResultsValidFile);
+      if (!results.equals(expectedResults)) {
+        pr("*** Results have changed");
+        if (config().exampleVerify()) {
+          var sampleResultsInvalidFile = new File(sampleTextFile.toString() + ".invalid");
+          try {
+            files().writeString(sampleResultsInvalidFile, results);
+            SystemCall sc = new SystemCall();
+            sc.withVerbose(true);
+            sc.arg("diff", sampleResultsValidFile, sampleResultsInvalidFile);
+            pr(sc.systemErr());
+          } finally {
+            files().deletePeacefully(sampleResultsInvalidFile);
+          }
+        }
+        setError("Example file tokenization did not produce expected results");
+      }
+    }
   }
 
 }

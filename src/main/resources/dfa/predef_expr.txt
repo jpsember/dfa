@@ -1,17 +1,30 @@
-_WHITESPACE: [\f\r\s\t\n]+
+_HTAB_: (\t)
+_LF_:   (\n)
+_FORMFEED_: (\f)
+_CR_:   (\r)
+_NEWLINE_: (\r?\n)
+_SP_: (\s)
+_COLON_: (\:)
+_COMMA_: (\,)
+_EQUALS_: (\=)
+_ESCAPE_: (\\)
+_TILDE_: (\^)
 
-_JAVACOMMENT:  ( // [^\n]* \n? )    \
+_WHITESPACE: ([\f\r\s\t\n]+)
+
+_JAVACOMMENT: ( ( // [^\n]* \n? )    \
              | ( /\*  ((\** [^*/] ) \
-             | [^*])*  \*+ / )
+             | [^*])*  \*+ / ) )
 
-_HASHCOMMENT:   \#\# [^\n]* \n?
+_HASHCOMMENT:  ( \#\# [^\n]* \n? )
 
-_ID:  [_a-zA-Z][_a-zA-Z0-9]*
+_ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
-_SIGNEDINT:  \-? \d+
+_SIGNEDINT: ( \-? \d+ )
 
-_UNSIGNEDINT: \d+
+_UNSIGNEDINT:  ( \d+ )
 
-_STRING:      "  ([^\0x0a\0x0d\0x09"] | \\")* "
+_STRING:      ("  ([^\0x0a\0x0d\0x09"] | \\")* ")
 
-_SINGLESTRING: '  ([^\0x0a\0x0d\0x09'] | \\')* '
+_SINGLESTRING: ('  ([^\0x0a\0x0d\0x09'] | \\')* ')
+

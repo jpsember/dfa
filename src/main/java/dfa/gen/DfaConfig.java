@@ -23,6 +23,10 @@ public class DfaConfig implements AbstractData {
     return mExampleText;
   }
 
+  public boolean exampleVerify() {
+    return mExampleVerify;
+  }
+
   public float version() {
     return mVersion;
   }
@@ -36,7 +40,8 @@ public class DfaConfig implements AbstractData {
   protected static final String _1 = "output";
   protected static final String _2 = "ids";
   protected static final String _3 = "example_text";
-  protected static final String _4 = "version";
+  protected static final String _4 = "example_verify";
+  protected static final String _5 = "version";
 
   @Override
   public String toString() {
@@ -50,7 +55,8 @@ public class DfaConfig implements AbstractData {
     m.putUnsafe(_1, mOutput.toString());
     m.putUnsafe(_2, mIds.toString());
     m.putUnsafe(_3, mExampleText.toString());
-    m.putUnsafe(_4, mVersion);
+    m.putUnsafe(_4, mExampleVerify);
+    m.putUnsafe(_5, mVersion);
     return m;
   }
 
@@ -93,7 +99,8 @@ public class DfaConfig implements AbstractData {
         mExampleText = new File(x);
       }
     }
-    mVersion = m.opt(_4, 3.0f);
+    mExampleVerify = m.opt(_4, false);
+    mVersion = m.opt(_5, 3.0f);
   }
 
   public static Builder newBuilder() {
@@ -117,6 +124,8 @@ public class DfaConfig implements AbstractData {
       return false;
     if (!(mExampleText.equals(other.mExampleText)))
       return false;
+    if (!(mExampleVerify == other.mExampleVerify))
+      return false;
     if (!(mVersion == other.mVersion))
       return false;
     return true;
@@ -131,6 +140,7 @@ public class DfaConfig implements AbstractData {
       r = r * 37 + mOutput.hashCode();
       r = r * 37 + mIds.hashCode();
       r = r * 37 + mExampleText.hashCode();
+      r = r * 37 + (mExampleVerify ? 1 : 0);
       r = r * 37 + (int)mVersion;
       m__hashcode = r;
     }
@@ -141,6 +151,7 @@ public class DfaConfig implements AbstractData {
   protected File mOutput;
   protected File mIds;
   protected File mExampleText;
+  protected boolean mExampleVerify;
   protected float mVersion;
   protected int m__hashcode;
 
@@ -151,6 +162,7 @@ public class DfaConfig implements AbstractData {
       mOutput = m.mOutput;
       mIds = m.mIds;
       mExampleText = m.mExampleText;
+      mExampleVerify = m.mExampleVerify;
       mVersion = m.mVersion;
     }
 
@@ -172,6 +184,7 @@ public class DfaConfig implements AbstractData {
       r.mOutput = mOutput;
       r.mIds = mIds;
       r.mExampleText = mExampleText;
+      r.mExampleVerify = mExampleVerify;
       r.mVersion = mVersion;
       return r;
     }
@@ -193,6 +206,11 @@ public class DfaConfig implements AbstractData {
 
     public Builder exampleText(File x) {
       mExampleText = (x == null) ? Files.DEFAULT : x;
+      return this;
+    }
+
+    public Builder exampleVerify(boolean x) {
+      mExampleVerify = x;
       return this;
     }
 

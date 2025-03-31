@@ -176,8 +176,12 @@ public final class ToknUtils {
   }
 
   public static String dumpStateMachine(State initialState, Object... title) {
+    final var dashes = "--------------------------------------------------------------------------\n";
     StringBuilder sb = new StringBuilder();
-    sb.append("====== State Machine");
+//    sb.append(dashes);
+    sb.append("\nState Machine\n");
+    sb.append(dashes);
+    
     if (title.length != 0) {
       sb.append(" : ");
       sb.append(BasePrinter.toString(title));
@@ -196,7 +200,7 @@ public final class ToknUtils {
         continue;
       sb.append(toString(s, true));
     }
-    sb.append("=======================================================\n");
+    sb.append(dashes);
     return sb.toString();
   }
 

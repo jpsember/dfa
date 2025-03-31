@@ -11,9 +11,13 @@ fields {
   //
   File ids;
 
-  // If not null, reads the text file and attempts to parse it with the generated dfa
+  // If not null, reads the text file and attempts to parse it with the generated dfa,
+  // and writes the output to <example_text>.verify
   //
   File example_text;
+
+  // If true, and example text file exists, verifies its contents haven't changed
+  bool example_verify;
 
   float version = 3.0;
 }

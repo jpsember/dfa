@@ -8,8 +8,9 @@ public class Dfa extends App {
 
   public static void main(String[] args) {
     loadTools();
+    todo("How much memory is actually saved by the json map fiddling around?");
     Dfa app = new Dfa();
-    //app.setCustomArgs("-v");
+     app.setCustomArgs("-v");
     app.startApplication(args);
     app.exitWithReturnCode();
   }
