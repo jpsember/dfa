@@ -85,7 +85,7 @@ public class CompileTest extends MyTestCase {
       proc("abab bca bbc bc");
       die("expected redundant tokens");
     } catch (IllegalArgumentException e) {
-      checkState(e.getMessage().contains("Redundant token"));
+      checkState(e.getMessage().contains("Subsumed"));
     }
   }
 
