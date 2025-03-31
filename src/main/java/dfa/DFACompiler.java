@@ -107,7 +107,7 @@ public final class DFACompiler extends BaseObject {
 
     List<String> redundantTokenNames = applyRedundantTokenFilter(token_records, dfa);
     if (nonEmpty(redundantTokenNames))
-      badArg("Redundant token(s) found (move them later in the .rxp file!):", redundantTokenNames);
+      badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
 
     return constructJsonDFA(token_records, dfa);
   }

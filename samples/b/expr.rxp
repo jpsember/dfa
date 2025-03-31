@@ -1,4 +1,11 @@
 WS: $_WHITESPACE
 
-TILDE: $_TILDE_
+TILDE: $_TILDE
+
+# All lower case letters except d,f, and p
+
+LOWER: [a-z^d-fp]
+
+ASTR: \" [a-z]* \"
+BSTR: \" $LOWER* \"
 
