@@ -16,7 +16,7 @@ LBL: '([^'\n]|\\')*'
 
 ID:  [_a-zA-Z][_a-zA-Z0-9]*
 
-ASSIGN: =
+ASSIGN: $_EQUALS
 
 EQUIV: ==
 
@@ -28,5 +28,7 @@ BROP: \{
 
 BRCL: \}
 
-TILDE: _TILDE_
+TILDE: $_TILDE
+
+HASHCOMMENT: $_HASHCOMMENT
 

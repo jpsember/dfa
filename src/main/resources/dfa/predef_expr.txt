@@ -1,22 +1,23 @@
-_HTAB_: (\t)
-_LF_:   (\n)
-_FORMFEED_: (\f)
-_CR_:   (\r)
-_NEWLINE_: (\r?\n)
-_SP_: (\s)
-_COLON_: (\:)
-_COMMA_: (\,)
-_EQUALS_: (\=)
-_ESCAPE_: (\\)
-_TILDE_: (\^)
+_HTAB: (\t)
+_LF:   (\n)
+_FORMFEED: (\f)
+_CR:   (\r)
+_NEWLINE: ($_CR?$_LF)
+_SP: (\s)
+_COLON: (\:)
+_COMMA: (\,)
+_EQUALS: (\=)
+_ESCAPE: (\\)
+_TILDE: (\^)
+_HASH: (\#)
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-_JAVACOMMENT: ( ( // [^\n]* \n? )    \
+_JAVACOMMENT: ( ( // [^\n]* $_NEWLINE? )    \
              | ( /\*  ((\** [^*/] ) \
              | [^*])*  \*+ / ) )
 
-_HASHCOMMENT:  ( \#\# [^\n]* \n? )
+_HASHCOMMENT:  ( $_HASH$_HASH [^\n\r]* $_NEWLINE? )
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
@@ -24,7 +25,6 @@ _SIGNEDINT: ( \-? \d+ )
 
 _UNSIGNEDINT:  ( \d+ )
 
-_STRING:      ("  ([^\0x0a\0x0d\0x09"] | \\")* ")
+_STRING:      ("  ([^\0x0a\0x0d\0x09"] | $_ESCAPE" )* ")
 
-_SINGLESTRING: ('  ([^\0x0a\0x0d\0x09'] | \\')* ')
-
+_SINGLESTRING: ('  ([^\0x0a\0x0d\0x09'] | $_ESCAPE' )* ')

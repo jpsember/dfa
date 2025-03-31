@@ -247,10 +247,13 @@ public class DfaOper extends AppOper {
     if (verbose())
       pr("Example text tokenization results:", DASHES, CR, results);
     var sampleResultsValidFile = new File(sampleTextFile.toString() + ".verify");
-    if (!sampleResultsValidFile.exists()) {
+    var expectedResults = "";
+    if (sampleResultsValidFile.exists())
+      expectedResults = Files.readString(sampleResultsValidFile);
+
+    if (expectedResults.trim().isEmpty()) {
       files().writeString(sampleResultsValidFile, results);
     } else {
-      var expectedResults = Files.readString(sampleResultsValidFile);
       if (!results.equals(expectedResults)) {
         pr("*** Results have changed");
         if (config().exampleVerify()) {
