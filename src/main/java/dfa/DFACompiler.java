@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import js.app.App;
 import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
@@ -71,6 +72,8 @@ public final class DFACompiler extends BaseObject {
 
       int token_id = -1;
       if (tokenName.charAt(0) != '_') {
+        if (next_token_id == MAX_TOKEN_DEF)
+          throw badArg("Too many token definitions");
         token_id = next_token_id;
         next_token_id++;
       }

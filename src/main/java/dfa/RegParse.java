@@ -12,6 +12,7 @@ import js.parsing.RegExp;
 import js.parsing.State;
 
 import static dfa.ToknUtils.*;
+import static dfa.Util.*;
 
 /**
  * <pre>
@@ -513,7 +514,7 @@ final class RegParse {
       if (x.finalState()) {
         continue;
       }
-      CodeSet codeset = CodeSet.withRange(State.CODEMIN, State.CODEMAX);
+      CodeSet codeset = CodeSet.withRange(OURCODEMIN, OURCODEMAX);
       for (Edge e : x.edges()) {
         codeset = codeset.difference(CodeSet.with(e.codeSets()));
       }

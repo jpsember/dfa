@@ -5,7 +5,7 @@ import static js.base.Tools.*;
 import java.util.List;
 import java.util.Set;
 
-import js.parsing.State;
+import static dfa.Util.*;
 
 /**
  * A data structure that transforms a set of CodeSets to a disjoint set of them,
@@ -44,7 +44,7 @@ final class RangePartition {
     mUniqueCodeSets = hashSet();
     // Make the root node hold the largest possible CodeSet. 
     // We want to be able to include all the token ids as well.
-    mRootNode = buildNode(CodeSet.withRange(State.CODEMIN, State.CODEMAX));
+    mRootNode = buildNode(CodeSet.withRange(OURCODEMIN, OURCODEMAX));
     // Add epsilon immediately, so it's always in its own subset
     addSet(CodeSet.epsilon());
   }
