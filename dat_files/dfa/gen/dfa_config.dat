@@ -20,4 +20,7 @@ fields {
   bool example_verify;
 
   float version = 4.0;
+
+  // If true, generates ASCII table and quits
+  bool ascii;
 }

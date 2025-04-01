@@ -31,6 +31,10 @@ public class DfaConfig implements AbstractData {
     return mVersion;
   }
 
+  public boolean ascii() {
+    return mAscii;
+  }
+
   @Override
   public Builder toBuilder() {
     return new Builder(this);
@@ -42,6 +46,7 @@ public class DfaConfig implements AbstractData {
   protected static final String _3 = "example_text";
   protected static final String _4 = "example_verify";
   protected static final String _5 = "version";
+  protected static final String _6 = "ascii";
 
   @Override
   public String toString() {
@@ -57,6 +62,7 @@ public class DfaConfig implements AbstractData {
     m.putUnsafe(_3, mExampleText.toString());
     m.putUnsafe(_4, mExampleVerify);
     m.putUnsafe(_5, mVersion);
+    m.putUnsafe(_6, mAscii);
     return m;
   }
 
@@ -101,6 +107,7 @@ public class DfaConfig implements AbstractData {
     }
     mExampleVerify = m.opt(_4, false);
     mVersion = m.opt(_5, 4.0f);
+    mAscii = m.opt(_6, false);
   }
 
   public static Builder newBuilder() {
@@ -128,6 +135,8 @@ public class DfaConfig implements AbstractData {
       return false;
     if (!(mVersion == other.mVersion))
       return false;
+    if (!(mAscii == other.mAscii))
+      return false;
     return true;
   }
 
@@ -142,6 +151,7 @@ public class DfaConfig implements AbstractData {
       r = r * 37 + mExampleText.hashCode();
       r = r * 37 + (mExampleVerify ? 1 : 0);
       r = r * 37 + (int)mVersion;
+      r = r * 37 + (mAscii ? 1 : 0);
       m__hashcode = r;
     }
     return r;
@@ -153,6 +163,7 @@ public class DfaConfig implements AbstractData {
   protected File mExampleText;
   protected boolean mExampleVerify;
   protected float mVersion;
+  protected boolean mAscii;
   protected int m__hashcode;
 
   public static final class Builder extends DfaConfig {
@@ -164,6 +175,7 @@ public class DfaConfig implements AbstractData {
       mExampleText = m.mExampleText;
       mExampleVerify = m.mExampleVerify;
       mVersion = m.mVersion;
+      mAscii = m.mAscii;
     }
 
     @Override
@@ -186,6 +198,7 @@ public class DfaConfig implements AbstractData {
       r.mExampleText = mExampleText;
       r.mExampleVerify = mExampleVerify;
       r.mVersion = mVersion;
+      r.mAscii = mAscii;
       return r;
     }
 
@@ -216,6 +229,11 @@ public class DfaConfig implements AbstractData {
 
     public Builder version(float x) {
       mVersion = x;
+      return this;
+    }
+
+    public Builder ascii(boolean x) {
+      mAscii = x;
       return this;
     }
 

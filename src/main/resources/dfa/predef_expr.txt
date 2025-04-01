@@ -1,8 +1,8 @@
-_HTAB: (\t)
+_HT: (\t)
 _LF:   (\n)
-_FORMFEED: (\f)
+_FF:   (\f)
 _CR:   (\r)
-_NEWLINE: ($_CR?$_LF)
+_NL: ($_CR?$_LF)
 _SP: (\s)
 _COLON: (\:)
 _COMMA: (\,)
@@ -13,18 +13,18 @@ _HASH: (\#)
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-_JAVACOMMENT: ( ( // [^\n]* $_NEWLINE? )    \
+_JAVACOMMENT: ( ( // [^\n]* $_NL? )    \
              | ( /\*  ((\** [^*/] ) \
              | [^*])*  \*+ / ) )
 
-_HASHCOMMENT:  ( $_HASH [^\n\r]* $_NEWLINE? )
+_HASHCOMMENT:  ( $_HASH [^\n\r]* $_NL? )
+
+_STRING:      ("  ([^\0x00-\0x1f"] | $_ESCAPE" )* ")
+_SINGLESTRING: ('  ([^\0x00-\0x1f'] | $_ESCAPE' )* ')
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
-_SIGNEDINT: ( \-? \d+ )
-
-_UNSIGNEDINT:  ( \d+ )
-
-_STRING:      ("  ([^\0x00-\0x1f"] | $_ESCAPE" )* ")
-
-_SINGLESTRING: ('  ([^\0x00-\0x1f'] | $_ESCAPE' )* ')
+_UNSIGNEDINT:  (0 | ([1-9] \d*))
+_SIGNEDINT: ( \-? $_UNSIGNEDINT )
+_INTORFLOAT: $_SIGNEDINT (\. \d+ )? ([eE] (\- | \+)? \d+)?
+_FLOAT: $_SIGNEDINT (\. \d+ ) ([eE] (\- | \+)? \d+)?

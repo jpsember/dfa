@@ -3,7 +3,9 @@ package dfa;
 import static js.base.Tools.*;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dfa.gen.DfaConfig;
 import js.app.AppOper;
@@ -45,6 +47,10 @@ public class DfaOper extends AppOper {
   @Override
   public void perform() {
     setConfig(config());
+    if (config().ascii()) {
+      generateASCIITable();
+      return;
+    }
 
     var sourceFile = config().input();
     if (Files.empty(sourceFile)) {
@@ -132,7 +138,7 @@ public class DfaOper extends AppOper {
       {
         // Use the number of spaces that the first marker is indented to determine the indentation
         int j;
-        for (j = 0;; j++) {
+        for (j = 0; ; j++) {
           int i = m0 - j - 1;
           if (i < 0 || content.charAt(i) == '\n')
             break;
@@ -147,17 +153,17 @@ public class DfaOper extends AppOper {
         existingText = content.substring(m0 + marker0.length(), m1);
         String tag;
         switch (ftype) {
-        case FTYPE_JAVA: {
-          tag = "static final int";
-        }
+          case FTYPE_JAVA: {
+            tag = "static final int";
+          }
           break;
-        case FTYPE_RUST: {
-          tag = "const";
-        }
+          case FTYPE_RUST: {
+            tag = "const";
+          }
           break;
 
-        default:
-          throw badArg("Unsupported file type");
+          default:
+            throw badArg("Unsupported file type");
         }
 
         //String tag = "static final int";
@@ -193,24 +199,24 @@ public class DfaOper extends AppOper {
       sb.append(tab);
 
       switch (ftype) {
-      case FTYPE_JAVA:
-        sb.append("public static final int ");
-        sb.append(symbolPrefix);
-        sb.append(tokenName);
-        sb.append(" = ");
-        sb.append(index);
-        sb.append(";\n");
-        break;
-      case FTYPE_RUST:
-        sb.append("const ");
-        sb.append(symbolPrefix);
-        sb.append(tokenName);
-        sb.append(": i32 = ");
-        sb.append(index);
-        sb.append(";\n");
-        break;
-      default:
-        throw notSupported();
+        case FTYPE_JAVA:
+          sb.append("public static final int ");
+          sb.append(symbolPrefix);
+          sb.append(tokenName);
+          sb.append(" = ");
+          sb.append(index);
+          sb.append(";\n");
+          break;
+        case FTYPE_RUST:
+          sb.append("const ");
+          sb.append(symbolPrefix);
+          sb.append(tokenName);
+          sb.append(": i32 = ");
+          sb.append(index);
+          sb.append(";\n");
+          break;
+        default:
+          throw notSupported();
       }
     }
     sb.append(tab);
@@ -276,4 +282,93 @@ public class DfaOper extends AppOper {
     }
   }
 
+
+  private void generateASCIITable() {
+    var sb = new StringBuilder();
+    Map<Character, String> m = new HashMap<>();
+    m.put('\b', "\\b");
+    m.put('\t', "\\t|_HT");
+    m.put('\n', "\\n|_LF");
+    m.put('\f', "\\f|_FF");
+    m.put('\r', "\\r|_CR");
+    m.put(':', "|_COLON");
+    m.put(' ', "|_SP");
+    m.put(',', "|_COMMA");
+    m.put('=', "|_EQUALS");
+    m.put('\\', "|_ESCAPE");
+    m.put('^', "|_TILDE");
+    m.put('#', "|_HASH");
+
+    {
+      final int POS_WIDTH = 18;
+      final int POS_ASCII = 5;
+      final int POS_PREDEF = POS_ASCII + 3;
+
+      for (int i = 0; i < 128; i++) {
+        var ci = (char) i;
+        var w = m.getOrDefault(ci, "");
+        var args = split(w, '|');
+
+        var ascii = args.get(0);
+        var tokenName = "";
+        if (args.size() >= 1) {
+          ascii = args.get(0);
+        }
+        if (args.size() >= 2)
+          tokenName = args.get(1);
+
+        if (ascii.isEmpty()) {
+          if (i >= 32) {
+            if (i < 127) {
+              ascii = Character.toString(ci);
+            }
+          }
+        }
+        var t = sb.length();
+
+        sb.append(String.format("\\x%02x ", i));
+
+        tab(sb, t + POS_ASCII);
+        sb.append(ascii);
+
+        tab(sb, t + POS_PREDEF);
+        sb.append(tokenName);
+
+        tab(sb, t + POS_WIDTH);
+      }
+
+      var str = sb.toString();
+      String[] strs = new String[128];
+      for (int i = 0; i < 128; i++) {
+        strs[i] = str.substring(i * POS_WIDTH, (i + 1) * POS_WIDTH);
+      }
+      sb.setLength(0);
+      int COLS = 4;
+      int colSize = 128 / COLS;
+      for (int col = 0; col < COLS; col++) {
+        sb.append("ASC  Esc Tok");
+        tab(sb, POS_WIDTH * (col + 1));
+      }
+      sb.append('\n');
+      var cp = sb.length();
+      for (int col = 0; col < COLS; col++) {
+        sb.append("----------------");
+        tab(sb, cp + POS_WIDTH * (col + 1));
+      }
+      sb.append('\n');
+
+
+      for (int row = 0; row < colSize; row++) {
+        for (int col = 0; col < COLS; col++) {
+          sb.append(strs[col * colSize + row]);
+        }
+        sb.append('\n');
+      }
+      pr(sb);
+    }
+    for (int i = 1; i <= 127; i++) {
+      sb.append(String.format("\\x%02x", i));
+      sb.append(' ');
+    }
+  }
 }

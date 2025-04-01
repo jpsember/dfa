@@ -9,7 +9,7 @@ public class Dfa extends App {
   public static void main(String[] args) {
     loadTools();
     Dfa app = new Dfa();
-    //app.setCustomArgs("-v");
+    //app.setCustomArgs("-v ascii");
     app.startApplication(args);
     app.exitWithReturnCode();
   }
