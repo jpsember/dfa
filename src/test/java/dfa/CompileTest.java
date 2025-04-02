@@ -60,6 +60,11 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void unicode() {
+    proc("\"here is a unicode char: \u0116  <-- \"");
+  }
+
+  @Test
   public void string() {
     proc(" \"hello\" ");
   }
@@ -232,6 +237,7 @@ public class CompileTest extends MyTestCase {
 
     assertFalse(acceptsEmptyString(s, f));
   }
+
 
   private void dump(State state, Object... messages) {
     String message;

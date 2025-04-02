@@ -177,6 +177,10 @@ public final class DFACompiler extends BaseObject {
 
   private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
 
+    // These optimizations are only useful to reduce the size of the DFA files on disk,
+    // and only by about 20%.  In memory, they have no effect; so for simplicity in
+    // parsing the files, probably best to omit them.
+
     var withOpts = !preVersion4();
 
     var withOptA = withOpts;
@@ -186,7 +190,7 @@ public final class DFACompiler extends BaseObject {
 
     m.put("version", dfaConfig().version());
 
-    if (alert("!use current version after unit tests satisfied")) {
+    if (false && alert("!use current version after unit tests satisfied")) {
       m.put("version", DFA_VERSION_3);
     }
 

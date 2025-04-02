@@ -1,0 +1,7 @@
+WS: $_WHITESPACE
+
+
+
+A:        ("      ( [\0x20-\0x7f\0xff^"] | ($_ESCAPE ") )* ")
+
+
