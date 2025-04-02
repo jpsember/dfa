@@ -14,69 +14,64 @@ import js.parsing.State;
 import static dfa.ToknUtils.*;
 import static dfa.Util.*;
 
-/**
- * <pre>
- *
- * Parses a single regular expression from a string.
- * Produces an NFA with distinguished start and end states
- * (none of these states are marked as final states)
- *
- * Here is the grammar for regular expressions.  Spaces are ignored,
- * and can be liberally sprinkled within the regular expressions to
- * aid readability.  To represent a space, the \s escape sequence must be used.
- * See the file 'sampletokens.txt' for some examples.
- *
- * Expressions have one of these types:
- *
- * E : base class
- * J : a Join expression, formed by concatenating one or more together
- * Q : a Quantified expression; followed optionally by '*', '+', or '?'
- * P : a Parenthesized expression, which is optionally surrounded with (), {}, []
- *
- * E -> J '|' E
- * | J
- *
- * J -> Q J
- * | Q
- *
- * Q -> P '*'
- * | P '+'
- * | P '?'
- * | P
- *
- * P -> '(' E ')'
- * | '{' TOKENNAME '}'
- * | '$' TOKENNAME
- * | '^' P
- * | BRACKETEXPR
- * | CODE_SET
- *
- * BRACKETEXPR -> '[' SET_OPTNEG ']'
- *
- * SET_OPTNEG -> SET+
- * |  SET* '^' SET+
- *
- * SET -> CODE_SET
- * | CODE_SET '-' CODE_SET
- *
- * CODE_SET ->
- * a |  b |  c  ...   any printable except {,},[, etc.
- * |  \xhh                  hex value from 00...ff
- * |  \0xhh                 hex value from 00...ff
- * |  \ u hhhh                hex value from 0000...ffff (e.g., unicode)
- * |  \f | \n | \r | \t     formfeed, linefeed, return, tab
- * |  \s                    a space (' ')
- * |  \d                    digit
- * |  \w                    word character
- * |  \*                    where * is some other non-alphabetic
- * character that needs to be escaped
- *
- * The parser performs recursive descent parsing;
- * each method returns an NFA represented by
- * a pair of states: the start and end states.
- *
- * </pre>
- */
+//
+//    Parses a single regular expression from a string.
+//    Produces an NFA with distinguished start and end states
+//    (none of these states are marked as final states)
+//
+//    Here is the grammar for regular expressions.  Spaces are ignored,
+//    and can be liberally sprinkled within the regular expressions to
+//    aid readability.  To represent a space, the \s escape sequence must be used.
+//    See the file 'sampletokens.txt' for some examples.
+//
+//   Expressions have one of these types:
+//
+//   E : base class
+//   J : a Join expression, formed by concatenating one or more together
+//   Q : a Quantified expression; followed optionally by '*', '+', or '?'
+//   P : a Parenthesized expression, which is optionally surrounded with (), {}, []
+//
+//   E -> J '|' E
+//      | J
+//
+//   J -> Q J
+//      | Q
+//
+//   Q -> P '*'
+//      | P '+'
+//      | P '?'
+//      | P
+//
+//   P -> '(' E ')'
+//      | '{' TOKENNAME '}'
+//      | '$' TOKENNAME
+//      | '^' P
+//      | BRACKETEXPR
+//      | CODE_SET
+//
+//   BRACKETEXPR -> '[' SET_OPTNEG ']'
+//
+//   SET_OPTNEG -> SET+
+//      |  SET* '^' SET+
+//
+//   SET -> CODE_SET
+//      | CODE_SET '-' CODE_SET
+//
+//   CODE_SET ->
+//         a |  b |  c  ...   any printable except {,},[, etc.
+//      |  \xhh                  hex value from 00...ff
+//      |  \0xhh                 hex value from 00...ff
+//      |  \ u hhhh                hex value from 0000...ffff (e.g., unicode)
+//      |  \f | \n | \r | \t     formfeed, linefeed, return, tab
+//      |  \s                    a space (' ')
+//      |  \d                    digit
+//      |  \w                    word character
+//      |  \*                    where * is some other non-alphabetic
+//                                character that needs to be escaped
+//
+// The parser performs recursive descent parsing;
+// each method returns an NFA represented by
+// a pair of states: the start and end states.
 
 final class RegParse {
 
@@ -282,112 +277,8 @@ final class RegParse {
     mEndState = sp.end;
   }
 
-//  private CodeSet parseSetSeq() {
-//    pr("parseSetSeq");
-//
-//    CodeSet result = null;
-//    while (true) {
-//      {
-//        var ch = peek(0);
-//        if (ch == '^' || ch == ']')
-//          break;
-//      }
-//
-//      var nextResult = parseSET();
-//      pr("...next result:", nextResult);
-//      if (result == null)
-//        result = nextResult;
-//      else {
-//        result.addSet(nextResult);
-//        pr("...added to result, now:", result);
-//      }
-//    }
-//    if (result == null)
-//      abort("Empty character range");
-//    return result;
-//  }
-
-//  private StatePair parseBracketExpr() {
-//    if (dfaConfig().version() < DFA_VERSION_4)
-//      return parseBracketExprV3();
-//
-//    boolean db = true;
-//    if (db)
-//      pr("parseBracketExpr");
-//
-//    read('[');
-//
-//    CodeSet result = parseSetSeq();
-//    if (db)
-//      pr("left set:", result);
-//
-//    if (read_if('^')) {
-//      if (db)
-//        pr("^ negative follows");
-//      CodeSet right = parseSetSeq();
-//      if (db)
-//        pr("parsed right set:", right);
-//
-//      if (db)
-//        pr("right.negate:", right.negate(0, codeMax()));
-//
-//      result = result.intersect(right.negate(0, codeMax()));
-//
-//      if (db)
-//        pr("left intersect ^right:", result);
-//
-//    }
-//
-//    read(']');
-//    if (result.isEmpty())
-//      abort("Empty character range");
-//    State sA = new State();
-//    State sB = new State();
-//    ToknUtils.addEdge(sA, result.elements(), sB);
-//    return statePair(sA, sB);
-//  }
-
-
-  private StatePair oldParseBracketExpr() {
-    read('[');
-    CodeSet rs = new CodeSet();
-    boolean expecting_set = true;
-    boolean negated = false;
-    boolean had_initial_set = false;
-    while (true) {
-      if (!negated && read_if('^')) {
-        negated = true;
-        expecting_set = true;
-      }
-      if (!expecting_set && read_if(']'))
-        break;
-
-      CodeSet set = parseSET();
-      expecting_set = false;
-      if (negated) {
-        if (had_initial_set)
-          rs = rs.difference(set);
-        else
-          rs.addSet(set);
-      } else {
-        rs.addSet(set);
-        had_initial_set = true;
-      }
-    }
-    if (negated && !had_initial_set)
-      rs = rs.negate(0, State.CODEMAX);
-    if (rs.isEmpty())
-      abort("Empty character range");
-    State sA = new State();
-    State sB = new State();
-    ToknUtils.addEdge(sA, rs.elements(), sB);
-    halt(rs.elements());
-    return statePair(sA, sB);
-  }
 
   private StatePair parseBracketExpr() {
-    var db = false;
-    if (db) pr("parseBracketExpr");
 
     read('[');
 
@@ -399,85 +290,39 @@ final class RegParse {
 
     while (true) {
 
-      if (db) pr(VERT_SP,"neg:",negated,"left:",leftSet,"right:"
-          ,rightSet);
-
       if (read_if('^')) {
-        checkState(!negated,"Character range syntax error");
+        checkState(!negated, "Character range syntax error");
         negated = true;
         // If there's no left set yet, create a maximal one
         if (leftSet == null)
           leftSet = CodeSet.withRange(1, codeMax());
-//
-//        // If there's no current set yet, set it to the maximum range
-//        if (currentSet == null) {
-//          currentSet = CodeSet.withRange(OURCODEMIN, codeMax());
-//        }
-//        result = currentSet;
-//        currentSet = null;
         continue;
       }
 
       if (read_if(']')) {
         break;
       }
-//        // If we were processing a negated set, incorporate that with the previous
-//        // one (constructing one if missing)
-//        if (negated) {
-//          result = result.difference(currentSet);
-//        } else {
-//          if (currentSet == null)
-//            throw badState("Empty character range");
-//          result = currentSet;
-//        }
-//        break;
-//      }
+
 
       CodeSet set = parseSET();
-      if (db) pr("parsed set:",set,VERT_SP);
       if (negated) {
         if (rightSet == null) rightSet = set;
-        else  rightSet.addSet(set);
-        if (db) pr("...modified right:",rightSet);
+        else rightSet.addSet(set);
       } else {
         if (leftSet == null) leftSet = set;
         else leftSet.addSet(set);
-        if (db) pr("...modified left:",leftSet);
       }
-
-//      if (negated) {
-//        if (result == null)
-//          result = CodeSet.withRange(OURCODEMIN, codeMax());
-//        result = result.difference(set);
-//      } else {
-//        if (result == null)
-//          result = set;
-//        else
-//          result.addSet(set);
-//      }
     }
 
-    checkState(leftSet!= null,"Empty character range");
+    checkState(leftSet != null, "Empty character range");
     if (rightSet != null) {
       result = leftSet.difference(rightSet);
-    if (db) pr("result is left-right:",leftSet,rightSet,result);
-    }
-    else result = leftSet;
-
-    if (db) pr("result:",result);
-
-//
-//    if (leftSet )
-////    if (result == null || result.isEmpty())
-////      throw abort("Empty character range");
+    } else result = leftSet;
 
     State sA = new State();
     State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
-    var ret = statePair(sA, sB);
-    // [ 32,34,35,1114112 ]
-if (false) halt(result);
-    return ret;
+    return statePair(sA, sB);
   }
 
   private static final Pattern TOKENREF_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*");
