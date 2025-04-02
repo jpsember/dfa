@@ -347,40 +347,137 @@ final class RegParse {
 //    return statePair(sA, sB);
 //  }
 
-  private StatePair parseBracketExpr() {
+
+  private StatePair oldParseBracketExpr() {
     read('[');
+    CodeSet rs = new CodeSet();
+    boolean expecting_set = true;
+    boolean negated = false;
+    boolean had_initial_set = false;
+    while (true) {
+      if (!negated && read_if('^')) {
+        negated = true;
+        expecting_set = true;
+      }
+      if (!expecting_set && read_if(']'))
+        break;
+
+      CodeSet set = parseSET();
+      expecting_set = false;
+      if (negated) {
+        if (had_initial_set)
+          rs = rs.difference(set);
+        else
+          rs.addSet(set);
+      } else {
+        rs.addSet(set);
+        had_initial_set = true;
+      }
+    }
+    if (negated && !had_initial_set)
+      rs = rs.negate(0, State.CODEMAX);
+    if (rs.isEmpty())
+      abort("Empty character range");
+    State sA = new State();
+    State sB = new State();
+    ToknUtils.addEdge(sA, rs.elements(), sB);
+    halt(rs.elements());
+    return statePair(sA, sB);
+  }
+
+  private StatePair parseBracketExpr() {
+    var db = false;
+    if (db) pr("parseBracketExpr");
+
+    read('[');
+
     CodeSet result = null;
+    CodeSet leftSet = null;
+    CodeSet rightSet = null;
+
     boolean negated = false;
 
     while (true) {
 
-      if (!negated && read_if('^')) {
+      if (db) pr(VERT_SP,"neg:",negated,"left:",leftSet,"right:"
+          ,rightSet);
+
+      if (read_if('^')) {
+        checkState(!negated,"Character range syntax error");
         negated = true;
+        // If there's no left set yet, create a maximal one
+        if (leftSet == null)
+          leftSet = CodeSet.withRange(1, codeMax());
+//
+//        // If there's no current set yet, set it to the maximum range
+//        if (currentSet == null) {
+//          currentSet = CodeSet.withRange(OURCODEMIN, codeMax());
+//        }
+//        result = currentSet;
+//        currentSet = null;
+        continue;
       }
-      if (read_if(']'))
+
+      if (read_if(']')) {
         break;
+      }
+//        // If we were processing a negated set, incorporate that with the previous
+//        // one (constructing one if missing)
+//        if (negated) {
+//          result = result.difference(currentSet);
+//        } else {
+//          if (currentSet == null)
+//            throw badState("Empty character range");
+//          result = currentSet;
+//        }
+//        break;
+//      }
 
       CodeSet set = parseSET();
-
+      if (db) pr("parsed set:",set,VERT_SP);
       if (negated) {
-        if (result == null)
-          result = CodeSet.withRange(OURCODEMIN, codeMax());
-        result = result.difference(set);
+        if (rightSet == null) rightSet = set;
+        else  rightSet.addSet(set);
+        if (db) pr("...modified right:",rightSet);
       } else {
-        if (result == null)
-          result = set;
-        else
-          result.addSet(set);
+        if (leftSet == null) leftSet = set;
+        else leftSet.addSet(set);
+        if (db) pr("...modified left:",leftSet);
       }
+
+//      if (negated) {
+//        if (result == null)
+//          result = CodeSet.withRange(OURCODEMIN, codeMax());
+//        result = result.difference(set);
+//      } else {
+//        if (result == null)
+//          result = set;
+//        else
+//          result.addSet(set);
+//      }
     }
 
-    if (result == null || result.isEmpty())
-      throw abort("Empty character range");
+    checkState(leftSet!= null,"Empty character range");
+    if (rightSet != null) {
+      result = leftSet.difference(rightSet);
+    if (db) pr("result is left-right:",leftSet,rightSet,result);
+    }
+    else result = leftSet;
+
+    if (db) pr("result:",result);
+
+//
+//    if (leftSet )
+////    if (result == null || result.isEmpty())
+////      throw abort("Empty character range");
 
     State sA = new State();
     State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
-    return statePair(sA, sB);
+    var ret = statePair(sA, sB);
+    // [ 32,34,35,1114112 ]
+if (false) halt(result);
+    return ret;
   }
 
   private static final Pattern TOKENREF_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*");

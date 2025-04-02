@@ -2,7 +2,7 @@ _HT: (\t)   // \0x09
 _LF:   (\n)	// \0x0a
 _FF:   (\f)
 _CR:   (\r) // \0x0d
-_NL: ($_CR?$_LF)
+_NL: ($_CR? $_LF)
 _SP: (\s)
 _COLON: (\:)
 _COMMA: (\,)
@@ -19,8 +19,10 @@ _JAVACOMMENT: ( ( // [^\n]* $_NL? )    \
 
 _HASHCOMMENT:  ( $_HASH [^\n\r]* $_NL? )
 
-_STRING:      ("  ([^\0x00-\0x1f"] | $_ESCAPE" )* ")
-_SINGLESTRING: ('  ([^\0x00-\0x1f'] | $_ESCAPE' )* ')
+# Disallow nonprintables (incl. tab) and unescaped quotes (")
+
+_STRING:       ("      ( [^\0x00-\0x1f " ] | ($_ESCAPE ") )* ")
+_SINGLESTRING: ('      ( [^\0x00-\0x1f ' ] | ($_ESCAPE ') )* ')
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
