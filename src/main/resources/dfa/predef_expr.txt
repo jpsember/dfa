@@ -13,19 +13,14 @@ _HASH: (\#)
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-# Omit 2a '*', 2f '/'
-#                     Omit '*' (2a) and '/' (2f)
-_JAVACOMMENT: ( ( // [\0x09\0x20-\0xff]* $_NL? )    \
-             | ( /\*  ((\** [\0x01-\0x29\0x2b-\0x2e\0x30-\0xff] ) \
-             | [\0x01-\0x29\0x2b-\0xff])*  \*+ / ) )
+_JAVACOMMENT: ( ( // [^\n]* $_NL? )    \
+             | ( /\*  ((\** [^*/] ) \
+             | [^*])*  \*+ / ) )
 
-# Omit 0a (LF) and 0d (CR)
-_HASHCOMMENT:  ( $_HASH [\0x01-\0x09\0x0b\0x0c\0x0e-\0xff]* $_NL? )
+_HASHCOMMENT:  ( $_HASH [^\n\r]* $_NL? )
 
-# Only printables can be within strings
-_PRINTABLE: [\0x20-\0xff]
-_STRING:      ("  ([\0x20\0x21\0x23-\0xff] | $_ESCAPE" )* ")
-_SINGLESTRING: ('  ([\0x20-\0x26\0x28-\0xff] | $_ESCAPE' )* ')
+_STRING:      ("  ([^\0x00-\0x1f"] | $_ESCAPE" )* ")
+_SINGLESTRING: ('  ([^\0x00-\0x1f'] | $_ESCAPE' )* ')
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
