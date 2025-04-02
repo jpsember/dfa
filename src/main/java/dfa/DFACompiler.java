@@ -176,15 +176,19 @@ public final class DFACompiler extends BaseObject {
   private static Pattern TOKENNAME_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*\\s*:\\s*.*");
 
   private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
-   
-    var withOpts = dfaConfig().version() == DFA_VERSION_4;
-    
+
+    var withOpts = !preVersion4();
+
     var withOptA = withOpts;
     var withOptB = withOpts;
 
     JSMap m = map();
 
-    m.put("version", DFA_VERSION_3);
+    m.put("version", dfaConfig().version());
+
+    if (alert("!use current version after unit tests satisfied")) {
+      m.put("version", DFA_VERSION_3);
+    }
 
     JSList list = list();
     mTokenIds = arrayList();

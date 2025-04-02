@@ -169,6 +169,7 @@ public final class CodeSet implements Comparable<CodeSet> {
    * Negate the inclusion of a contiguous range of values [lower..upper)
    */
   public CodeSet negate(int lower, int upper) {
+    todo("This can probably be replaced with constant 0...OURCODEMAX");
     checkArgument(lower < upper);
     IntArray.Builder new_elements = IntArray.newBuilder();
     int i = 0;

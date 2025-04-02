@@ -21,10 +21,17 @@ public final class Util {
    * Doesn't make a difference in the DFA size if the code max is reduced to 256
    * (i.e. for utf8 only)
    */
-  public static final int OURCODEMAX = 0x110000;
+  public static int codeMax() {
+    return preVersion4() ? 0x110000 : 256;
+  }
+
+  public static boolean preVersion4() {
+    return dfaConfig().version() < DFA_VERSION_4;
+  }
+
+  //  public static final int OURCODEMAX = 0x110000;
 
   public static final int MAX_TOKEN_DEF = 1_000;
-
   /**
    * Minimum code possible. Negative values indicate token ids, so we need this
    * to include the value -(# tokens)

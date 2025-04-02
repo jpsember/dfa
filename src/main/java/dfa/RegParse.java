@@ -288,13 +288,81 @@ final class RegParse {
     mEndState = sp.end;
   }
 
-  private StatePair parseBRACKETEXPR() {
+  private CodeSet parseSetSeq() {
+    pr("parseSetSeq");
+
+    CodeSet result = null;
+    while (true) {
+      {
+        var ch = peek(0);
+        if (ch == '^' || ch == ']')
+          break;
+      }
+
+      var nextResult = parseSET();
+      pr("...next result:", nextResult);
+      if (result == null)
+        result = nextResult;
+      else {
+        result.addSet(nextResult);
+        pr("...added to result, now:", result);
+      }
+    }
+    if (result == null)
+      abort("Empty character range");
+    return result;
+  }
+
+  private StatePair parseBracketExpr() {
+    if (dfaConfig().version() < DFA_VERSION_4)
+      return parseBracketExprV3();
+
+    boolean db = true;
+    if (db)
+      pr("parseBracketExpr");
+
+    read('[');
+
+    CodeSet result = parseSetSeq();
+    if (db)
+      pr("left set:", result);
+
+    if (read_if('^')) {
+      if (db)
+        pr("^ negative follows");
+      CodeSet right = parseSetSeq();
+      if (db)
+        pr("parsed right set:", right);
+
+      if (db)
+        pr("right.negate:", right.negate(0, codeMax()));
+
+      result = result.intersect(right.negate(0, codeMax()));
+
+      if (db)
+        pr("left intersect ^right:", result);
+
+    }
+
+    read(']');
+    if (result.isEmpty())
+      abort("Empty character range");
+    State sA = new State();
+    State sB = new State();
+    ToknUtils.addEdge(sA, result.elements(), sB);
+    return statePair(sA, sB);
+  }
+
+  private StatePair parseBracketExprV3() {
     read('[');
     CodeSet rs = new CodeSet();
+
     boolean expecting_set = true;
     boolean negated = false;
     boolean had_initial_set = false;
+
     while (true) {
+
       if (!negated && read_if('^')) {
         negated = true;
         expecting_set = true;
@@ -376,7 +444,7 @@ final class RegParse {
       e1 = parseTokenDef();
       break;
     case '[':
-      e1 = parseBRACKETEXPR();
+      e1 = parseBracketExpr();
       break;
     default: {
       CodeSet code_set = parse_code_set(false);
@@ -514,7 +582,7 @@ final class RegParse {
       if (x.finalState()) {
         continue;
       }
-      CodeSet codeset = CodeSet.withRange(OURCODEMIN, OURCODEMAX);
+      CodeSet codeset = CodeSet.withRange(OURCODEMIN, codeMax());
       for (Edge e : x.edges()) {
         codeset = codeset.difference(CodeSet.with(e.codeSets()));
       }
@@ -548,7 +616,7 @@ final class RegParse {
       int u = code_set.singleValue();
       int v = parse_code_set(true).singleValue();
       if (v < u)
-        abort("Illegal range");
+        abort("Illegal range; u:",u,"v:",v);
       code_set = CodeSet.withRange(u, v + 1);
     }
     return code_set;
