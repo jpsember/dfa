@@ -14,16 +14,15 @@ import js.parsing.State;
 import static dfa.ToknUtils.*;
 import static dfa.Util.*;
 
-//
 //    Parses a single regular expression from a string.
 //    Produces an NFA with distinguished start and end states
 //    (none of these states are marked as final states)
-//
+//   
 //    Here is the grammar for regular expressions.  Spaces are ignored,
 //    and can be liberally sprinkled within the regular expressions to
 //    aid readability.  To represent a space, the \s escape sequence must be used.
 //    See the file 'sampletokens.txt' for some examples.
-//
+//   
 //   Expressions have one of these types:
 //
 //   E : base class
@@ -72,7 +71,7 @@ import static dfa.Util.*;
 // The parser performs recursive descent parsing;
 // each method returns an NFA represented by
 // a pair of states: the start and end states.
-
+//
 final class RegParse {
 
   public RegParse(int id, String name) {
@@ -90,13 +89,16 @@ final class RegParse {
 
   /**
    * Parse a regular expression
-   *
-   * @param script           script to parse
-   * @param tokenDefMap      a map of previously parsed regular expressions (mapping names to
-   *                         ids) to be consulted if a curly brace expression appears in the
-   *                         script
-   * @param sourceLineNumber for error reporting, the line number where the regular expression
-   *                         came from
+   * 
+   * @param script
+   *          script to parse
+   * @param tokenDefMap
+   *          a map of previously parsed regular expressions (mapping names to
+   *          ids) to be consulted if a curly brace expression appears in the
+   *          script
+   * @param sourceLineNumber
+   *          for error reporting, the line number where the regular expression
+   *          came from
    */
   public void parse(String script, Map<String, RegParse> tokenDefMap, int sourceLineNumber) {
     mOrigScript = script;
@@ -125,19 +127,19 @@ final class RegParse {
     for (int pos = 0; pos < s.length(); pos++) {
       int ch = s.charAt(pos);
       switch (ch) {
-        case ' ':
-        case '\t':
-          if (escaped)
-            escaped = false;
-          else
-            ch = -1;
-          break;
-        case '\\':
-          escaped = !escaped;
-          break;
-        default:
+      case ' ':
+      case '\t':
+        if (escaped)
           escaped = false;
-          break;
+        else
+          ch = -1;
+        break;
+      case '\\':
+        escaped = !escaped;
+        break;
+      default:
+        escaped = false;
+        break;
       }
       if (ch >= 0)
         result.append((char) ch);
@@ -227,42 +229,45 @@ final class RegParse {
       read();
 
       c = read();
+      val = c;
 
       if (c == '0') {
         c = read();
         if (!charWithin(c, "xX"))
           throw abort("Unsupported escape sequence:", c);
-        val = (read_hex() << 4) | read_hex();
+        var h1 = read_hex();
+        var h2 = read_hex();
+        val = (h1 << 4) | h2;
       } else if (charWithin(c, "xX")) {
         val = (read_hex() << 4) | read_hex();
       } else if (charWithin(c, "uU")) {
         val = (read_hex() << 12) | (read_hex() << 8) | (read_hex() << 4) | read_hex();
       } else {
         switch (c) {
-          case 'f':
-            val = '\f';
-            break;
-          case 'r':
-            val = '\r';
-            break;
-          case 'n':
-            val = '\n';
-            break;
-          case 't':
-            val = '\t';
-            break;
-          case 's':
-            val = ' ';
-            break;
-          default:
-            // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
-            // that's a problem, since it is most likely not what the user intended
-            final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        case 'f':
+          val = '\f';
+          break;
+        case 'r':
+          val = '\r';
+          break;
+        case 'n':
+          val = '\n';
+          break;
+        case 't':
+          val = '\t';
+          break;
+        case 's':
+          val = ' ';
+          break;
+        default:
+          // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
+          // that's a problem, since it is most likely not what the user intended
+          final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-            if (charWithin(c, noEscapeChars))
-              throw abort("Unsupported escape sequence:", quote(c));
-            val = c;
-            break;
+          if (charWithin(c, noEscapeChars))
+            abort("Unsupported escape sequence:", quote(c));
+          val = c;
+          break;
         }
       }
     }
@@ -277,37 +282,44 @@ final class RegParse {
     mEndState = sp.end;
   }
 
+  private CodeSet parseSetSeq() {
+    CodeSet result = null;
+    while (true) {
+      {
+        var ch = peek(0);
+        if (ch == '^' || ch == ']')
+          break;
+      }
+
+      var nextResult = parseSET();
+      if (result == null)
+        result = nextResult;
+      else {
+        result.addSet(nextResult);
+      }
+    }
+    return result;
+  }
+
   private StatePair parseBracketExpr() {
+    boolean db = false;
+    if (db)
+      pr("parseBracketExpr");
+
     read('[');
 
-    CodeSet leftSet = null;
     CodeSet rightSet = null;
+    CodeSet leftSet = parseSetSeq();
+    if (db)
+      pr("left set:", leftSet);
 
-    boolean negated = false;
+    if (read_if('^')) {
+      if (db)
+        pr("^ negative follows");
+      rightSet = parseSetSeq();
+      if (db)
+        pr("parsed right set:", rightSet);
 
-    while (true) {
-
-      if (read_if('^')) {
-        checkState(!negated, "Character range syntax error");
-        negated = true;
-        // If there's no left set yet, create a maximal one
-        if (leftSet == null)
-          leftSet = CodeSet.withRange(1, codeMax());
-        continue;
-      }
-
-      if (read_if(']')) {
-        break;
-      }
-
-      CodeSet set = parseSET();
-      if (negated) {
-        if (rightSet == null) rightSet = set;
-        else rightSet.addSet(set);
-      } else {
-        if (leftSet == null) leftSet = set;
-        else leftSet.addSet(set);
-      }
     }
 
     read(']');
@@ -367,33 +379,33 @@ final class RegParse {
     char ch = peek(0);
     StatePair e1;
     switch (ch) {
-      case '(': {
-        read();
-        e1 = parseE();
-        read(')');
-      }
+    case '(': {
+      read();
+      e1 = parseE();
+      read(')');
+    }
       break;
-      case '^':
-        read();
-        e1 = parseP();
-        e1 = construct_complement(e1);
-        break;
-      case '{':
-      case '$':
-        e1 = parseTokenDef();
-        break;
-      case '[':
-        e1 = parseBracketExpr();
-        break;
-      default: {
-        CodeSet code_set = parse_code_set(false);
-        // Construct a pair of states with an edge between them
-        // labelled with this code set
-        State sA = new State();
-        State sB = new State();
-        ToknUtils.addEdge(sA, code_set.elements(), sB);
-        e1 = statePair(sA, sB);
-      }
+    case '^':
+      read();
+      e1 = parseP();
+      e1 = construct_complement(e1);
+      break;
+    case '{':
+    case '$':
+      e1 = parseTokenDef();
+      break;
+    case '[':
+      e1 = parseBracketExpr();
+      break;
+    default: {
+      CodeSet code_set = parse_code_set(false);
+      // Construct a pair of states with an edge between them
+      // labelled with this code set
+      State sA = new State();
+      State sB = new State();
+      ToknUtils.addEdge(sA, code_set.elements(), sB);
+      e1 = statePair(sA, sB);
+    }
       break;
     }
     return e1;
@@ -482,6 +494,8 @@ final class RegParse {
     State nfa_end = statesp.end;
     checkArgument(!nfa_start.finalState() && !nfa_end.finalState());
 
+    nfa_end = new State(false, nfa_end.edges());
+
     NFAToDFA builder = new NFAToDFA();
     State dfa_start_state = builder.convertNFAToDFA(nfa_start);
 
@@ -490,19 +504,19 @@ final class RegParse {
     /**
      * <pre>
      *
-     + Let S be the DFA's start state
-     + Create F, a new final state
-     + for each state X in the DFA (excluding F):
-     + if X is a final state, clear its final state flag;
-     + otherwise:
-     + construct C, a set of labels that is the complement of the union of any existing edge labels from X
-     + if C is nonempty, add transition on C from X to F
-     + if X is not the start state, add e-transition from X to F
-     + augment original NFA by copying each state X to a state X' (clearing final state flags)
-     + return [S', F']
-     *
+        + Let S be the DFA's start state
+        + Create F, a new final state
+        + for each state X in the DFA (excluding F):
+          + if X is a final state, clear its final state flag;
+          + otherwise:
+            + construct C, a set of labels that is the complement of the union of any existing edge labels from X
+            + if C is nonempty, add transition on C from X to F
+            + if X is not the start state, add e-transition from X to F
+        + augment original NFA by copying each state X to a state X' (clearing final state flags)
+        + return [S', F']
+     * 
      * </pre>
-     *
+     * 
      * We don't process any final states in the above loop, because we've sort
      * of "lost" once we reach a final state no matter what edges leave that
      * state. This is because we're looking for substrings of the input string

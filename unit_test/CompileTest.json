@@ -1,6 +1,15 @@
-{     "normalizeMergeLabels" : 9076,
+{                    "alpha" : 2992,
+                   "complex" : 8132,
+                  "complex1" : 2382,
+                "identifier" : 6673,
+                    "jsona1" : 6665,
+      "normalizeMergeLabels" : 9076,
   "normalizeOmitEmptyLabels" : 4499,
                  "partition" : 7654,
+                   "predef1" : 4960,
          "printStateMachine" : 3729,
-                "reverseDFA" : 3548
+                "reverseDFA" : 3548,
+                    "simple" : 7577,
+                    "string" : 9256,
+                   "unicode" : 2945
 }

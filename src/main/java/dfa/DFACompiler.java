@@ -32,6 +32,9 @@ public final class DFACompiler extends BaseObject {
     // Parse the predefined expressions, and insert those lines before the current ones
     {
       List<String> predefinedLines = parsePredefinedExpressions();
+      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
+        predefinedLines.clear();
+      }
       sourceLines.addAll(0, predefinedLines);
       ArrayList<Integer> newLineNumbers = arrayList();
       for (int i = 0; i < predefinedLines.size(); i++)
