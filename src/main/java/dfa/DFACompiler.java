@@ -177,7 +177,7 @@ public final class DFACompiler extends BaseObject {
 
   private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
 
-    var withOpts = !preVersion4();
+    var withOpts = false;
 
     var withOptA = withOpts;
     var withOptB = withOpts;
@@ -185,10 +185,6 @@ public final class DFACompiler extends BaseObject {
     JSMap m = map();
 
     m.put("version", dfaConfig().version());
-
-    if (alert("!use current version after unit tests satisfied")) {
-      m.put("version", DFA_VERSION_3);
-    }
 
     JSList list = list();
     mTokenIds = arrayList();

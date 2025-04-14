@@ -308,45 +308,48 @@ final class RegParse {
         pr("...added to result, now:", result);
       }
     }
-    if (result == null)
-      abort("Empty character range");
     return result;
   }
 
   private StatePair parseBracketExpr() {
-    if (dfaConfig().version() < DFA_VERSION_4)
+    if (preVersion4())
       return parseBracketExprV3();
 
-    boolean db = true;
+    boolean db = false;
     if (db)
       pr("parseBracketExpr");
 
     read('[');
 
-    CodeSet result = parseSetSeq();
+    CodeSet rightSet = null;
+    CodeSet leftSet = parseSetSeq();
     if (db)
-      pr("left set:", result);
+      pr("left set:", leftSet);
 
     if (read_if('^')) {
       if (db)
         pr("^ negative follows");
-      CodeSet right = parseSetSeq();
+      rightSet = parseSetSeq();
       if (db)
-        pr("parsed right set:", right);
-
-      if (db)
-        pr("right.negate:", right.negate(0, codeMax()));
-
-      result = result.intersect(right.negate(0, codeMax()));
-
-      if (db)
-        pr("left intersect ^right:", result);
+        pr("parsed right set:", rightSet);
 
     }
 
     read(']');
+
+    if (leftSet == null && rightSet == null) {
+      abort("Empty character range");
+    }
+    if (leftSet == null)
+      leftSet = CodeSet.withRange(1, 256);
+
+    var result = leftSet;
+    if (rightSet != null)
+      result = result.difference(rightSet);
+
     if (result.isEmpty())
       abort("Empty character range");
+
     State sA = new State();
     State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
@@ -366,6 +369,9 @@ final class RegParse {
       if (!negated && read_if('^')) {
         negated = true;
         expecting_set = true;
+        // If the original set was empty, set it to everything (except 0)
+        if (rs.isEmpty())
+          rs.add(1, 256);
       }
       if (!expecting_set && read_if(']'))
         break;
@@ -616,7 +622,7 @@ final class RegParse {
       int u = code_set.singleValue();
       int v = parse_code_set(true).singleValue();
       if (v < u)
-        abort("Illegal range; u:",u,"v:",v);
+        abort("Illegal range; u:", u, "v:", v);
       code_set = CodeSet.withRange(u, v + 1);
     }
     return code_set;

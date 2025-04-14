@@ -60,7 +60,7 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
-  public void string() {
+  public void string() { 
     proc(" \"hello\" ");
   }
 
