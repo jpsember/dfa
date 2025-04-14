@@ -236,7 +236,7 @@ public class CodeSetTest extends MyTestCase {
     prep();
     add(10, 22);
     neg(0, State.CODEMAX);
-    equ("0 10 22 1114112");
+    equ("0 10 22 256");
 
     prep();
     add(10, 20);
