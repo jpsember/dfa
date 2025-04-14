@@ -289,8 +289,6 @@ final class RegParse {
   }
 
   private CodeSet parseSetSeq() {
-    pr("parseSetSeq");
-
     CodeSet result = null;
     while (true) {
       {
@@ -300,21 +298,16 @@ final class RegParse {
       }
 
       var nextResult = parseSET();
-      pr("...next result:", nextResult);
       if (result == null)
         result = nextResult;
       else {
         result.addSet(nextResult);
-        pr("...added to result, now:", result);
       }
     }
     return result;
   }
 
   private StatePair parseBracketExpr() {
-    if (preVersion4())
-      return parseBracketExprV3();
-
     boolean db = false;
     if (db)
       pr("parseBracketExpr");
@@ -353,48 +346,6 @@ final class RegParse {
     State sA = new State();
     State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
-    return statePair(sA, sB);
-  }
-
-  private StatePair parseBracketExprV3() {
-    read('[');
-    CodeSet rs = new CodeSet();
-
-    boolean expecting_set = true;
-    boolean negated = false;
-    boolean had_initial_set = false;
-
-    while (true) {
-
-      if (!negated && read_if('^')) {
-        negated = true;
-        expecting_set = true;
-        // If the original set was empty, set it to everything (except 0)
-        if (rs.isEmpty())
-          rs.add(1, 256);
-      }
-      if (!expecting_set && read_if(']'))
-        break;
-
-      CodeSet set = parseSET();
-      expecting_set = false;
-      if (negated) {
-        if (had_initial_set)
-          rs = rs.difference(set);
-        else
-          rs.addSet(set);
-      } else {
-        rs.addSet(set);
-        had_initial_set = true;
-      }
-    }
-    if (negated && !had_initial_set)
-      rs = rs.negate(0, State.CODEMAX);
-    if (rs.isEmpty())
-      abort("Empty character range");
-    State sA = new State();
-    State sB = new State();
-    ToknUtils.addEdge(sA, rs.elements(), sB);
     return statePair(sA, sB);
   }
 
