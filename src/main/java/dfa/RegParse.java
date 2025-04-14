@@ -277,12 +277,9 @@ final class RegParse {
     mEndState = sp.end;
   }
 
-
   private StatePair parseBracketExpr() {
-
     read('[');
 
-    CodeSet result = null;
     CodeSet leftSet = null;
     CodeSet rightSet = null;
 
@@ -303,7 +300,6 @@ final class RegParse {
         break;
       }
 
-
       CodeSet set = parseSET();
       if (negated) {
         if (rightSet == null) rightSet = set;
@@ -314,10 +310,20 @@ final class RegParse {
       }
     }
 
-    checkState(leftSet != null, "Empty character range");
-    if (rightSet != null) {
-      result = leftSet.difference(rightSet);
-    } else result = leftSet;
+    read(']');
+
+    if (leftSet == null && rightSet == null) {
+      abort("Empty character range");
+    }
+    if (leftSet == null)
+      leftSet = CodeSet.withRange(1, 256);
+
+    var result = leftSet;
+    if (rightSet != null)
+      result = result.difference(rightSet);
+
+    if (result.isEmpty())
+      abort("Empty character range");
 
     State sA = new State();
     State sB = new State();

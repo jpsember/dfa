@@ -181,7 +181,7 @@ public final class DFACompiler extends BaseObject {
     // and only by about 20%.  In memory, they have no effect; so for simplicity in
     // parsing the files, probably best to omit them.
 
-    var withOpts = !preVersion4();
+    var withOpts = false;
 
     var withOptA = withOpts;
     var withOptB = withOpts;
@@ -189,10 +189,6 @@ public final class DFACompiler extends BaseObject {
     JSMap m = map();
 
     m.put("version", dfaConfig().version());
-
-    if (false && alert("!use current version after unit tests satisfied")) {
-      m.put("version", DFA_VERSION_3);
-    }
 
     JSList list = list();
     mTokenIds = arrayList();
