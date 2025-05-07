@@ -208,7 +208,7 @@ public class DfaOper extends AppOper {
           sb.append(";\n");
           break;
         case FTYPE_RUST:
-          sb.append("const ");
+          sb.append("pub(crate) const ");
           sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(": i32 = ");
