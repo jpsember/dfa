@@ -10,12 +10,12 @@ import js.base.BasePrinter;
 
 public final class ToknUtils {
 
-  private static BigEdge newEdge(OurState sourceState, int[] codeSet, OurState destinationState) {
-    return new BigEdge(sourceState, codeSet, destinationState);
+  private static OurEdge newEdge(OurState sourceState, int[] codeSet, OurState destinationState) {
+    return new OurEdge(sourceState, codeSet, destinationState);
   }
 
   public static void addEdge(OurState sourceState, int[] codeSet, OurState destinationState) {
-    sourceState.edges().add(new BigEdge(sourceState, codeSet, destinationState));
+    sourceState.edges().add(new OurEdge(sourceState, codeSet, destinationState));
   }
 
   public static void addEdge(OurState sourceState, CodeSet codeSet, OurState destinationState) {
