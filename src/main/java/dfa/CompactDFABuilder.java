@@ -8,7 +8,6 @@ import js.parsing.State;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static js.base.Tools.*;
 
@@ -23,27 +22,13 @@ class CompactDFABuilder {
     var dfa = mDfa;
     var g = mGraph;
     var sc = dfa.debStates().length;
-    {
-//      mStateIdMap = hashMap();
-      mFirstDebugStateId = dfa.debStates()[0].debugId();
-//       for (var s : dfa.debStates()) {
-//        var id = s.debugId();
-//        if (mFirstDebugStateId == null) {
-//          pr("mFirstDebugStateId:",id);
-//          mFirstDebugStateId = id;
-//        }
-//        pr("storing state id mapping id:",id,"==>",id- mFirstDebugStateId);
-//        var prevValue = mStateIdMap.put(id, id - mFirstDebugStateId);
-//        checkState(prevValue == null, "duplicate State.debugId():", id);
-//      }
-    }
+    mFirstDebugStateId = dfa.debStates()[0].debugId();
 
     // <graph> ::= <int: # of states> <state>*
     g.add(sc);
 
-    for (var state : dfa.debStates()) {
+    for (var state : dfa.debStates())
       addState(state);
-    }
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
@@ -51,6 +36,7 @@ class CompactDFABuilder {
     return mBuilt;
   }
 
+  private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
   private void addState(State s) {
     // <state> ::= <edge count> <edge>*
@@ -71,9 +57,9 @@ class CompactDFABuilder {
     }
 
     var destStateNumber = stateIndex(edge.destinationState());
-
-    // During constructing, state offsets are represented by negative indexes
-    g.add(-(destStateNumber + 1));
+    // During constructing, state offsets are represented by adding a large offset
+    var tempStateNumber = destStateNumber + ENCODED_STATE_ID_OFFSET;
+    g.add(tempStateNumber);
   }
 
   private int stateIndex(int debugStateId) {
@@ -92,23 +78,25 @@ class CompactDFABuilder {
     var b = codeSets[i + 1];
     checkArgument(a < b && (a > 0) == (b > 0), "illegal char range:", a, b);
     if (a < 0) {
-      int tokenId = -b - 1;
-      checkArgument(tokenId >= 0 && tokenId < numTokens(), "bad token id:", tokenId, "for range:", a, b);
-      g.add(CompactDFA.TOKEN_OFFSET + tokenId);
+      // Convert the codeset token id to an index
+      int tokenIndex = -b - 1;
+      checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
+      // Convert the token index to a compact DFA encoded version (which at present is the same as the codeset version?)
+      var compiledTokenId = -tokenIndex - 1;
+      g.add(compiledTokenId);
     } else {
       g.add(a);
       g.add(b);
     }
   }
 
-
   private void convertStateIdsToAddresses() {
     var i = INIT_INDEX;
     var g = mGraph.array();
     for (var val : g) {
       i++;
-      if (val < 0) {
-        var decodedStateIndex = (-val) - 1;
+      if (val >= ENCODED_STATE_ID_OFFSET) {
+        var decodedStateIndex = val - ENCODED_STATE_ID_OFFSET;
         var stateIndex = decodedStateIndex;
         checkArgument(stateIndex >= 0 && stateIndex < mStateAddresses.size(), "state address list has no value for:", stateIndex);
         var stateAddr = mStateAddresses.get(stateIndex);
@@ -117,11 +105,9 @@ class CompactDFABuilder {
     }
   }
 
-
   private short[] encodeGraph() {
     var s = ShortArray.newBuilder();
     var src = mGraph.array();
-    checkArgument(src.length < CompactDFA.TOKEN_OFFSET, "graph has grown too large:", src.length);
     for (var i : src) {
       var sTry = (short) i;
       checkState(sTry == i, "failed to convert int to short:", i);
@@ -130,19 +116,6 @@ class CompactDFABuilder {
     return s.array();
   }
 
-
-  //
-  // <graph> ::= <int: # of states> <state>*
-  //
-  // <state> ::= <edge count> <edge>*
-  //
-  // <edge>  ::= <int: number of char_range items> <char_range>* <dest_state_id>
-  //
-  // <char_range> ::= <int: start of range> <int: end of range (exclusive)>
-  //                | <int: -(token index + 1)>
-  //
-  // <dest_state_id> ::= offset of state within graph
-  //
 
   private int numTokens() {
     return mDfa.tokenNames().length;

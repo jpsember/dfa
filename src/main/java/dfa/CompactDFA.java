@@ -28,7 +28,6 @@ import static js.base.Tools.*;
 //
 public class CompactDFA {
 
-  public static int TOKEN_OFFSET = 30000;
   public static double VERSION = 5.0;
 
   public CompactDFA(double version, String tokenNames, short[] graph) {
