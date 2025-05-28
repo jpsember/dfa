@@ -7,38 +7,36 @@ import java.util.Map;
 import java.util.Set;
 
 import js.base.BasePrinter;
-import js.parsing.Edge;
-import js.parsing.State;
 
 public final class ToknUtils {
 
-  private static BigEdge newEdge(State sourceState, int[] codeSet, State destinationState) {
+  private static BigEdge newEdge(OurState sourceState, int[] codeSet, OurState destinationState) {
     return new BigEdge(sourceState, codeSet, destinationState);
   }
 
-  public static void addEdge(State sourceState, int[] codeSet, State destinationState) {
+  public static void addEdge(OurState sourceState, int[] codeSet, OurState destinationState) {
     sourceState.edges().add(new BigEdge(sourceState, codeSet, destinationState));
   }
 
-  public static void addEdge(State sourceState, CodeSet codeSet, State destinationState) {
+  public static void addEdge(OurState sourceState, CodeSet codeSet, OurState destinationState) {
     addEdge(sourceState, codeSet.elements(), destinationState);
   }
 
   /**
    * Build set of states reachable from this state
    */
-  public static List<State> reachableStates(State sourceState) {
-    Set<State> knownStatesSet = hashSet();
-    List<State> stack = arrayList();
-    List<State> output = arrayList();
+  public static List<OurState> reachableStates(OurState sourceState) {
+    Set<OurState> knownStatesSet = hashSet();
+    List<OurState> stack = arrayList();
+    List<OurState> output = arrayList();
     push(stack, sourceState);
     knownStatesSet.add(sourceState);
 
     while (nonEmpty(stack)) {
-      State state = pop(stack);
+      OurState state = pop(stack);
       output.add(state);
-      for (Edge edge : state.edges()) {
-        State dest = edge.destinationState();
+      for (OurEdge edge : state.edges()) {
+        OurState dest = edge.destinationState();
         if (knownStatesSet.add(dest))
           push(stack, dest);
       }
@@ -53,32 +51,32 @@ public final class ToknUtils {
    *          start state for NFA
    * @return start state of reversed NFA
    */
-  public static State reverseNFA(State startState) {
-    State.bumpDebugIds();
+  public static OurState reverseNFA(OurState startState) {
+    OurState.bumpDebugIds();
 
     // Create new start state first, so it has the lowest id
-    State newStartState = new State();
+    OurState newStartState = new OurState();
 
-    List<State> newStartStateList = arrayList();
-    List<State> newFinalStateList = arrayList();
+    List<OurState> newStartStateList = arrayList();
+    List<OurState> newFinalStateList = arrayList();
 
     StateRenamer newStateMap = new StateRenamer();
 
-    List<State> stateSet = reachableStates(startState);
+    List<OurState> stateSet = reachableStates(startState);
 
-    for (State s : stateSet) {
-      State newState = newStateMap.put(s, new State(s == startState));
+    for (OurState s : stateSet) {
+      OurState newState = newStateMap.put(s, new OurState(s == startState));
       if (newState.finalState())
         newFinalStateList.add(newState);
       if (s.finalState())
         newStartStateList.add(newState);
     }
 
-    for (State oldState : stateSet) {
-      State newState = newStateMap.get(oldState);
-      for (Edge oldEdge : oldState.edges()) {
-        State oldDest = oldEdge.destinationState();
-        State newDest = newStateMap.get(oldDest);
+    for (OurState oldState : stateSet) {
+      OurState newState = newStateMap.get(oldState);
+      for (OurEdge oldEdge : oldState.edges()) {
+        OurState oldDest = oldEdge.destinationState();
+        OurState newDest = newStateMap.get(oldDest);
         // We want a reversed edge
         addEdge(newDest, oldEdge.codeSets(), newState);
       }
@@ -86,7 +84,7 @@ public final class ToknUtils {
 
     //  Make start node point to each of the reversed start nodes
 
-    for (State s : newStartStateList)
+    for (OurState s : newStartStateList)
       addEps(newStartState, s);
     return newStartState;
   }
@@ -97,38 +95,38 @@ public final class ToknUtils {
    * @param origToDupStateMap
    *          where to construct map of original state ids to new states
    */
-  public static StatePair duplicateNFA(State startState, State endState) {
+  public static StatePair duplicateNFA(OurState startState, OurState endState) {
 
-    Map<State, State> origToDupStateMap = hashMap();
+    Map<OurState, OurState> origToDupStateMap = hashMap();
 
-    List<State> oldStates = reachableStates(startState);
+    List<OurState> oldStates = reachableStates(startState);
     checkState(oldStates.contains(endState), "end state not reachable");
 
-    for (State s : oldStates) {
-      State s2 = new State(s.finalState(), null);
+    for (OurState s : oldStates) {
+      OurState s2 = new OurState(s.finalState(), null);
       origToDupStateMap.put(s, s2);
     }
 
-    for (State s : oldStates) {
-      State s2 = origToDupStateMap.get(s);
-      for (Edge edge : s.edges()) {
-        State newTargetState = origToDupStateMap.get(edge.destinationState());
+    for (OurState s : oldStates) {
+      OurState s2 = origToDupStateMap.get(s);
+      for (OurEdge edge : s.edges()) {
+        OurState newTargetState = origToDupStateMap.get(edge.destinationState());
         addEdge(s2, edge.codeSets(), newTargetState);
       }
     }
     return statePair(origToDupStateMap.get(startState), origToDupStateMap.get(endState));
   }
 
-  private static int[] EPSILON_RANGE = { State.EPSILON, 1 + State.EPSILON };
+  private static int[] EPSILON_RANGE = { OurState.EPSILON, 1 + OurState.EPSILON };
 
   /**
    * Add an epsilon transition to a state
    */
-  public static void addEps(State source, State target) {
+  public static void addEps(OurState source, OurState target) {
     addEdge(source, EPSILON_RANGE, target);
   }
 
-  public static StatePair statePair(State start, State end) {
+  public static StatePair statePair(OurState start, OurState end) {
     checkNotNull(start);
     checkNotNull(end);
     StatePair sp = new StatePair();
@@ -166,16 +164,16 @@ public final class ToknUtils {
     final String forbidden = "\'\"\\[]{}()";
     // Unless it corresponds to a non-confusing printable ASCII value,
     // just print its decimal equivalent
-    if (charCode == State.EPSILON)
+    if (charCode == OurState.EPSILON)
       return "(e)";
     if (charCode > ' ' && charCode < 0x7f && forbidden.indexOf(charCode) < 0)
       return "'" + Character.toString((char) charCode) + "'";
-    if (charCode == State.CODEMAX - 1)
+    if (charCode == OurState.CODEMAX - 1)
       return "MAX";
     return Integer.toString(charCode);
   }
 
-  public static String dumpStateMachine(State initialState, Object... title) {
+  public static String dumpStateMachine(OurState initialState, Object... title) {
     final var dashes = "--------------------------------------------------------------------------\n";
     StringBuilder sb = new StringBuilder();
 //    sb.append(dashes);
@@ -188,14 +186,14 @@ public final class ToknUtils {
     }
     sb.append('\n');
 
-    List<State> reachableStates = reachableStates(initialState);
+    List<OurState> reachableStates = reachableStates(initialState);
 
     // Sort them by their debug ids
     reachableStates.sort(null);
 
     // But make sure the start state is first
     sb.append(toString(initialState, true));
-    for (State s : reachableStates) {
+    for (OurState s : reachableStates) {
       if (s == initialState)
         continue;
       sb.append(toString(s, true));
@@ -204,13 +202,13 @@ public final class ToknUtils {
     return sb.toString();
   }
 
-  public static String toString(State state, boolean includeEdges) {
+  public static String toString(OurState state, boolean includeEdges) {
     StringBuilder sb = new StringBuilder();
     sb.append(state.debugId());
     sb.append(state.finalState() ? '*' : ' ');
     if (includeEdges) {
       sb.append("=>\n");
-      for (Edge e : state.edges()) {
+      for (OurEdge e : state.edges()) {
         sb.append("       ");
         sb.append(e.destinationState().debugId());
         sb.append(' ');
@@ -225,20 +223,20 @@ public final class ToknUtils {
    * Modify a state machine's edges so each is labelled with a disjoint subset
    * of characters.
    */
-  public static State partitionEdges(State startState) {
+  public static OurState partitionEdges(OurState startState) {
     RangePartition par = new RangePartition();
 
     StateRenamer ren = new StateRenamer();
     ren.constructNewVersions(startState);
 
-    for (State s : ren.oldStates()) {
-      for (Edge edge : s.edges())
+    for (OurState s : ren.oldStates()) {
+      for (OurEdge edge : s.edges())
         par.addSet(CodeSet.with(edge.codeSets()));
     }
 
-    for (State s : ren.oldStates()) {
-      State sNew = ren.get(s);
-      for (Edge edge : s.edges()) {
+    for (OurState s : ren.oldStates()) {
+      OurState sNew = ren.get(s);
+      for (OurEdge edge : s.edges()) {
         List<CodeSet> newLbls = par.apply(CodeSet.with(edge.codeSets()));
         for (CodeSet x : newLbls) {
           addEdge(sNew, x, ren.get(edge.destinationState()));
@@ -248,11 +246,11 @@ public final class ToknUtils {
     return ren.get(startState);
   }
 
-  public static State normalizeStates(State startState) {
+  public static OurState normalizeStates(OurState startState) {
     StateRenamer renamer = new StateRenamer();
     renamer.constructNewVersionsWithEdges(startState);
-    for (State oldState : renamer.oldStates()) {
-      State newState = renamer.get(oldState);
+    for (OurState oldState : renamer.oldStates()) {
+      OurState newState = renamer.get(oldState);
       normalizeState(newState);
     }
     return renamer.get(startState);
@@ -268,18 +266,18 @@ public final class ToknUtils {
    * [] delete edges that have empty labels
    * 
    */
-  private static void normalizeState(State state) {
+  private static void normalizeState(OurState state) {
     // Sort edges by destination state ids
     state.edges()
         .sort((e1, e2) -> Integer.compare(e1.destinationState().debugId(), e2.destinationState().debugId()));
 
-    List<Edge> new_edges = arrayList();
+    List<OurEdge> new_edges = arrayList();
     CodeSet prev_label = null;
-    State prev_dest = null;
+    OurState prev_dest = null;
 
-    for (Edge edge : state.edges()) {
+    for (OurEdge edge : state.edges()) {
       int[] label = edge.codeSets();
-      State dest = edge.destinationState();
+      OurState dest = edge.destinationState();
 
       // If this edge goes to the same state as the previous one (they are in sorted order already), merge with that one...
       if (prev_dest == dest)
@@ -299,7 +297,7 @@ public final class ToknUtils {
     if (prev_dest != null) {
       // Omit edges with no labels
       if (prev_label.elements().length != 0)
-        new_edges.add(new Edge(prev_label.elements(), prev_dest));
+        new_edges.add(new OurEdge(prev_label.elements(), prev_dest));
     }
 
     state.setEdges(new_edges);
@@ -309,27 +307,27 @@ public final class ToknUtils {
    * Determine if a state machine can get from one state to another while
    * consuming no input
    */
-  public static boolean acceptsEmptyString(State stateA, State stateB) {
-    Set<State> markedStates = hashSet();
-    List<State> stateStack = arrayList();
+  public static boolean acceptsEmptyString(OurState stateA, OurState stateB) {
+    Set<OurState> markedStates = hashSet();
+    List<OurState> stateStack = arrayList();
     push(stateStack, stateA);
     while (nonEmpty(stateStack)) {
-      State state = pop(stateStack);
+      OurState state = pop(stateStack);
       if (markedStates.contains(state))
         continue;
       markedStates.add(state);
       if (state == stateB)
         return true;
 
-      for (Edge edge : state.edges()) {
-        if (CodeSet.contains(edge.codeSets(), State.EPSILON))
+      for (OurEdge edge : state.edges()) {
+        if (CodeSet.contains(edge.codeSets(), OurState.EPSILON))
           push(stateStack, edge.destinationState());
       }
     }
     return false;
   }
 
-  private static String toString(Edge edge) {
+  private static String toString(OurEdge edge) {
     StringBuilder sb = new StringBuilder();
     sb.append(dumpCodeSet(edge.codeSets()));
     sb.append(" => ");
@@ -338,14 +336,14 @@ public final class ToknUtils {
   }
 
   static {
-    BasePrinter.registerClassHandler(Edge.class, (x, p) -> p.append(toString((Edge) x)));
+    BasePrinter.registerClassHandler(OurEdge.class, (x, p) -> p.append(toString((OurEdge) x)));
   }
 
-  public static void validateDFA(State startState) {
-    for (State s : reachableStates(startState)) {
+  public static void validateDFA(OurState startState) {
+    for (OurState s : reachableStates(startState)) {
       CodeSet prevSet = new CodeSet();
-      for (Edge e : s.edges()) {
-        if (CodeSet.contains(e.codeSets(), State.EPSILON))
+      for (OurEdge e : s.edges()) {
+        if (CodeSet.contains(e.codeSets(), OurState.EPSILON))
           badArg("edge accepts epsilon:", INDENT, toString(s, true));
 
         // See if the code set intersects union of previous edges' code sets

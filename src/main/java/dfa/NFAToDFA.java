@@ -1,8 +1,6 @@
 package dfa;
 
 import js.base.BaseObject;
-import js.parsing.Edge;
-import js.parsing.State;
 import static js.base.Tools.*;
 
 import java.util.Collection;
@@ -32,7 +30,7 @@ final class NFAToDFA extends BaseObject {
   /**
    * Convert an NFA to a DFA; return the new start state
    */
-  public State convertNFAToDFA(State start_state) {
+  public OurState convertNFAToDFA(OurState start_state) {
     checkState(mStartState == null, "already used");
     mStartState = start_state;
 
@@ -67,9 +65,9 @@ final class NFAToDFA extends BaseObject {
     mStartState = ToknUtils.normalizeStates(mStartState);
   }
 
-  private static CodeSet constructKeyForStateCollection(Collection<State> states) {
+  private static CodeSet constructKeyForStateCollection(Collection<OurState> states) {
     CodeSet keySet = new CodeSet();
-    for (State s : states)
+    for (OurState s : states)
       keySet.add(s.debugId());
     return keySet;
   }
@@ -84,33 +82,33 @@ final class NFAToDFA extends BaseObject {
 
     mDFAStateToNFAStatesMap.clear();
 
-    State.bumpDebugIds();
+    OurState.bumpDebugIds();
 
     log("creating start state");
-    State new_start_state = create_dfa_state_if_necessary(eps_closure(mStartState));
+    OurState new_start_state = create_dfa_state_if_necessary(eps_closure(mStartState));
 
-    List<State> unmarked = arrayList();
+    List<OurState> unmarked = arrayList();
     unmarked.add(new_start_state);
 
     while (nonEmpty(unmarked)) {
-      State dfaState = pop(unmarked);
+      OurState dfaState = pop(unmarked);
 
-      Collection<State> nfaStateSubset = mDFAStateToNFAStatesMap.get(dfaState);
+      Collection<OurState> nfaStateSubset = mDFAStateToNFAStatesMap.get(dfaState);
       if (nfaStateSubset == null)
         badState("dfaState had no entry in sorted_nfa_state_id_lists:", dfaState);
 
-      log("popped DFA state:", dfaState, "with NFA states:", State.toString(nfaStateSubset));
+      log("popped DFA state:", dfaState, "with NFA states:", OurState.toString(nfaStateSubset));
 
       // Map of CodeSet => set of NFA states
       // 
       // The sets should be TreeSets, for deterministic results
       //
-      Map<CodeSet, TreeSet<State>> moveMap = treeMap();
+      Map<CodeSet, TreeSet<OurState>> moveMap = treeMap();
 
-      for (State nfaState : nfaStateSubset) {
+      for (OurState nfaState : nfaStateSubset) {
         log("...processing NFA state:", nfaState);
 
-        for (Edge nfaEdge : nfaState.edges()) {
+        for (OurEdge nfaEdge : nfaState.edges()) {
           log("......edge:", nfaEdge);
 
           CodeSet codeSet = CodeSet.with(nfaEdge.codeSets());
@@ -122,10 +120,10 @@ final class NFAToDFA extends BaseObject {
           // (because of the edge partitioning we did earlier);
           // and we can ignore it (as any state reachable from here lies within the
           // NFA subset we are processing)
-          if (codeSet.contains(State.EPSILON))
+          if (codeSet.contains(OurState.EPSILON))
             continue;
 
-          TreeSet<State> nfaStates = moveMap.get(codeSet);
+          TreeSet<OurState> nfaStates = moveMap.get(codeSet);
           if (nfaStates == null) {
             nfaStates = treeSet();
             moveMap.put(codeSet, nfaStates);
@@ -140,14 +138,14 @@ final class NFAToDFA extends BaseObject {
       // Process each CodeSet->[NFA State] mapping, and generate a DFA state for the [NFA State] subset
       // (if none exists)
 
-      for (Entry<CodeSet, TreeSet<State>> moveMapEntry : moveMap.entrySet()) {
+      for (Entry<CodeSet, TreeSet<OurState>> moveMapEntry : moveMap.entrySet()) {
         CodeSet codeSet = moveMapEntry.getKey();
-        Set<State> nfaStates = moveMapEntry.getValue();
+        Set<OurState> nfaStates = moveMapEntry.getValue();
         log("processing map entry", codeSet, "=>", nfaStates);
         eps_closure(nfaStates);
         log("NFA states e-closure:", nfaStates);
 
-        State dfaDestState = create_dfa_state_if_necessary(nfaStates);
+        OurState dfaDestState = create_dfa_state_if_necessary(nfaStates);
         log("DFA state for this set of NFA states:", dfaDestState);
         if (mDFAStateCreatedFlag) {
           log("...this was a new DFA state; marking it for exploration");
@@ -170,22 +168,22 @@ final class NFAToDFA extends BaseObject {
    * @return DFA state; also, mDFAStateCreatedFlag will be set iff a new state
    *         was created
    */
-  private State create_dfa_state_if_necessary(Collection<State> stateSet) {
+  private OurState create_dfa_state_if_necessary(Collection<OurState> stateSet) {
     mDFAStateCreatedFlag = false;
 
     CodeSet keySet = constructKeyForStateCollection(stateSet);
     if (verbose())
       log("create_dfa_state_if_nec?", keySet);
 
-    State newState = mNFAStateSetToDFAStateMap.get(keySet);
+    OurState newState = mNFAStateSetToDFAStateMap.get(keySet);
     if (verbose())
       log("...existing state:", newState);
 
     if (newState == null) {
       mDFAStateCreatedFlag = true;
-      newState = new State();
+      newState = new OurState();
       // Determine if any of the NFA states were final states
-      for (State nfaState : stateSet)
+      for (OurState nfaState : stateSet)
         if (nfaState.finalState()) {
           newState.setFinal(true);
           break;
@@ -202,13 +200,13 @@ final class NFAToDFA extends BaseObject {
   /**
    * Calculate the epsilon closure of a set of NFA states
    */
-  private Set<State> eps_closure(Set<State> stateSet) {
-    List<State> stk = arrayList();
+  private Set<OurState> eps_closure(Set<OurState> stateSet) {
+    List<OurState> stk = arrayList();
     stk.addAll(stateSet);
     while (nonEmpty(stk)) {
-      State s = pop(stk);
-      for (Edge edge : s.edges()) {
-        if (CodeSet.contains(edge.codeSets(), State.EPSILON)) {
+      OurState s = pop(stk);
+      for (OurEdge edge : s.edges()) {
+        if (CodeSet.contains(edge.codeSets(), OurState.EPSILON)) {
           if (stateSet.add(edge.destinationState()))
             push(stk, edge.destinationState());
         }
@@ -217,22 +215,22 @@ final class NFAToDFA extends BaseObject {
     return stateSet;
   }
 
-  private Set<State> eps_closure(State state) {
+  private Set<OurState> eps_closure(OurState state) {
     // The set should be a TreeSet, so the order is deterministic (based on state's debug ids)
-    Set<State> set = treeSet();
+    Set<OurState> set = treeSet();
     set.add(state);
     return eps_closure(set);
   }
 
-  private State mStartState;
+  private OurState mStartState;
 
   // A map of NFA id sets to NFA states.  
   // Each NFA id set is represented by a CodeSet, since they support equals+hashcode methods
   //
-  private final Map<CodeSet, State> mNFAStateSetToDFAStateMap = hashMap();
+  private final Map<CodeSet, OurState> mNFAStateSetToDFAStateMap = hashMap();
 
   // Map of { DFA State -> [NFA state] }
   //
-  private final Map<State, Collection<State>> mDFAStateToNFAStatesMap = hashMap();
+  private final Map<OurState, Collection<OurState>> mDFAStateToNFAStatesMap = hashMap();
 
 }

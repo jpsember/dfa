@@ -32,7 +32,6 @@ import java.util.BitSet;
 import org.junit.Test;
 
 import js.data.IntArray;
-import js.parsing.State;
 import js.testutil.MyTestCase;
 
 public class CodeSetTest extends MyTestCase {
@@ -235,7 +234,7 @@ public class CodeSetTest extends MyTestCase {
 
     prep();
     add(10, 22);
-    neg(0, State.CODEMAX);
+    neg(0, OurState.CODEMAX);
     equ("0 10 22 256");
 
     prep();

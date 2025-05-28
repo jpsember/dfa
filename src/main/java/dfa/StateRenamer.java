@@ -5,9 +5,6 @@ import java.util.Map;
 
 import static js.base.Tools.*;
 
-import js.parsing.Edge;
-import js.parsing.State;
-
 /**
  * Maintains a map of old to new states
  */
@@ -19,10 +16,10 @@ final class StateRenamer {
    * @param oldStartState
    *          old starting state
    */
-  public void constructNewVersions(State oldStartState) {
-    State.bumpDebugIds();
-    List<State> oldStates = ToknUtils.reachableStates(oldStartState);
-    for (State oldState : oldStates)
+  public void constructNewVersions(OurState oldStartState) {
+    OurState.bumpDebugIds();
+    List<OurState> oldStates = ToknUtils.reachableStates(oldStartState);
+    for (OurState oldState : oldStates)
       put(oldState, null);
   }
 
@@ -32,15 +29,15 @@ final class StateRenamer {
    * @param oldStartState
    *          old starting state
    */
-  public void constructNewVersionsWithEdges(State oldStartState) {
-    State.bumpDebugIds();
-    List<State> oldStates = ToknUtils.reachableStates(oldStartState);
-    for (State oldState : oldStates) {
+  public void constructNewVersionsWithEdges(OurState oldStartState) {
+    OurState.bumpDebugIds();
+    List<OurState> oldStates = ToknUtils.reachableStates(oldStartState);
+    for (OurState oldState : oldStates) {
       put(oldState, null);
     }
-    for (State oldState : oldStates) {
-      State newState = get(oldState);
-      for (Edge e : oldState.edges()) {
+    for (OurState oldState : oldStates) {
+      OurState newState = get(oldState);
+      for (OurEdge e : oldState.edges()) {
         ToknUtils.addEdge(newState, e.codeSets(), get(e.destinationState()));
       }
     }
@@ -49,7 +46,7 @@ final class StateRenamer {
   /**
    * Get list of old states, in the sequence that old->new mappings were added
    */
-  public List<State> oldStates() {
+  public List<OurState> oldStates() {
     return mOldStateList;
   }
 
@@ -62,12 +59,12 @@ final class StateRenamer {
    *          any edges
    * @return new state
    */
-  public State put(State oldState, State newStateOrNull) {
+  public OurState put(OurState oldState, OurState newStateOrNull) {
     checkArgument(oldState != null);
-    State newState = newStateOrNull;
+    OurState newState = newStateOrNull;
     if (newState == null)
-      newState = new State(oldState.finalState());
-    State prevMapping = mMap.put(oldState, newState);
+      newState = new OurState(oldState.finalState());
+    OurState prevMapping = mMap.put(oldState, newState);
     if (prevMapping != null)
       badState("state already had a mapping!", oldState, prevMapping, "; cannot remap to", newState);
     mOldStateList.add(oldState);
@@ -78,14 +75,14 @@ final class StateRenamer {
    * Get the new state that has been mapped to an old one; throws exception if
    * no mapping exists
    */
-  public State get(State oldState) {
+  public OurState get(OurState oldState) {
     checkArgument(oldState != null);
-    State newState = mMap.get(oldState);
+    OurState newState = mMap.get(oldState);
     if (newState == null)
       badArg("no mapping found for key:", oldState);
     return newState;
   }
 
-  private final Map<State, State> mMap = hashMap();
-  private final List<State> mOldStateList = arrayList();
+  private final Map<OurState, OurState> mMap = hashMap();
+  private final List<OurState> mOldStateList = arrayList();
 }

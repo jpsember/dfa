@@ -7,9 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import js.base.BasePrinter;
-import js.parsing.Edge;
 import js.parsing.RegExp;
-import js.parsing.State;
 
 import static dfa.ToknUtils.*;
 import static dfa.Util.*;
@@ -108,12 +106,12 @@ final class RegParse {
     parseScript();
   }
 
-  public State startState() {
+  public OurState startState() {
     checkNotNull(mStartState);
     return mStartState;
   }
 
-  public State endState() {
+  public OurState endState() {
     checkNotNull(mEndState);
     return mEndState;
   }
@@ -337,8 +335,8 @@ final class RegParse {
     if (result.isEmpty())
       abort("Empty character range");
 
-    State sA = new State();
-    State sB = new State();
+    OurState sA = new OurState();
+    OurState sB = new OurState();
     ToknUtils.addEdge(sA, result.elements(), sB);
     return statePair(sA, sB);
   }
@@ -401,8 +399,8 @@ final class RegParse {
       CodeSet code_set = parse_code_set(false);
       // Construct a pair of states with an edge between them
       // labelled with this code set
-      State sA = new State();
-      State sB = new State();
+      OurState sA = new OurState();
+      OurState sB = new OurState();
       ToknUtils.addEdge(sA, code_set.elements(), sB);
       e1 = statePair(sA, sB);
     }
@@ -415,12 +413,12 @@ final class RegParse {
     StatePair e1 = parseJ();
     if (read_if('|')) {
       StatePair e2 = parseE();
-      State u = new State();
-      State v = new State();
+      OurState u = new OurState();
+      OurState v = new OurState();
 
       addEps(u, e1.start);
       addEps(u, e2.start);
-      State w = e1.end;
+      OurState w = e1.end;
       addEps(w, v);
       addEps(w, v);
 
@@ -469,9 +467,9 @@ final class RegParse {
    * has no edges back
    */
   private StatePair create_new_final_state_if_nec(StatePair start_end_states) {
-    State end_state = start_end_states.end;
+    OurState end_state = start_end_states.end;
     if (!end_state.edges().isEmpty()) {
-      State new_final_state = new State();
+      OurState new_final_state = new OurState();
       ToknUtils.addEps(end_state, new_final_state);
       start_end_states.end = new_final_state;
     }
@@ -490,16 +488,16 @@ final class RegParse {
    */
   private StatePair construct_complement(StatePair statesp) {
 
-    State nfa_start = statesp.start;
-    State nfa_end = statesp.end;
+    OurState nfa_start = statesp.start;
+    OurState nfa_end = statesp.end;
     checkArgument(!nfa_start.finalState() && !nfa_end.finalState());
 
-    nfa_end = new State(false, nfa_end.edges());
+    nfa_end = new OurState(false, nfa_end.edges());
 
     NFAToDFA builder = new NFAToDFA();
-    State dfa_start_state = builder.convertNFAToDFA(nfa_start);
+    OurState dfa_start_state = builder.convertNFAToDFA(nfa_start);
 
-    List<State> states = ToknUtils.reachableStates(dfa_start_state);
+    List<OurState> states = ToknUtils.reachableStates(dfa_start_state);
 
     /**
      * <pre>
@@ -524,13 +522,13 @@ final class RegParse {
      * for an (entire) input string.
      */
 
-    State f = new State(false, null);
+    OurState f = new OurState(false, null);
 
-    for (State x : states) {
+    for (OurState x : states) {
       if (x.finalState())
         throw badState("unexpected final state");
       CodeSet codeset = CodeSet.withRange(OURCODEMIN, codeMax());
-      for (Edge e : x.edges()) {
+      for (OurEdge e : x.edges()) {
         codeset = codeset.difference(CodeSet.with(e.codeSets()));
       }
       if (codeset.elements().length != 0) {
@@ -542,16 +540,16 @@ final class RegParse {
     states.add(f);
 
     // Build a map of old to new states for the NFA
-    Map<State, State> new_state_map = hashMap();
-    for (State x : states) {
-      State x_new = new State();
+    Map<OurState, OurState> new_state_map = hashMap();
+    for (OurState x : states) {
+      OurState x_new = new OurState();
       new_state_map.put(x, x_new);
     }
 
-    for (State x : states) {
-      State x_new = new_state_map.get(x);
-      for (Edge edge : x.edges()) {
-        x_new.edges().add(new Edge(edge.codeSets(), new_state_map.get(edge.destinationState())));
+    for (OurState x : states) {
+      OurState x_new = new_state_map.get(x);
+      for (OurEdge edge : x.edges()) {
+        x_new.edges().add(new OurEdge(edge.codeSets(), new_state_map.get(edge.destinationState())));
       }
     }
     return statePair(new_state_map.get(dfa_start_state), new_state_map.get(f));
@@ -596,8 +594,8 @@ final class RegParse {
   private static CodeSet sDigitCodeSet;
   private static CodeSet sWordCharCodeSet;
 
-  private State mStartState;
-  private State mEndState;
+  private OurState mStartState;
+  private OurState mEndState;
   private String mOrigScript;
   private String mScript;
   private Map<String, RegParse> mTokenDefMap;

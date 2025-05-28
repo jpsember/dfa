@@ -2,7 +2,6 @@ package dfa;
 
 import js.data.DataUtil;
 import js.data.IntArray;
-import js.parsing.State;
 
 import static js.base.Tools.*;
 
@@ -36,7 +35,7 @@ public final class CodeSet implements Comparable<CodeSet> {
    * Construct a CodeSet with the single value EPSILON
    */
   public static CodeSet epsilon() {
-    return withValue(State.EPSILON);
+    return withValue(OurState.EPSILON);
   }
 
   /**

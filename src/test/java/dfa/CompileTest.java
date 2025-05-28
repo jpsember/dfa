@@ -35,7 +35,6 @@ import js.json.JSMap;
 import js.parsing.DFA;
 import js.parsing.RegExp;
 import js.parsing.Scanner;
-import js.parsing.State;
 import js.testutil.MyTestCase;
 
 import static dfa.ToknUtils.*;
@@ -46,7 +45,7 @@ public class CompileTest extends MyTestCase {
   public void setup() {
     super.setup();
     // We need to reset the debug ids before each test, for deterministic behaviour
-    State.resetDebugIds();
+    OurState.resetDebugIds();
   }
 
   @Test
@@ -116,10 +115,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void printStateMachine() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, cs('X'), a);
     addEdge(s, cs('Y'), b);
@@ -132,10 +131,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void reverseDFA() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, cs('X'), a);
     addEdge(s, cs('Y'), b);
@@ -143,17 +142,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs('W'), f);
 
     dump(s, "input");
-    State s2 = reverseNFA(s);
+    OurState s2 = reverseNFA(s);
     dump(s2, "reversed");
     assertSb();
   }
 
   @Test
   public void partition() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, cs("abcdefgh"), a);
     addEdge(s, cs("cde"), b);
@@ -161,17 +160,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    State s2 = partitionEdges(s);
+    OurState s2 = partitionEdges(s);
     dump(s2, "partitioned");
     assertSb();
   }
 
   @Test
   public void normalizeMergeLabels() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, cs("abcd"), a);
     addEdge(s, cs("efgh"), a);
@@ -180,17 +179,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    State s2 = normalizeStates(s);
+    OurState s2 = normalizeStates(s);
     dump(s2, "normalized");
     assertSb();
   }
 
   @Test
   public void normalizeOmitEmptyLabels() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, cs(""), a);
     addEdge(s, cs("cde"), b);
@@ -198,23 +197,23 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    State s2 = normalizeStates(s);
+    OurState s2 = normalizeStates(s);
     dump(s2, "normalized");
     assertSb();
   }
 
   @Test
   public void acceptsEmptyStringTrue() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, CodeSet.epsilon(), a);
     addEdge(s, cs("cde"), b);
 
     CodeSet ck = cs("uvwx");
-    ck.add(State.EPSILON);
+    ck.add(OurState.EPSILON);
 
     addEdge(a, ck, f);
     addEdge(b, cs("wxyz"), f);
@@ -226,10 +225,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void acceptsEmptyStringFalse() {
-    State s = new State(false);
-    State a = new State();
-    State b = new State();
-    State f = new State(true);
+    OurState s = new OurState(false);
+    OurState a = new OurState();
+    OurState b = new OurState();
+    OurState f = new OurState(true);
 
     addEdge(s, CodeSet.epsilon(), a);
     addEdge(s, cs("cde"), b);
@@ -243,7 +242,7 @@ public class CompileTest extends MyTestCase {
     assertFalse(acceptsEmptyString(s, f));
   }
 
-  private void dump(State state, Object... messages) {
+  private void dump(OurState state, Object... messages) {
     String message;
     if (messages.length == 0)
       message = name();
@@ -342,8 +341,6 @@ public class CompileTest extends MyTestCase {
       StringBuilder sb = new StringBuilder();
 
       // Don't skip any tokens
-      if (false && alert("showing dfa"))
-        pr(ToknUtils.dumpStateMachine(dfa().getStartState(), "dfa being used"));
       Scanner s = new Scanner(dfa(), sampleText, -1);
       s.setVerbose(verbose());
       while (s.hasNext()) {

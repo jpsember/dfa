@@ -10,9 +10,7 @@ import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
-import js.parsing.Edge;
 import js.parsing.RegExp;
-import js.parsing.State;
 
 import static js.base.Tools.*;
 import static dfa.Util.*;
@@ -97,14 +95,14 @@ public final class DFACompiler extends BaseObject {
       if (verbose())
         log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
     }
-    State combined = combineNFAs(token_records);
+    OurState combined = combineNFAs(token_records);
     if (verbose())
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
     NFAToDFA builder = new NFAToDFA();
     if (false) // takes too long on sizeable token files
       builder.setVerbose(verbose());
-    State dfa = builder.convertNFAToDFA(combined);
+    OurState dfa = builder.convertNFAToDFA(combined);
     if (verbose())
       log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));
 
@@ -178,7 +176,7 @@ public final class DFACompiler extends BaseObject {
   // Regex for token names preceding regular expressions
   private static Pattern TOKENNAME_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*\\s*:\\s*.*");
 
-  private JSMap constructJsonDFA(List<RegParse> token_records, State startState) {
+  private JSMap constructJsonDFA(List<RegParse> token_records, OurState startState) {
 
     // These optimizations are only useful to reduce the size of the DFA files on disk,
     // and only by about 20%.  In memory, they have no effect; so for simplicity in
@@ -201,14 +199,14 @@ public final class DFACompiler extends BaseObject {
     }
     m.put("tokens", list);
 
-    List<State> reachable = ToknUtils.reachableStates(startState);
-    State finalState = null;
+    List<OurState> reachable = ToknUtils.reachableStates(startState);
+    OurState finalState = null;
 
-    Map<State, Integer> stateIndexMap = hashMap();
-    List<State> orderedStates = arrayList();
+    Map<OurState, Integer> stateIndexMap = hashMap();
+    List<OurState> orderedStates = arrayList();
 
     int index = 0;
-    for (State s : reachable) {
+    for (OurState s : reachable) {
       stateIndexMap.put(s, index);
       orderedStates.add(s);
       index++;
@@ -223,11 +221,11 @@ public final class DFACompiler extends BaseObject {
     m.put("final", finalStateIndex);
 
     JSList states = list();
-    for (State s : orderedStates) {
+    for (OurState s : orderedStates) {
       JSList stateDesc = list();
 
       int edgeIndex = INIT_INDEX;
-      for (Edge edge : s.edges()) {
+      for (OurEdge edge : s.edges()) {
         edgeIndex++;
         int[] cr = edge.codeSets();
         checkArgument(cr.length >= 2);
@@ -272,25 +270,25 @@ public final class DFACompiler extends BaseObject {
    * large NFA, each augmented with an edge labelled with the appropriate token
    * identifier to let the tokenizer see which token led to the final state.
    */
-  private State combineNFAs(List<RegParse> token_records) {
+  private OurState combineNFAs(List<RegParse> token_records) {
 
     // Create a new distinguished start state
     //
-    State start_state = new State();
+    OurState start_state = new OurState();
     for (RegParse regParse : token_records) {
 
       StatePair newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
 
-      State dupStart = newStates.start;
+      OurState dupStart = newStates.start;
 
       // Transition from the expression's end state (not a final state)
       // to a new final state, with the transitioning edge
       // labelled with the token id (actually, a transformed token id to distinguish
       // it from character codes)
-      State dupEnd = newStates.end;
-      State dupfinal_state = new State(true);
+      OurState dupEnd = newStates.end;
+      OurState dupfinal_state = new OurState(true);
 
-      CodeSet cs = CodeSet.withValue(State.tokenIdToEdgeLabel(regParse.id()));
+      CodeSet cs = CodeSet.withValue(OurState.tokenIdToEdgeLabel(regParse.id()));
       ToknUtils.addEdge(dupEnd, cs.elements(), dupfinal_state);
 
       // Add an e-transition from the start state to this expression's start
@@ -303,13 +301,13 @@ public final class DFACompiler extends BaseObject {
   /**
    * Determine if any tokens are redundant, and report an error if so
    */
-  private List<String> applyRedundantTokenFilter(List<RegParse> token_records, State start_state) {
+  private List<String> applyRedundantTokenFilter(List<RegParse> token_records, OurState start_state) {
     Set<Integer> recognizedTokenIdsSet = treeSet();
-    for (State state : ToknUtils.reachableStates(start_state)) {
-      for (Edge edge : state.edges()) {
+    for (OurState state : ToknUtils.reachableStates(start_state)) {
+      for (OurEdge edge : state.edges()) {
         if (!edge.destinationState().finalState())
           continue;
-        int token_id = State.edgeLabelToTokenId(edge.codeSets()[0]);
+        int token_id = OurState.edgeLabelToTokenId(edge.codeSets()[0]);
         recognizedTokenIdsSet.add(token_id);
       }
     }

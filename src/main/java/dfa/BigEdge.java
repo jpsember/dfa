@@ -1,24 +1,21 @@
 package dfa;
 
-import js.parsing.Edge;
-import js.parsing.State;
-
 /**
  * A subclass of Edge that supports source states, useful during DFA
  * construction
  */
-final class BigEdge extends Edge {
+final class BigEdge extends OurEdge {
 
-  public BigEdge(State sourceState, int[] codeSet, State destState) {
+  public BigEdge(OurState sourceState, int[] codeSet, OurState destState) {
     super(codeSet, destState);
     mSourceState = sourceState;
   }
 
   @Override
-  public State sourceState() {
+  public OurState sourceState() {
     return mSourceState;
   }
 
-  private final State mSourceState;
+  private final OurState mSourceState;
 
 }
