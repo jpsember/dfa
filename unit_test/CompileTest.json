@@ -1,14 +1,14 @@
-{                    "alpha" : 3116,
-                   "complex" : 2890,
-                  "complex1" : 6672,
-                "identifier" : 7347,
-                    "jsona1" : 3563,
+{                    "alpha" : 9652,
+                   "complex" : 7102,
+                  "complex1" : 7050,
+                "identifier" : 9350,
+                    "jsona1" : 6801,
       "normalizeMergeLabels" : 9076,
   "normalizeOmitEmptyLabels" : 4499,
                  "partition" : 7654,
-                   "predef1" : 7534,
+                   "predef1" : 6411,
          "printStateMachine" : 3729,
                 "reverseDFA" : 3548,
-                    "simple" : 1421,
-                    "string" : 7938
+                    "simple" : 6125,
+                    "string" : 1853
 }

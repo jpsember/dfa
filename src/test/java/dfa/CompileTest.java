@@ -323,6 +323,7 @@ public class CompileTest extends MyTestCase {
     c.setVerbose(verbose());
     mDFAJson = c.parse(mScript);
     files().writeString(generatedFile("dfa.json"), mDFAJson.prettyPrint());
+    files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
 
     if (sampleText == null) {
       // If there's a sample text file, read it
