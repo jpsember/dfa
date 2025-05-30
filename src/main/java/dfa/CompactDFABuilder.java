@@ -32,7 +32,7 @@ class CompactDFABuilder {
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
-    mBuilt = new CompactDFA(CompactDFA.VERSION, String.join(" ", dfa.tokenNames()), graph);
+    mBuilt = new CompactDFA(CompactDFA.VERSION, dfa.tokenNames(), graph);
     return mBuilt;
   }
 

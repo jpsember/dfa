@@ -48,6 +48,16 @@ public class CompactTest extends MyTestCase {
     var dfa = new DFA(text);
     var b = new CompactDFABuilder(dfa);
     var built = b.build();
-    assertMessage(built.toString());
+    var builtJson = built.toJson();
+    var builtStr = builtJson.toString();
+    generateMessage("built.json", builtStr);
+    var parsed = CompactDFA.parse(builtStr);
+    var parsedStr = parsed.toString();
+    generateMessage("parse.json", parsedStr);
+
+    // Make sure these two files are equal
+    checkArgumentsEqual(builtStr, parsedStr);
+
+    assertGenerated();
   }
 }
