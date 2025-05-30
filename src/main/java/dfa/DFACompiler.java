@@ -10,6 +10,7 @@ import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
+import js.parsing.DFA;
 import js.parsing.RegExp;
 
 import static js.base.Tools.*;

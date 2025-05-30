@@ -322,6 +322,20 @@ public class CompileTest extends MyTestCase {
     DFACompiler c = new DFACompiler();
     c.setVerbose(verbose());
     mDFAJson = c.parse(mScript);
+
+
+
+    if (true) {
+      var oldDfa = DFA.parseDfaUsingBespokeParser(mDFAJson.toString());
+      var b = new CompactDFABuilder(oldDfa);
+      var built = b.build();
+      var builtJson = built.toJson();
+      pr("compact version:",CR,builtJson.toString());
+    }
+
+
+
+
     files().writeString(generatedFile("dfa.json"), mDFAJson.prettyPrint());
     files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
 

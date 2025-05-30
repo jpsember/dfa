@@ -36,7 +36,13 @@ import js.parsing.*;
 
 public class CompactScanner extends BaseObject {
 
-  private static final int SKIP_ID_NONE = -10000;
+  private static final int SKIP_ID_NONE = -1;
+  private static final boolean DEBUG = false && alert("DEBUG in effect");
+
+  private static void p(Object... messages) {
+    if (DEBUG)
+      pr(insertStringToFront("CompactScanner>>>", messages));
+  }
 
   public CompactScanner(CompactDFA dfa, String string, int skipId) {
     mDfa = dfa;
@@ -115,15 +121,8 @@ public class CompactScanner extends BaseObject {
     throw badArg("can't find state:", state);
   }
 
-  private static void p(Object... messages) {
-    if (true)
-      pr(insertStringToFront("CompactScanner>>>", messages));
-  }
-
   private Token peekAux() {
-
-    p("peekAux, nextTokenStart", mNextTokenStart, "peekByte:", debugByte(peekByte(0)));
-
+    p("peekAux, nextTokenStart", mNextTokenStart, "peekByte:", peekByte(0));
     if (peekByte(0) == 0)
       return null;
     int bestLength = 1;
@@ -149,7 +148,7 @@ public class CompactScanner extends BaseObject {
     while (true) {
       p(VERT_SP, "byte offset:", byteOffset);
       int ch = peekByte(byteOffset);
-      p("nextByte:", debugByte(ch), "state_ptr:", statePtr, "max:", graph.length);
+      p("nextByte:", ch, "state_ptr:", statePtr, "max:", graph.length);
       int nextState = -1;
 
       int edgeCount = graph[statePtr++];
@@ -174,7 +173,7 @@ public class CompactScanner extends BaseObject {
             if (newTokenId >= bestId || byteOffset > bestLength) {
               bestLength = byteOffset;
               bestId = newTokenId;
-              p("...........setting bestId:", tokenName(bestId));
+              p("...........setting bestId:", mDfa.tokenName(bestId));
             }
 
           } else {
@@ -219,21 +218,6 @@ public class CompactScanner extends BaseObject {
     return peekToken;
   }
 
-  private static String debugByte(int b) {
-    checkArgument(b >= 0 && b < 0x100);
-    if (b == 0) {
-      return "<EOF>";
-    }
-    if (b < 0x20)
-      return "#" + b;
-    return "'" + Character.toString(b) + "'";
-  }
-
-  private String tokenName(int id) {
-    if (id < 0 || id >= mDfa.numTokens()) return "?" + id + "?";
-    return mDfa.tokenName(id);
-  }
-
   public Token read() {
     return read(-1);
   }
@@ -270,10 +254,6 @@ public class CompactScanner extends BaseObject {
     return peek() != null;
   }
 
-  public String nameOf(Token token) {
-    return mDfa.tokenName(token.id());
-  }
-
   public void unread() {
     unread(1);
   }
@@ -284,44 +264,12 @@ public class CompactScanner extends BaseObject {
     mHistoryCursor -= count;
   }
 
-  @Deprecated
-  public int readInt(int tokenId) {
-    return (int) ensureIntegerValue(read(tokenId).text(), Integer.MIN_VALUE, Integer.MAX_VALUE);
-  }
-
-  @Deprecated
-  public static long ensureIntegerValue(String numberString, long min, long max) {
-    try {
-      long value = Long.parseLong(numberString);
-      if (value < min || value > max)
-        badArg("integral value out of range of", min, "...", max, ":", numberString);
-      return value;
-    } catch (Throwable t) {
-      throw badArg("expected an integer, not:", quote(numberString));
-    }
-  }
-
   private byte peekByte(int index) {
     var absIndex = index + mNextTokenStart;
     if (absIndex < mBytes.length) {
       return mBytes[absIndex];
     }
     return 0;
-  }
-
-
-  private static boolean rangeContainsValue(int[] range, int value) {
-    // If the value is > 255, accept it if the range contains 255
-    var effectiveValue = (value > 255) ? 255 : value;
-    int i = 0;
-    while (i < range.length) {
-      if (effectiveValue < range[i])
-        return false;
-      if (effectiveValue < range[i + 1])
-        return true;
-      i += 2;
-    }
-    return false;
   }
 
   private CompactDFA mDfa;
@@ -335,5 +283,4 @@ public class CompactScanner extends BaseObject {
   private boolean mAcceptUnknownTokens;
   private List<Token> mHistory = arrayList();
   private int mHistoryCursor;
-  private char[] mReaderBuffer = new char[256];
 }

@@ -82,6 +82,26 @@ public class DfaOper extends AppOper {
     String str = jsonMap.toString();
     log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
+
+
+
+
+
+
+
+    if (true) {
+      var oldDfa = DFA.parseDfaUsingBespokeParser(str);
+      var b = new CompactDFABuilder(oldDfa);
+      var built = b.build();
+      var builtJson = built.toJson();
+      pr("compact version:",CR,builtJson.toString());
+    }
+
+
+
+
+
+
     procIdsFile(compiler.tokenNames());
     processExampleText(jsonMap);
   }
