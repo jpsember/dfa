@@ -9,29 +9,37 @@ import org.junit.Test;
 import js.parsing.DFA;
 
 
-public class CompactTest extends MyTestCase {
-
-  @Test
-  public void small() {
-    script("{\"final\":2,\"tokens\":[\"A\",\"B\"],\"version\":4.0,\"states\":[[[98,99],3,[97,98],1],[[-2,-1]],[],[[98,99],4],[[-3,-2]]]}");
-  }
+public class ScanTest extends MyTestCase {
 
   @Test
   public void simple() {
-    script("{   \"final\" : 2,\n" +
-        "   \"states\" : [ [ [ 65,91,95,96,97,123 ],4,[ 48,58 ],3,[ 32,33 ],\n" +
-        "                  1 ],\n" +
-        "                [ [ -2,-1 ],2,[ 32,33 ],1 ],[  ],[ [ -4,-3 ],2,[ 48,58 ],3 ],\n" +
-        "                [ [ 65,91,95,96,97,123 ],4,[ 48,58 ],5,[ -3,-2 ] ],\n" +
-        "                [ [ 48,58 ],5,[ -3,-2 ] ] ],\n" +
-        "   \"tokens\" : [ \"WS\",\"ID\",\"NUM\" ],\n" +
-        "  \"version\" : 4.0\n" +
-        "}");
+    script("{ \"alpha\": [1,2,3]}");
   }
 
   @Test
-  public void complex() {
-    script("{\"final\":2,\"tokens\":[\"WS\",\"BROP\",\"BRCL\",\"TRUE\",\"FALSE\",\"NULL\"," +
+  public void small() {
+    dfa("{\"graph\":[5,2,1,98,99,15,1,97,98,10,1,1,-1,14,0,1,1,98,99,20,1,1,-2,14],\"token_names\":\"A B\",\"version\":\"$1\"}");
+    script("aabba");
+  }
+
+  @Test
+  public void unknown() {
+    mAllowUnknown = true;
+    dfa("{\"graph\":[5,2,1,98,99,15,1,97,98,10,1,1,-1,14,0,1,1,98,99,20,1,1,-2,14],\"token_names\":\"A B\",\"version\":\"$1\"}");
+    script("aabbac");
+  }
+
+  @Test
+  public void medium() {
+    dfa(
+        "{\"final\":5,\"tokens\":[\"A\",\"B\",\"C\"],\"version\":4.0,\"states\":[[[98,99],6,[97,98],1],[[-2,-1],5,[98,99],2],[[98,99],3],[[97,98],4],[[-4,-3]],[],[[98,99],7],[[-3,-2]]]}"
+    );
+    script("abbabba");
+
+  }
+
+  private static String dfaScript() {
+    return "{\"final\":2,\"tokens\":[\"WS\",\"BROP\",\"BRCL\",\"TRUE\",\"FALSE\",\"NULL\"," +
         "\"CBROP\",\"CBRCL\",\"COMMA\",\"COLON\",\"STRING\",\"NUMBER\"],\"version\":4.0,\"states\"" +
         ":[[[125,126],46,[123,124],45,[116,117],41,[110,111],37,[102,103],32,[93,94],31,[91,92],30," +
         "[58,59],29,[49,58],28,[48,49],22,[47,48],18,[45,46],17,[44,45],16,[35,36],7,[34,35],3," +
@@ -45,24 +53,38 @@ public class CompactTest extends MyTestCase {
         "[43,44,45,46],26],[[48,58],27],[[-13,-12],2,[48,58],27],[[-13,-12],2,[48,58],28,[69,70,101," +
         "102],25,[46,47],23],[[-11,-10]],[[-3,-2]],[[-4,-3]],[[97,98],33],[[108,109],34],[[115,116]" +
         ",35],[[101,102],36],[[-6,-5]],[[117,118],38],[[108,109],39],[[108,109],40],[[-7,-6]],[[114" +
-        ",115],42],[[117,118],43],[[101,102],44],[[-5,-4]],[[-8,-7]],[[-9,-8]]]}");
+        ",115],42],[[117,118],43],[[101,102],44],[[-5,-4]],[[-8,-7]],[[-9,-8]]]}";
   }
 
-  private void script(String text) {
-    loadTools();
-    var dfa = new DFA(text);
-    var b = new CompactDFABuilder(dfa);
-    var built = b.build();
-    var builtJson = built.toJson();
-    var builtStr = builtJson.toString();
-    generateMessage("built.json", builtStr);
-    var parsed = CompactDFA.parse(builtStr);
-    var parsedStr = parsed.toString();
-    generateMessage("parse.json", parsedStr);
 
-    // Make sure these two files are equal
-    checkArgumentsEqual(builtStr, parsedStr);
+  private void dfa(String s) {
+    log("parsing dfa from:", INDENT, s);
+    mDfa = CompactDFA.parse(s);
+  }
+
+  private CompactDFA dfa() {
+    if (mDfa == null) dfa(dfaScript());
+    return mDfa;
+  }
+
+  private CompactDFA mDfa;
+
+  private void script(String text) {
+    var s = new CompactScanner(dfa(), text, -1);
+if (mAllowUnknown)
+  s.setAcceptUnknownTokens();
+
+    var sb = new StringBuilder();
+    while (s.hasNext()) {
+      var t = s.read();
+      sb.append(String.format("%9s ", mDfa.tokenName(t.id())) + " loc:" + t.locInfo() + "  '" + t.text() + "'");
+      addLF(sb);
+    }
+
+    generateMessage(sb);
 
     assertGenerated();
   }
+
+  private boolean mAllowUnknown;
 }

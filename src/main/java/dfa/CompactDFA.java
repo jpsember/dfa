@@ -1,9 +1,9 @@
 package dfa;
 
-import js.data.DataUtil;
 import js.data.ShortArray;
 import js.json.JSList;
 import js.json.JSMap;
+import js.parsing.DFA;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -54,6 +54,16 @@ public class CompactDFA {
   @Override
   public String toString() {
     return toJson().toString();
+  }
+
+  public short[] graph() {
+    return mGraph;
+  }
+
+  public String tokenName(int id) {
+    if (id == DFA.UNKNOWN_TOKEN)
+      return "<UNKNOWN>";
+    return mTokenNames[id];
   }
 
   private String mVersion;
@@ -132,4 +142,7 @@ public class CompactDFA {
     return (b >= '0' && b <= '9') || b == '-';
   }
 
+  public int numTokens() {
+    return mTokenNames.length;
+  }
 }
