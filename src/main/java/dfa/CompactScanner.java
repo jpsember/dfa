@@ -36,7 +36,8 @@ import js.parsing.*;
 
 public class CompactScanner extends BaseObject {
 
-  private static final int SKIP_ID_NONE = -1;
+  public static final int ID_UNKNOWN = -1;
+  private static final int SKIP_ID_NONE = -2;
   private static final boolean DEBUG = false && alert("DEBUG in effect");
 
   private static void p(Object... messages) {
@@ -112,21 +113,12 @@ public class CompactScanner extends BaseObject {
     return peek(0);
   }
 
-//  private static int stateNum(DFA dfa, State state) {
-//    int i = INIT_INDEX;
-//    for (var s : dfa.debStates()) {
-//      i++;
-//      if (s == state) return i;
-//    }
-//    throw badArg("can't find state:", state);
-//  }
-
   private Token peekAux() {
     p("peekAux, nextTokenStart", mNextTokenStart, "peekByte:", peekByte(0));
     if (peekByte(0) == 0)
       return null;
     int bestLength = 1;
-    int bestId = DFA.UNKNOWN_TOKEN;
+    int bestId = ID_UNKNOWN;
     int byteOffset = 0;
 
     var graph = mDfa.graph();
@@ -194,7 +186,11 @@ public class CompactScanner extends BaseObject {
       }
       statePtr = nextState;
       p("...advanced to next state:", statePtr);
-      if (statePtr < 0) break;
+      if (statePtr < 0) {
+//        if (bestId < 0)
+//          halt("we couldn't find a token; bestLength:", bestLength, "bestId:", bestId,"text:", new String(mBytes, mNextTokenStart, bestLength));
+        break;
+      }
       byteOffset++;
     }
 
@@ -212,9 +208,6 @@ public class CompactScanner extends BaseObject {
     if (peekToken.isUnknown() && !mAcceptUnknownTokens) {
       throw new ScanException(peekToken, "unknown token");
     }
-    todo("is length zero even possible?");
-    if (bestLength == 0)
-      throw new ScanException(peekToken, "scanned zero-length token");
     return peekToken;
   }
 

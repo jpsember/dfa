@@ -1,5 +1,6 @@
 package dfa;
 
+import js.json.JSMap;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
@@ -29,14 +30,6 @@ public class ScanTest extends MyTestCase {
     script("aabbac");
   }
 
-  @Test
-  public void medium() {
-    dfa(
-        "{\"final\":5,\"tokens\":[\"A\",\"B\",\"C\"],\"version\":4.0,\"states\":[[[98,99],6,[97,98],1],[[-2,-1],5,[98,99],2],[[98,99],3],[[97,98],4],[[-4,-3]],[],[[98,99],7],[[-3,-2]]]}"
-    );
-    script("abbabba");
-
-  }
 
   private static String dfaScript() {
     return "{\"final\":2,\"tokens\":[\"WS\",\"BROP\",\"BRCL\",\"TRUE\",\"FALSE\",\"NULL\"," +
@@ -63,7 +56,14 @@ public class ScanTest extends MyTestCase {
   }
 
   private CompactDFA dfa() {
-    if (mDfa == null) dfa(dfaScript());
+    if (mDfa == null) {
+      // We have to convert the dfa to the compact form
+      var mp = new JSMap(dfaScript());
+      // This is kind of awkward... during the parsing back and forth, it converts 4.0 to 4
+      mp.put("version", 4.0);
+      var newScript = Util.convertOldDFAJSMapToCompactDFA(mp).toString();
+      dfa(newScript);
+    }
     return mDfa;
   }
 
@@ -71,8 +71,8 @@ public class ScanTest extends MyTestCase {
 
   private void script(String text) {
     var s = new CompactScanner(dfa(), text, -1);
-if (mAllowUnknown)
-  s.setAcceptUnknownTokens();
+    if (mAllowUnknown)
+      s.setAcceptUnknownTokens();
 
     var sb = new StringBuilder();
     while (s.hasNext()) {

@@ -64,13 +64,8 @@ public final class Util {
   private static DfaConfig sDfaConfig;
 
   public static CompactDFA convertOldDFAJSMapToCompactDFA(JSMap oldDFAJSMap) {
-    pr("convertOldDFA:",INDENT,oldDFAJSMap);
     var oldDfa = OldDfa.parseDfaUsingBespokeParser(oldDFAJSMap.toString());
-    pr("old dfa:",INDENT,oldDfa.describe());
     var b = new CompactDFABuilder(oldDfa);
-    var built = b.build();
-    // var builtJson = built.toJson();
-    // pr("compact version:", CR, builtJson.toString());
-    return built;
+    return b.build();
   }
 }

@@ -31,10 +31,7 @@ import org.junit.Test;
 import js.base.BasePrinter;
 import js.file.FileException;
 import js.file.Files;
-import js.json.JSMap;
-import js.parsing.DFA;
 import js.parsing.RegExp;
-import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
 import static dfa.ToknUtils.*;

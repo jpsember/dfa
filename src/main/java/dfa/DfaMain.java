@@ -4,11 +4,11 @@ import static js.base.Tools.*;
 
 import js.app.App;
 
-public class Dfa extends App {
+public class DfaMain extends App {
 
   public static void main(String[] args) {
     loadTools();
-    Dfa app = new Dfa();
+    DfaMain app = new DfaMain();
     //app.setCustomArgs("-v ascii");
     app.startApplication(args);
     app.exitWithReturnCode();

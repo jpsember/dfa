@@ -4,7 +4,6 @@ import js.data.ShortArray;
 import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
-import js.parsing.Token;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -16,7 +15,7 @@ import static js.base.Tools.*;
  */
 
 // {
-//   "version" : 5.0,
+//   "version" : "$1",
 //   "tokens" : "space-delimited set of token names",
 //   "graph"  : [ array of integers, described below ]
 // }
@@ -66,6 +65,7 @@ public class CompactDFA {
     return mTokenNames[id];
   }
 
+  @Deprecated // suspect it's unused
   public String[] tokenNames() {
     return mTokenNames;
   }
@@ -146,6 +146,7 @@ public class CompactDFA {
     return (b >= '0' && b <= '9') || b == '-';
   }
 
+  @Deprecated // suspect it's unused
   public int numTokens() {
     return mTokenNames.length;
   }
