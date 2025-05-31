@@ -78,8 +78,8 @@ public class DfaOper extends AppOper {
 
     DFACompiler compiler = new DFACompiler();
     compiler.setVerbose(verbose());
-    JSMap jsonMap = compiler.parse(Files.readString(sourceFile));
-    String str = jsonMap.toString();
+    var compactDFA = compiler.parse(Files.readString(sourceFile));
+    String str = compactDFA.toString();
     log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
 
@@ -99,11 +99,8 @@ public class DfaOper extends AppOper {
 
 
 
-
-
-
     procIdsFile(compiler.tokenNames());
-    processExampleText(jsonMap);
+    processExampleText(compactDFA);
   }
 
   @Override
@@ -252,7 +249,7 @@ public class DfaOper extends AppOper {
     return file;
   }
 
-  private void processExampleText(JSMap dfaJson) {
+  private void processExampleText(CompactDFA dfa) {
     var sampleTextFile = config().exampleText();
     if (Files.empty(sampleTextFile))
       return;
@@ -260,12 +257,12 @@ public class DfaOper extends AppOper {
     sampleTextFile = sampleTextFile.getAbsoluteFile();
 
     var text = Files.readString(Files.assertExists(sampleTextFile, "example_text"));
-    var dfa = new DFA(dfaJson);
+   // var dfa = new DFA(dfaJson);
     var firstToken = dfa.tokenName(0);
     int skip = -1;
     if (firstToken.equals("WS"))
       skip = 0;
-    var s = new Scanner(dfa, text, skip);
+    var s = new CompactScanner(dfa, text, skip);
 
     var sb = new BasePrinter();
     while (s.hasNext()) {

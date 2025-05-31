@@ -55,6 +55,8 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void simple() {
+    //    A:   a
+    //    B:   b
     proc("abbaaa");
   }
 
@@ -323,21 +325,19 @@ public class CompileTest extends MyTestCase {
     c.setVerbose(verbose());
     mDFAJson = c.parse(mScript);
 
-
+    pr("dfa_json:", INDENT, mDFAJson);
 
     if (true) {
       var oldDfa = DFA.parseDfaUsingBespokeParser(mDFAJson.toString());
       var b = new CompactDFABuilder(oldDfa);
       var built = b.build();
       var builtJson = built.toJson();
-      pr("compact version:",CR,builtJson.toString());
+      pr("compact version:", CR, builtJson.toString());
     }
 
 
-
-
-    files().writeString(generatedFile("dfa.json"), mDFAJson.prettyPrint());
-    files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
+    files().writeString(generatedFile("dfa.json"), mDFAJson.toString());
+    //files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
 
     if (sampleText == null) {
       // If there's a sample text file, read it
@@ -356,7 +356,7 @@ public class CompileTest extends MyTestCase {
       StringBuilder sb = new StringBuilder();
 
       // Don't skip any tokens
-      Scanner s = new Scanner(dfa(), sampleText, -1);
+      var s = new CompactScanner(dfa(), sampleText, -1);
       s.setVerbose(verbose());
       while (s.hasNext()) {
         sb.append(s.read());
@@ -370,13 +370,11 @@ public class CompileTest extends MyTestCase {
     assertGenerated();
   }
 
-  private DFA dfa() {
-    if (mDFA == null)
-      mDFA = new DFA(mDFAJson);
-    return mDFA;
+  private CompactDFA dfa() {
+    return mDFAJson;
   }
 
   private String mScript;
-  private JSMap mDFAJson;
-  private DFA mDFA;
+  private CompactDFA mDFAJson;
+//  private DFA mDFA;
 }

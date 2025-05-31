@@ -1,6 +1,10 @@
 package dfa;
 
 import dfa.gen.DfaConfig;
+import js.json.JSMap;
+import js.parsing.DFA;
+
+import static js.base.Tools.*;
 
 public final class Util {
 
@@ -58,4 +62,14 @@ public final class Util {
   }
 
   private static DfaConfig sDfaConfig;
+
+  public static CompactDFA convertOldDFAJSMapToCompactDFA(JSMap oldDFAJSMap) {
+    pr("convertOldDFA:",INDENT,oldDFAJSMap);
+    var oldDfa = DFA.parseDfaUsingBespokeParser(oldDFAJSMap.toString());
+    var b = new CompactDFABuilder(oldDfa);
+    var built = b.build();
+    // var builtJson = built.toJson();
+    // pr("compact version:", CR, builtJson.toString());
+    return built;
+  }
 }

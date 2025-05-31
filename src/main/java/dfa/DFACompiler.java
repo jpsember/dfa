@@ -10,7 +10,6 @@ import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
-import js.parsing.DFA;
 import js.parsing.RegExp;
 
 import static js.base.Tools.*;
@@ -18,7 +17,7 @@ import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
-  public JSMap parse(String script) {
+  public CompactDFA parse(String script) {
     int next_token_id = 0;
     List<RegParse> token_records = arrayList();
 
@@ -111,7 +110,9 @@ public final class DFACompiler extends BaseObject {
     if (nonEmpty(redundantTokenNames))
       badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
 
-    return constructJsonDFA(token_records, dfa);
+    var jsmap =
+        constructOldDFAJSMap(token_records, dfa);
+    return  convertOldDFAJSMapToCompactDFA(jsmap);
   }
 
   public List<String> tokenNames() {
@@ -177,7 +178,12 @@ public final class DFACompiler extends BaseObject {
   // Regex for token names preceding regular expressions
   private static Pattern TOKENNAME_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*\\s*:\\s*.*");
 
-  private JSMap constructJsonDFA(List<RegParse> token_records, OurState startState) {
+  /**
+   * This constructs a JSMap representing the OLD (non-compact) DFA.
+   *
+   * We'll need to convert it to the compact form...
+   */
+  private JSMap constructOldDFAJSMap(List<RegParse> token_records, OurState startState) {
 
     // These optimizations are only useful to reduce the size of the DFA files on disk,
     // and only by about 20%.  In memory, they have no effect; so for simplicity in
