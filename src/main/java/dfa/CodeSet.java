@@ -63,11 +63,9 @@ public final class CodeSet implements Comparable<CodeSet> {
 
   /**
    * Add a contiguous range of values to the set
-   * 
-   * @param lower
-   *          minimum value in range
-   * @param upper
-   *          one plus maximum value in range
+   *
+   * @param lower minimum value in range
+   * @param upper one plus maximum value in range
    */
   public void add(int lower, int upper) {
 
@@ -159,7 +157,9 @@ public final class CodeSet implements Comparable<CodeSet> {
     return combineWith(s, false);
   }
 
-  /** Calculate the intersection of this set and another */
+  /**
+   * Calculate the intersection of this set and another
+   */
   public CodeSet intersect(CodeSet s) {
     return combineWith(s, true);
   }
@@ -253,11 +253,10 @@ public final class CodeSet implements Comparable<CodeSet> {
 
   /**
    * Construct result of combining this CodeSet with another
-   * 
+   *
    * @param code_set
-   * @param intersect
-   *          if true, returns this ^ code_set; otherwise, returns this -
-   *          code_set
+   * @param intersect if true, returns this ^ code_set; otherwise, returns this -
+   *                  code_set
    */
   private CodeSet combineWith(CodeSet code_set, boolean intersect) {
 

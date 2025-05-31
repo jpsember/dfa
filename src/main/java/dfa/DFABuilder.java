@@ -2,18 +2,19 @@ package dfa;
 
 import js.data.IntArray;
 import js.data.ShortArray;
+import js.parsing.DFA;
 
 import java.util.List;
 
 import static js.base.Tools.*;
 
-class CompactDFABuilder {
+class DFABuilder {
 
-  public CompactDFABuilder(OldDfa dfa) {
+  public DFABuilder(OldDfa dfa) {
     mDfa = dfa;
   }
 
-  public CompactDFA build() {
+  public DFA build() {
     if (mBuilt != null) return mBuilt;
     var dfa = mDfa;
     var g = mGraph;
@@ -28,7 +29,7 @@ class CompactDFABuilder {
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
-    mBuilt = new CompactDFA(CompactDFA.VERSION, dfa.tokenNames(), graph);
+    mBuilt = new DFA(DFA.VERSION, dfa.tokenNames(), graph);
     return mBuilt;
   }
 
@@ -123,7 +124,7 @@ class CompactDFABuilder {
   private OldDfa mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
   private List<Integer> mStateAddresses = arrayList();
-  private CompactDFA mBuilt;
+  private DFA mBuilt;
   private Integer mFirstDebugStateId;
 
 }

@@ -13,7 +13,6 @@ import js.base.BasePrinter;
 import js.base.SystemCall;
 import js.data.AbstractData;
 import js.file.Files;
-import js.json.JSMap;
 import js.parsing.DFA;
 import js.parsing.Scanner;
 
@@ -83,21 +82,13 @@ public class DfaOper extends AppOper {
     log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
 
-
-
-
-
-
-
-    if (true) {
+    if (false) {
       var oldDfa = OldDfa.parseDfaUsingBespokeParser(str);
-      var b = new CompactDFABuilder(oldDfa);
+      var b = new DFABuilder(oldDfa);
       var built = b.build();
       var builtJson = built.toJson();
-      pr("compact version:",CR,builtJson.toString());
+      pr("compact version:", CR, builtJson.toString());
     }
-
-
 
     procIdsFile(compiler.tokenNames());
     processExampleText(compactDFA);
@@ -249,7 +240,7 @@ public class DfaOper extends AppOper {
     return file;
   }
 
-  private void processExampleText(CompactDFA dfa) {
+  private void processExampleText(DFA dfa) {
     var sampleTextFile = config().exampleText();
     if (Files.empty(sampleTextFile))
       return;
@@ -257,12 +248,12 @@ public class DfaOper extends AppOper {
     sampleTextFile = sampleTextFile.getAbsoluteFile();
 
     var text = Files.readString(Files.assertExists(sampleTextFile, "example_text"));
-   // var dfa = new DFA(dfaJson);
+    // var dfa = new DFA(dfaJson);
     var firstToken = dfa.tokenName(0);
     int skip = -1;
     if (firstToken.equals("WS"))
       skip = 0;
-    var s = new CompactScanner(dfa, text, skip);
+    var s = new Scanner(dfa, text, skip);
 
     var sb = new BasePrinter();
     while (s.hasNext()) {

@@ -10,6 +10,7 @@ import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
+import js.parsing.DFA;
 import js.parsing.RegExp;
 
 import static js.base.Tools.*;
@@ -17,7 +18,7 @@ import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
-  public CompactDFA parse(String script) {
+  public DFA parse(String script) {
     int next_token_id = 0;
     List<RegParse> token_records = arrayList();
 
@@ -112,7 +113,7 @@ public final class DFACompiler extends BaseObject {
 
     var jsmap =
         constructOldDFAJSMap(token_records, dfa);
-    return  convertOldDFAJSMapToCompactDFA(jsmap);
+    return convertOldDFAJSMapToCompactDFA(jsmap);
   }
 
   public List<String> tokenNames() {

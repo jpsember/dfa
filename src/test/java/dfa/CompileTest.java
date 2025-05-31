@@ -26,6 +26,8 @@ package dfa;
 import static js.base.Tools.*;
 import static org.junit.Assert.*;
 
+import js.parsing.DFA;
+import js.parsing.Scanner;
 import org.junit.Test;
 
 import js.base.BasePrinter;
@@ -341,7 +343,7 @@ public class CompileTest extends MyTestCase {
       StringBuilder sb = new StringBuilder();
 
       // Don't skip any tokens
-      var s = new CompactScanner(dfa(), sampleText, -1);
+      var s = new Scanner(dfa(), sampleText, -1);
       s.setVerbose(verbose());
       while (s.hasNext()) {
         sb.append(s.read());
@@ -355,10 +357,10 @@ public class CompileTest extends MyTestCase {
     assertGenerated();
   }
 
-  private CompactDFA dfa() {
+  private DFA dfa() {
     return mDFAJson;
   }
 
   private String mScript;
-  private CompactDFA mDFAJson;
+  private DFA mDFAJson;
 }

@@ -51,12 +51,12 @@ public class CompactTest extends MyTestCase {
   private void script(String text) {
     loadTools();
     var dfa = new OldDfa(text);
-    var b = new CompactDFABuilder(dfa);
+    var b = new DFABuilder(dfa);
     var built = b.build();
     var builtJson = built.toJson();
     var builtStr = builtJson.toString();
     generateMessage("built.json", builtStr);
-    var parsed = CompactDFA.parse(builtStr);
+    var parsed = DFA.parse(builtStr);
     var parsedStr = parsed.toString();
     generateMessage("parse.json", parsedStr);
 

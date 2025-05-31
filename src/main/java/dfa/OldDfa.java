@@ -291,7 +291,7 @@ public class OldDfa {
     }
 
     // Validate the version number, and final state index
-    checkArgument(mp.get("version").equals("4.0"), "unexpected version",INDENT,mp);
+    checkArgument(mp.get("version").equals("4.0"), "unexpected version", INDENT, mp);
 
     var finalStateIndex = Integer.parseInt(mp.get("final"));
 

@@ -1,6 +1,7 @@
 package dfa;
 
 import js.json.JSMap;
+import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
@@ -52,10 +53,10 @@ public class ScanTest extends MyTestCase {
 
   private void dfa(String s) {
     log("parsing dfa from:", INDENT, s);
-    mDfa = CompactDFA.parse(s);
+    mDfa = DFA.parse(s);
   }
 
-  private CompactDFA dfa() {
+  private DFA dfa() {
     if (mDfa == null) {
       // We have to convert the dfa to the compact form
       var mp = new JSMap(dfaScript());
@@ -67,10 +68,10 @@ public class ScanTest extends MyTestCase {
     return mDfa;
   }
 
-  private CompactDFA mDfa;
+  private DFA mDfa;
 
   private void script(String text) {
-    var s = new CompactScanner(dfa(), text, -1);
+    var s = new Scanner(dfa(), text, -1);
     if (mAllowUnknown)
       s.setAcceptUnknownTokens();
 
@@ -82,7 +83,6 @@ public class ScanTest extends MyTestCase {
     }
 
     generateMessage(sb);
-
     assertGenerated();
   }
 

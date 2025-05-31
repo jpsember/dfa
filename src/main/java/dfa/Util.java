@@ -4,8 +4,6 @@ import dfa.gen.DfaConfig;
 import js.json.JSMap;
 import js.parsing.DFA;
 
-import static js.base.Tools.*;
-
 public final class Util {
 
   public static final String EXT_RXP = "rxp" //
@@ -63,9 +61,9 @@ public final class Util {
 
   private static DfaConfig sDfaConfig;
 
-  public static CompactDFA convertOldDFAJSMapToCompactDFA(JSMap oldDFAJSMap) {
+  public static DFA convertOldDFAJSMapToCompactDFA(JSMap oldDFAJSMap) {
     var oldDfa = OldDfa.parseDfaUsingBespokeParser(oldDFAJSMap.toString());
-    var b = new CompactDFABuilder(oldDfa);
+    var b = new DFABuilder(oldDfa);
     return b.build();
   }
 }
