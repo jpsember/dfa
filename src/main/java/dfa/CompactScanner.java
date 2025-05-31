@@ -33,10 +33,8 @@ import js.base.BaseObject;
 
 import js.parsing.*;
 
-
 public class CompactScanner extends BaseObject {
 
-  public static final int ID_UNKNOWN = -1;
   private static final int SKIP_ID_NONE = -2;
   private static final boolean DEBUG = false && alert("DEBUG in effect");
 
@@ -118,7 +116,7 @@ public class CompactScanner extends BaseObject {
     if (peekByte(0) == 0)
       return null;
     int bestLength = 1;
-    int bestId = ID_UNKNOWN;
+    int bestId = Token.ID_UNKNOWN;
     int byteOffset = 0;
 
     var graph = mDfa.graph();

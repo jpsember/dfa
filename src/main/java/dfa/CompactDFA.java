@@ -4,6 +4,7 @@ import js.data.ShortArray;
 import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
+import js.parsing.Token;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -60,7 +61,7 @@ public class CompactDFA {
   }
 
   public String tokenName(int id) {
-    if (id == DFA.UNKNOWN_TOKEN)
+    if (id == Token.ID_UNKNOWN)
       return "<UNKNOWN>";
     return mTokenNames[id];
   }

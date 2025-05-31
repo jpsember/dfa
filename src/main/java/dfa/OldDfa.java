@@ -3,6 +3,7 @@ package dfa;
 import js.data.DataUtil;
 import js.json.JSList;
 import js.json.JSMap;
+import js.parsing.Token;
 
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,6 @@ import static js.base.Tools.*;
  * is here to facilitate construction of the new ('compact') Dfa.
  */
 public class OldDfa {
-
-  public static final int UNKNOWN_TOKEN = -1;
 
   OldDfa() {
   }
@@ -82,7 +81,7 @@ public class OldDfa {
    * 0...n-1
    */
   public String tokenName(int tokenId) {
-    if (tokenId == UNKNOWN_TOKEN)
+    if (tokenId == Token.ID_UNKNOWN)
       return "<UNKNOWN>";
     return mTokenNames[tokenId];
   }

@@ -2,9 +2,7 @@ package dfa;
 
 import js.data.IntArray;
 import js.data.ShortArray;
-import js.parsing.DFA;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static js.base.Tools.*;
@@ -35,10 +33,6 @@ class CompactDFABuilder {
   }
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
-
-//  public void addAState(OurState s) {
-//    mDebStates.add(s);
-//  }
 
   private void addState(OurState s) {
     // <state> ::= <edge count> <edge>*
@@ -122,17 +116,14 @@ class CompactDFABuilder {
     return s.array();
   }
 
-
   private int numTokens() {
     return mDfa.tokenNames().length;
   }
 
   private OldDfa mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
-  //  private Map<Integer, Integer> mStateIdMap;
   private List<Integer> mStateAddresses = arrayList();
   private CompactDFA mBuilt;
   private Integer mFirstDebugStateId;
-//  private List<OurState> mDebStates = arrayList();
 
 }
