@@ -90,7 +90,7 @@ public class DfaOper extends AppOper {
 
 
     if (true) {
-      var oldDfa = DFA.parseDfaUsingBespokeParser(str);
+      var oldDfa = OldDfa.parseDfaUsingBespokeParser(str);
       var b = new CompactDFABuilder(oldDfa);
       var built = b.build();
       var builtJson = built.toJson();

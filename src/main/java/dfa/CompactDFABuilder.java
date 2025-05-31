@@ -11,7 +11,7 @@ import static js.base.Tools.*;
 
 class CompactDFABuilder {
 
-  public CompactDFABuilder(DFA dfa) {
+  public CompactDFABuilder(OldDfa dfa) {
     mDfa = dfa;
   }
 
@@ -19,13 +19,13 @@ class CompactDFABuilder {
     if (mBuilt != null) return mBuilt;
     var dfa = mDfa;
     var g = mGraph;
-    var sc = mDebStates.size();
-     mFirstDebugStateId = mDebStates.get(0).debugId();
+    var sc = states().length;
+    mFirstDebugStateId = states()[0].debugId();
 
     // <graph> ::= <int: # of states> <state>*
     g.add(sc);
 
-    for (var state : mDebStates)
+    for (var state : states())
       addState(state);
 
     convertStateIdsToAddresses();
@@ -36,9 +36,9 @@ class CompactDFABuilder {
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
-  public void addAState(OurState s) {
-    mDebStates.add(s);
-  }
+//  public void addAState(OurState s) {
+//    mDebStates.add(s);
+//  }
 
   private void addState(OurState s) {
     // <state> ::= <edge count> <edge>*
@@ -66,7 +66,7 @@ class CompactDFABuilder {
 
   private int stateIndex(int debugStateId) {
     var result = debugStateId - mFirstDebugStateId;
-    checkArgument(result >= 0 && result < mDebStates.size(), "can't find state index for:", debugStateId);
+    checkArgument(result >= 0 && result < states().length, "can't find state index for:", debugStateId);
     return result;
   }
 
@@ -90,6 +90,10 @@ class CompactDFABuilder {
       g.add(a);
       g.add(b);
     }
+  }
+
+  private OurState[] states() {
+    return mDfa.debStates();
   }
 
   private void convertStateIdsToAddresses() {
@@ -123,12 +127,12 @@ class CompactDFABuilder {
     return mDfa.tokenNames().length;
   }
 
-  private DFA mDfa;
+  private OldDfa mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
   //  private Map<Integer, Integer> mStateIdMap;
   private List<Integer> mStateAddresses = arrayList();
   private CompactDFA mBuilt;
   private Integer mFirstDebugStateId;
-private List<OurState> mDebStates = arrayList();
+//  private List<OurState> mDebStates = arrayList();
 
 }

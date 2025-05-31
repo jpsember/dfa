@@ -55,8 +55,6 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void simple() {
-    //    A:   a
-    //    B:   b
     proc("abbaaa");
   }
 
@@ -327,8 +325,8 @@ public class CompileTest extends MyTestCase {
 
     pr("dfa_json:", INDENT, mDFAJson);
 
-    if (true) {
-      var oldDfa = DFA.parseDfaUsingBespokeParser(mDFAJson.toString());
+    if (false) {
+      var oldDfa = OldDfa.parseDfaUsingBespokeParser(mDFAJson.toString());
       var b = new CompactDFABuilder(oldDfa);
       var built = b.build();
       var builtJson = built.toJson();
@@ -337,6 +335,7 @@ public class CompileTest extends MyTestCase {
 
 
     files().writeString(generatedFile("dfa.json"), mDFAJson.toString());
+    todo("refactor the describe() method to work with the compact dfa");
     //files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
 
     if (sampleText == null) {
