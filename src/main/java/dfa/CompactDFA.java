@@ -4,6 +4,7 @@ import js.data.ShortArray;
 import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
+import js.parsing.Token;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -32,7 +33,6 @@ import static js.base.Tools.*;
 // <dest_state_id> ::= offset of state within graph
 //
 public class CompactDFA {
-
 
   public static String VERSION = "$1";
 
@@ -64,6 +64,10 @@ public class CompactDFA {
     if (id == DFA.UNKNOWN_TOKEN)
       return "<UNKNOWN>";
     return mTokenNames[id];
+  }
+
+  public String[] tokenNames() {
+    return mTokenNames;
   }
 
   private String mVersion;

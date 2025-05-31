@@ -3,8 +3,6 @@ package dfa;
 import js.data.IntArray;
 import js.data.ShortArray;
 import js.parsing.DFA;
-import js.parsing.Edge;
-import js.parsing.State;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +19,13 @@ class CompactDFABuilder {
     if (mBuilt != null) return mBuilt;
     var dfa = mDfa;
     var g = mGraph;
-    var sc = dfa.debStates().length;
-    mFirstDebugStateId = dfa.debStates()[0].debugId();
+    var sc = mDebStates.size();
+     mFirstDebugStateId = mDebStates.get(0).debugId();
 
     // <graph> ::= <int: # of states> <state>*
     g.add(sc);
 
-    for (var state : dfa.debStates())
+    for (var state : mDebStates)
       addState(state);
 
     convertStateIdsToAddresses();
@@ -38,7 +36,11 @@ class CompactDFABuilder {
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
-  private void addState(State s) {
+  public void addAState(OurState s) {
+    mDebStates.add(s);
+  }
+
+  private void addState(OurState s) {
     // <state> ::= <edge count> <edge>*
     var g = mGraph;
     mStateAddresses.add(g.size());
@@ -47,7 +49,7 @@ class CompactDFABuilder {
       addEdge(edge);
   }
 
-  private void addEdge(Edge edge) {
+  private void addEdge(OurEdge edge) {
     // <edge>  ::= <int: number of char_range items> <char_range>* <dest_state_id>
     var g = mGraph;
 
@@ -64,11 +66,11 @@ class CompactDFABuilder {
 
   private int stateIndex(int debugStateId) {
     var result = debugStateId - mFirstDebugStateId;
-    checkArgument(result >= 0 && result < mDfa.debStates().length, "can't find state index for:", debugStateId);
+    checkArgument(result >= 0 && result < mDebStates.size(), "can't find state index for:", debugStateId);
     return result;
   }
 
-  private int stateIndex(State s) {
+  private int stateIndex(OurState s) {
     return stateIndex(s.debugId());
   }
 
@@ -124,8 +126,9 @@ class CompactDFABuilder {
   private DFA mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
   //  private Map<Integer, Integer> mStateIdMap;
-  private List<Integer> mStateAddresses = new ArrayList();
+  private List<Integer> mStateAddresses = arrayList();
   private CompactDFA mBuilt;
   private Integer mFirstDebugStateId;
+private List<OurState> mDebStates = arrayList();
 
 }

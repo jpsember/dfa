@@ -112,14 +112,14 @@ public class CompactScanner extends BaseObject {
     return peek(0);
   }
 
-  private static int stateNum(DFA dfa, State state) {
-    int i = INIT_INDEX;
-    for (var s : dfa.debStates()) {
-      i++;
-      if (s == state) return i;
-    }
-    throw badArg("can't find state:", state);
-  }
+//  private static int stateNum(DFA dfa, State state) {
+//    int i = INIT_INDEX;
+//    for (var s : dfa.debStates()) {
+//      i++;
+//      if (s == state) return i;
+//    }
+//    throw badArg("can't find state:", state);
+//  }
 
   private Token peekAux() {
     p("peekAux, nextTokenStart", mNextTokenStart, "peekByte:", peekByte(0));
