@@ -320,17 +320,6 @@ public class CompileTest extends MyTestCase {
     c.setVerbose(verbose());
     mDFAJson = c.parse(mScript);
 
-    pr("dfa_json:", INDENT, mDFAJson);
-
-    if (false) {
-      var oldDfa = OldDfa.parseDfaUsingBespokeParser(mDFAJson.toString());
-      var b = new CompactDFABuilder(oldDfa);
-      var built = b.build();
-      var builtJson = built.toJson();
-      pr("compact version:", CR, builtJson.toString());
-    }
-
-
     files().writeString(generatedFile("dfa.json"), mDFAJson.toString());
     todo("refactor the describe() method to work with the compact dfa");
     //files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
@@ -372,5 +361,4 @@ public class CompileTest extends MyTestCase {
 
   private String mScript;
   private CompactDFA mDFAJson;
-//  private DFA mDFA;
 }

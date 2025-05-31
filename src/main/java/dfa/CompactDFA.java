@@ -3,7 +3,6 @@ package dfa;
 import js.data.ShortArray;
 import js.json.JSList;
 import js.json.JSMap;
-import js.parsing.DFA;
 import js.parsing.Token;
 
 import java.nio.charset.StandardCharsets;

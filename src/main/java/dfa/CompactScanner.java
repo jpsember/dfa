@@ -33,7 +33,7 @@ import js.base.BaseObject;
 
 import js.parsing.*;
 
-public class CompactScanner extends BaseObject {
+public class  CompactScanner extends BaseObject {
 
   private static final int SKIP_ID_NONE = -2;
   private static final boolean DEBUG = false && alert("DEBUG in effect");
