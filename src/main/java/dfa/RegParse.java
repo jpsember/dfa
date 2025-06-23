@@ -30,7 +30,6 @@ public final class RegParse {
    *                         came from
    */
   public void parse(String script, Map<String, RegParse> tokenDefMap, int sourceLineNumber) {
-
     var p = new BespokeRegParse();
     var states = p.parse(script, tokenDefMap, sourceLineNumber);
     mStartState = states[0];
