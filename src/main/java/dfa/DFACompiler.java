@@ -80,7 +80,13 @@ public final class DFACompiler extends BaseObject {
       }
       todo("Issue #5: refactor this interface, and supply a new implementation?");
       var rex = new RegParse(token_id, tokenName);
-      rex.parse(expr, tokenNameMap, line_number);
+
+//      var parser = rex.parser();
+//
+//
+//      var states = parser.parse(expr, tokenNameMap, line_number);
+
+  rex.parse(expr, tokenNameMap, line_number);
 
       if (tokenNameMap.containsKey(tokenName))
         throw badArg("Duplicate token name", line_number, line);
