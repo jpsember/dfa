@@ -81,22 +81,20 @@ final class RegParse {
     return mName;
   }
 
+  @Deprecated // refactor
   public int id() {
     return mId;
   }
 
   /**
    * Parse a regular expression
-   * 
-   * @param script
-   *          script to parse
-   * @param tokenDefMap
-   *          a map of previously parsed regular expressions (mapping names to
-   *          ids) to be consulted if a curly brace expression appears in the
-   *          script
-   * @param sourceLineNumber
-   *          for error reporting, the line number where the regular expression
-   *          came from
+   *
+   * @param script           script to parse
+   * @param tokenDefMap      a map of previously parsed regular expressions (mapping names to
+   *                         ids) to be consulted if a curly brace expression appears in the
+   *                         script
+   * @param sourceLineNumber for error reporting, the line number where the regular expression
+   *                         came from
    */
   public void parse(String script, Map<String, RegParse> tokenDefMap, int sourceLineNumber) {
     mOrigScript = script;
@@ -125,19 +123,19 @@ final class RegParse {
     for (int pos = 0; pos < s.length(); pos++) {
       int ch = s.charAt(pos);
       switch (ch) {
-      case ' ':
-      case '\t':
-        if (escaped)
+        case ' ':
+        case '\t':
+          if (escaped)
+            escaped = false;
+          else
+            ch = -1;
+          break;
+        case '\\':
+          escaped = !escaped;
+          break;
+        default:
           escaped = false;
-        else
-          ch = -1;
-        break;
-      case '\\':
-        escaped = !escaped;
-        break;
-      default:
-        escaped = false;
-        break;
+          break;
       }
       if (ch >= 0)
         result.append((char) ch);
@@ -227,7 +225,6 @@ final class RegParse {
       read();
 
       c = read();
-      val = c;
 
       if (c == '0') {
         c = read();
@@ -242,30 +239,30 @@ final class RegParse {
         val = (read_hex() << 12) | (read_hex() << 8) | (read_hex() << 4) | read_hex();
       } else {
         switch (c) {
-        case 'f':
-          val = '\f';
-          break;
-        case 'r':
-          val = '\r';
-          break;
-        case 'n':
-          val = '\n';
-          break;
-        case 't':
-          val = '\t';
-          break;
-        case 's':
-          val = ' ';
-          break;
-        default:
-          // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
-          // that's a problem, since it is most likely not what the user intended
-          final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          case 'f':
+            val = '\f';
+            break;
+          case 'r':
+            val = '\r';
+            break;
+          case 'n':
+            val = '\n';
+            break;
+          case 't':
+            val = '\t';
+            break;
+          case 's':
+            val = ' ';
+            break;
+          default:
+            // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
+            // that's a problem, since it is most likely not what the user intended
+            final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-          if (charWithin(c, noEscapeChars))
-            abort("Unsupported escape sequence:", quote(c));
-          val = c;
-          break;
+            if (charWithin(c, noEscapeChars))
+              throw abort("Unsupported escape sequence:", quote(c));
+            val = c;
+            break;
         }
       }
     }
@@ -300,30 +297,18 @@ final class RegParse {
   }
 
   private StatePair parseBracketExpr() {
-    boolean db = false;
-    if (db)
-      pr("parseBracketExpr");
-
     read('[');
 
     CodeSet rightSet = null;
     CodeSet leftSet = parseSetSeq();
-    if (db)
-      pr("left set:", leftSet);
-
     if (read_if('^')) {
-      if (db)
-        pr("^ negative follows");
       rightSet = parseSetSeq();
-      if (db)
-        pr("parsed right set:", rightSet);
-
     }
 
     read(']');
 
     if (leftSet == null && rightSet == null) {
-      abort("Empty character range");
+      throw abort("Empty character range");
     }
     if (leftSet == null)
       leftSet = CodeSet.withRange(1, 256);
@@ -333,7 +318,7 @@ final class RegParse {
       result = result.difference(rightSet);
 
     if (result.isEmpty())
-      abort("Empty character range");
+      throw abort("Empty character range");
 
     OurState sA = new OurState();
     OurState sB = new OurState();
@@ -377,33 +362,33 @@ final class RegParse {
     char ch = peek(0);
     StatePair e1;
     switch (ch) {
-    case '(': {
-      read();
-      e1 = parseE();
-      read(')');
-    }
+      case '(': {
+        read();
+        e1 = parseE();
+        read(')');
+      }
       break;
-    case '^':
-      read();
-      e1 = parseP();
-      e1 = construct_complement(e1);
-      break;
-    case '{':
-    case '$':
-      e1 = parseTokenDef();
-      break;
-    case '[':
-      e1 = parseBracketExpr();
-      break;
-    default: {
-      CodeSet code_set = parse_code_set(false);
-      // Construct a pair of states with an edge between them
-      // labelled with this code set
-      OurState sA = new OurState();
-      OurState sB = new OurState();
-      ToknUtils.addEdge(sA, code_set.elements(), sB);
-      e1 = statePair(sA, sB);
-    }
+      case '^':
+        read();
+        e1 = parseP();
+        e1 = construct_complement(e1);
+        break;
+      case '{':
+      case '$':
+        e1 = parseTokenDef();
+        break;
+      case '[':
+        e1 = parseBracketExpr();
+        break;
+      default: {
+        CodeSet code_set = parse_code_set(false);
+        // Construct a pair of states with an edge between them
+        // labelled with this code set
+        OurState sA = new OurState();
+        OurState sB = new OurState();
+        ToknUtils.addEdge(sA, code_set.elements(), sB);
+        e1 = statePair(sA, sB);
+      }
       break;
     }
     return e1;
@@ -492,35 +477,31 @@ final class RegParse {
     OurState nfa_end = statesp.end;
     checkArgument(!nfa_start.finalState() && !nfa_end.finalState());
 
-    nfa_end = new OurState(false, nfa_end.edges());
+    //nfa_end = new OurState(false, nfa_end.edges());
 
     NFAToDFA builder = new NFAToDFA();
     OurState dfa_start_state = builder.convertNFAToDFA(nfa_start);
 
     List<OurState> states = ToknUtils.reachableStates(dfa_start_state);
 
-    /**
-     * <pre>
-     *
-        + Let S be the DFA's start state
-        + Create F, a new final state
-        + for each state X in the DFA (excluding F):
-          + if X is a final state, clear its final state flag;
-          + otherwise:
-            + construct C, a set of labels that is the complement of the union of any existing edge labels from X
-            + if C is nonempty, add transition on C from X to F
-            + if X is not the start state, add e-transition from X to F
-        + augment original NFA by copying each state X to a state X' (clearing final state flags)
-        + return [S', F']
-     * 
-     * </pre>
-     * 
-     * We don't process any final states in the above loop, because we've sort
-     * of "lost" once we reach a final state no matter what edges leave that
-     * state. This is because we're looking for substrings of the input string
-     * to find matches, instead of just answering a yes/no recognition question
-     * for an (entire) input string.
-     */
+    //
+    //        + Let S be the DFA's start state
+    //        + Create F, a new final state
+    //        + for each state X in the DFA (excluding F):
+    //          + if X is a final state, clear its final state flag;
+    //          + otherwise:
+    //            + construct C, a set of labels that is the complement of the union of any existing edge labels from X
+    //            + if C is nonempty, add transition on C from X to F
+    //            + if X is not the start state, add e-transition from X to F
+    //        + augment original NFA by copying each state X to a state X' (clearing final state flags)
+    //        + return [S', F']
+    //
+    //     We don't process any final states in the above loop, because we've sort
+    //     of "lost" once we reach a final state no matter what edges leave that
+    //     state. This is because we're looking for substrings of the input string
+    //     to find matches, instead of just answering a yes/no recognition question
+    //     for an (entire) input string.
+    //
 
     OurState f = new OurState(false, null);
 
