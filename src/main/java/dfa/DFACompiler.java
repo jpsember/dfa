@@ -78,6 +78,7 @@ public final class DFACompiler extends BaseObject {
         token_id = next_token_id;
         next_token_id++;
       }
+      todo("Issue #5: refactor this interface, and supply a new implementation?");
       RegParse rex = new RegParse(token_id, tokenName);
       rex.parse(expr, tokenNameMap, line_number);
 
