@@ -30,7 +30,7 @@ public final class TokenDefinition {
    *                    script
    */
   public void parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
-    var p = new TokenRegParse();
+    var p = new TokenDefinitionParser();
     var states = p.parse(scanner, tokenDefMap);
     mStartState = states[0];
     mEndState = states[1];

@@ -27,7 +27,7 @@ public final class DFACompiler extends BaseObject {
   private void parseExpressions(String script, boolean debug) {
     var scanner = new Scanner(getDfa(), script);
     while (scanner.hasNext()) {
-      var exprId = scanner.read(TokenRegParse.T_TOKENID);
+      var exprId = scanner.read(TokenDefinitionParser.T_TOKENID);
       var tokenName = chomp(exprId.text(), ":");
 
       // Give it the next available token id, if it's not an anonymous token; else -1
