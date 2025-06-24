@@ -25,10 +25,6 @@ public class OldDfa {
     constructFromJson(new JSMap(script));
   }
 
-  public OldDfa(JSMap json) {
-    constructFromJson(json);
-  }
-
   private void constructFromJson(JSMap map) {
     State.bumpIds();
     if (map.getDouble("version") < 3.0)

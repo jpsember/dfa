@@ -20,7 +20,7 @@ class DFABuilder {
     var g = mGraph;
     var sc = states().length;
     mFirstDebugStateId = states()[0].debugId();
-todo("!we don't actually need the number of states, except for logging purposes?");
+    todo("!we don't actually need the number of states, except for logging purposes?");
 
     // <graph> ::= <int: # of states> <state>*
     g.add(sc);

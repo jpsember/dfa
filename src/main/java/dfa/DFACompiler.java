@@ -42,7 +42,6 @@ public final class DFACompiler extends BaseObject {
         throw exprId.failWith("Duplicate token name");
 
       rex.parse(scanner, mTokenNameMap);
-      p5("storing token name in map:", tokenName);
 
       mTokenNameMap.put(tokenName, rex);
 
@@ -80,8 +79,6 @@ public final class DFACompiler extends BaseObject {
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
     NFAToDFA builder = new NFAToDFA();
-    if (false) // takes too long on sizeable token files
-      builder.setVerbose(verbose());
     State dfa = builder.convertNFAToDFA(combined);
     if (verbose())
       log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));

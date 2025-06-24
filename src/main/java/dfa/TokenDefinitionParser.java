@@ -150,7 +150,6 @@ public class TokenDefinitionParser {
   private StatePair parsePAREN() {
     StatePair e1;
     var t = peekToken();
-    p5("parsePAREN, next token:", t);
     if (t.id(T_PAROP)) {
       read(T_PAROP);
       e1 = parseALTERNATE();
@@ -224,7 +223,6 @@ public class TokenDefinitionParser {
 
   private CodeSet parse_code_set(boolean within_bracket_expr) {
     int val;
-    p5("parse_code_set, next token:", mScanner.peek());
     if (readIf(T_ASCII)) {
       var tx = mReadToken.text();
       return CodeSet.withValue(tx.charAt(0));

@@ -133,11 +133,11 @@ public final class State implements Comparable<State> {
    */
   public static final int CODEMAX = 256;
 
-  public static final int edgeLabelToTokenId(int edgeLabel) {
+  public static   int edgeLabelToTokenId(int edgeLabel) {
     return EPSILON - 1 - edgeLabel;
   }
 
-  public static final int tokenIdToEdgeLabel(int tokenId) {
+  public static int tokenIdToEdgeLabel(int tokenId) {
     // Note: this does the same calculation as edgeLabelToTokenId
     return EPSILON - 1 - tokenId;
   }

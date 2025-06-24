@@ -9,13 +9,6 @@ import static js.base.Tools.*;
 
 public final class Util {
 
-  public static final boolean ISSUE_5 = false && alert("ISSUE_5 is in effect");
-
-  public static void p5(Object... messages) {
-    if (ISSUE_5)
-      pr(insertStringToFront("ISSUE_5 --->", messages));
-  }
-
   public static final String EXT_RXP = "rxp" //
       , EXT_DFA = "dfa" //
       ;
@@ -24,7 +17,6 @@ public final class Util {
       , FTYPE_RUST = 1 //
       ;
 
-  public static final double DFA_VERSION_3 = 3.0;
   public static final double DFA_VERSION_4 = 4.0;
 
   /**
@@ -40,11 +32,9 @@ public final class Util {
     // If a DFA is being used to scan utf8 or unicode, then a character range that
     // includes 255 will also accept any value > 255.
     //
-    return preVersion4() ? 0x110000 : 255;
-  }
 
-  public static boolean preVersion4() {
-    return dfaConfig().version() < DFA_VERSION_4;
+    // TODO: actually, if a range includes 127, it will also include 127...255
+    return 255;
   }
 
   public static final int MAX_TOKEN_DEF = 1_000;
@@ -77,16 +67,15 @@ public final class Util {
     return b.build();
   }
 
-
   public static DFA getDfa() {
     todo("have utility method for caching DFAs, parsing from resources");
     if (sDFA == null) {
       sDFA = DFA.parse(Files.readString(TokenDefinitionParser.class, "rexp_parser.dfa"));
       return sDFA;
     }
-
     return sDFA;
   }
+
   private static DFA sDFA;
 
 }

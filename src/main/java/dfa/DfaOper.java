@@ -58,7 +58,7 @@ public class DfaOper extends AppOper {
 
     {
       var v = config().version();
-      if (v != DFA_VERSION_3 && v != DFA_VERSION_4)
+      if (v != DFA_VERSION_4)
         app().setError("Unsupported version:", versionString(config().version()));
     }
 
@@ -81,14 +81,6 @@ public class DfaOper extends AppOper {
     String str = compactDFA.toString();
     log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
-
-    if (false) {
-      var oldDfa = OldDfa.parseDfaUsingBespokeParser(str);
-      var b = new DFABuilder(oldDfa);
-      var built = b.build();
-      var builtJson = built.toJson();
-      pr("compact version:", CR, builtJson.toString());
-    }
 
     procIdsFile(compiler.tokenNames());
     processExampleText(compactDFA);
@@ -130,8 +122,8 @@ public class DfaOper extends AppOper {
       content = marker0 + marker1;
     }
 
-    String beforeText = "";
-    String afterText = "";
+    String beforeText;
+    String afterText;
 
     String symbolPrefix = "T_";
     int indent = 4;
@@ -263,7 +255,7 @@ public class DfaOper extends AppOper {
     var results = sb.toString();
     if (verbose())
       pr("Example text tokenization results:", DASHES, CR, results);
-    var sampleResultsValidFile = new File(sampleTextFile.toString() + ".verify");
+    var sampleResultsValidFile = new File(sampleTextFile + ".verify");
     var expectedResults = "";
     if (sampleResultsValidFile.exists())
       expectedResults = Files.readString(sampleResultsValidFile);
@@ -274,7 +266,7 @@ public class DfaOper extends AppOper {
       if (!results.equals(expectedResults)) {
         pr("*** Results have changed");
         if (config().exampleVerify()) {
-          var sampleResultsInvalidFile = new File(sampleTextFile.toString() + ".invalid");
+          var sampleResultsInvalidFile = new File(sampleTextFile  + ".invalid");
           try {
             files().writeString(sampleResultsInvalidFile, results);
             SystemCall sc = new SystemCall();
