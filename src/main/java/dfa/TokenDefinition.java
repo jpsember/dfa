@@ -6,9 +6,9 @@ import static js.base.Tools.*;
 
 import java.util.Map;
 
-public final class RegParse {
+public final class TokenDefinition {
 
-  public RegParse(int id, String name) {
+  public TokenDefinition(int id, String name) {
     mId = id;
     mName = name;
   }
@@ -29,7 +29,7 @@ public final class RegParse {
    *                    ids) to be consulted if a curly brace expression appears in the
    *                    script
    */
-  public void parse(Scanner scanner, Map<String, RegParse> tokenDefMap) {
+  public void parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
     var p = new TokenRegParse();
     var states = p.parse(scanner, tokenDefMap);
     mStartState = states[0];

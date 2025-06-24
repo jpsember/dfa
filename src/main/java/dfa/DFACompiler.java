@@ -1,6 +1,5 @@
 package dfa;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,9 +18,9 @@ import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
-  private List<RegParse> mTokenRecords;
+  private List<TokenDefinition> mTokenRecords;
   // Maps token name to token entry
-  private Map<String, RegParse> mTokenNameMap;
+  private Map<String, TokenDefinition> mTokenNameMap;
   private int next_token_id;
 
 
@@ -40,7 +39,7 @@ public final class DFACompiler extends BaseObject {
         token_id = next_token_id;
         next_token_id++;
       }
-      var rex = new RegParse(token_id, tokenName);
+      var rex = new TokenDefinition(token_id, tokenName);
       if (mTokenNameMap.containsKey(tokenName))
         throw exprId.failWith("Duplicate token name");
 
@@ -253,7 +252,7 @@ public final class DFACompiler extends BaseObject {
    *
    * We'll need to convert it to the compact form...
    */
-  private JSMap constructOldDFAJSMap(List<RegParse> token_records, OurState startState) {
+  private JSMap constructOldDFAJSMap(List<TokenDefinition> token_records, OurState startState) {
 
     // These optimizations are only useful to reduce the size of the DFA files on disk,
     // and only by about 20%.  In memory, they have no effect; so for simplicity in
@@ -270,7 +269,7 @@ public final class DFACompiler extends BaseObject {
 
     JSList list = list();
     mTokenIds = arrayList();
-    for (RegParse ent : token_records) {
+    for (TokenDefinition ent : token_records) {
       list.add(ent.name());
       mTokenIds.add(ent.name());
     }
@@ -347,12 +346,12 @@ public final class DFACompiler extends BaseObject {
    * large NFA, each augmented with an edge labelled with the appropriate token
    * identifier to let the tokenizer see which token led to the final state.
    */
-  private OurState combineNFAs(List<RegParse> token_records) {
+  private OurState combineNFAs(List<TokenDefinition> token_records) {
 
     // Create a new distinguished start state
     //
     OurState start_state = new OurState();
-    for (RegParse regParse : token_records) {
+    for (TokenDefinition regParse : token_records) {
 
       StatePair newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
 
@@ -378,7 +377,7 @@ public final class DFACompiler extends BaseObject {
   /**
    * Determine if any tokens are redundant, and report an error if so
    */
-  private List<String> applyRedundantTokenFilter(List<RegParse> token_records, OurState start_state) {
+  private List<String> applyRedundantTokenFilter(List<TokenDefinition> token_records, OurState start_state) {
     Set<Integer> recognizedTokenIdsSet = treeSet();
     for (OurState state : ToknUtils.reachableStates(start_state)) {
       for (OurEdge edge : state.edges()) {
@@ -390,7 +389,7 @@ public final class DFACompiler extends BaseObject {
     }
 
     List<String> unrecognized = arrayList();
-    for (RegParse rec : token_records) {
+    for (TokenDefinition rec : token_records) {
       if (recognizedTokenIdsSet.contains(rec.id()))
         continue;
       unrecognized.add(rec.name());

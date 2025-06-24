@@ -40,7 +40,7 @@ public class DfaOper extends AppOper {
     b.pr(" \n", "\n\nExisting tokens can be included in regular expressions as $NAME or {NAME}, and");
     b.pr("can include these predefined anonymous tokens:");
     b.pr(" \n", "\n\n");
-    b.pr(Files.readString(RegParse.class, "predef_expr.txt"));
+    b.pr(Files.readString(TokenDefinition.class, "predef_expr.txt"));
   }
 
   @Override

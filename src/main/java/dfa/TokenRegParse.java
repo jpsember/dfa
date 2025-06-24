@@ -59,7 +59,7 @@ import static dfa.Util.*;
 //
 public class TokenRegParse {
 
-  public OurState[] parse(Scanner scanner, Map<String, RegParse> tokenDefMap) {
+  public OurState[] parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
     mTokenDefMap = tokenDefMap;
     mScanner = scanner;
     parseScript();
@@ -176,7 +176,7 @@ public class TokenRegParse {
     var t = read(T_RXREF);
     var s = t.text();
     var nameStr = s.substring(1);
-    RegParse regExp = mTokenDefMap.get(nameStr);
+    TokenDefinition regExp = mTokenDefMap.get(nameStr);
     if (regExp == null)
       throw abortAtToken(t, "undefined token");
     return duplicateNFA(regExp.startState(), regExp.endState());
@@ -349,7 +349,7 @@ public class TokenRegParse {
 
   private OurState mStartState;
   private OurState mEndState;
-  private Map<String, RegParse> mTokenDefMap;
+  private Map<String, TokenDefinition> mTokenDefMap;
   private Scanner mScanner;
   private Token mReadToken;
 
