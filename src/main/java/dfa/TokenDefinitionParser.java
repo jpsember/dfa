@@ -116,7 +116,6 @@ public class TokenDefinitionParser {
       addEps(u, e2.start);
       OurState w = e1.end;
       addEps(w, v);
-      addEps(w, v);
 
       addEps(e1.end, v);
       addEps(e2.end, v);
