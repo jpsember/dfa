@@ -9,14 +9,6 @@ import static dfa.ToknUtils.*;
 import static js.base.Tools.*;
 import static dfa.Util.*;
 
-//   Expressions have one of these types:
-//
-//   ALTERNATE
-//   CONCAT : a Join expression, formed by concatenating one or more together
-//   QUANTIFIED : a Quantified expression; followed optionally by '*', '+', or '?'
-//   QUANTIFIED : a Parenthesized expression, which is optionally surrounded with (), {}, []
-//
-
 //   One or more expressions separated by '|':
 //   ------------------------------------------------
 //   ALTERNATE -> CONCAT '|' ALTERNATE
@@ -69,9 +61,6 @@ public class TokenRegParse implements IParseRegExp {
 
   public OurState[] parse(Scanner scanner, Map<String, RegParse> tokenDefMap) {
     mTokenDefMap = tokenDefMap;
-
-    // Load the DFA
-
     mScanner = scanner;
     parseScript();
     return new OurState[]{startState(), endState()};
@@ -87,15 +76,11 @@ public class TokenRegParse implements IParseRegExp {
     return mEndState;
   }
 
-
   private void parseScript() {
     StatePair sp = parseALTERNATE();
     mStartState = sp.start;
     mEndState = sp.end;
   }
-
-
-  private Token mReadToken;
 
   private boolean hasNext() {
     return mScanner.hasNext();
@@ -150,7 +135,6 @@ public class TokenRegParse implements IParseRegExp {
     return e1;
   }
 
-
   private StatePair parseQUANTIFIED() {
     StatePair e1 = parsePAREN();
     if (readIf(T_ZERO_OR_MORE)) {
@@ -167,7 +151,7 @@ public class TokenRegParse implements IParseRegExp {
   private StatePair parsePAREN() {
     StatePair e1;
     var t = peekToken();
-    p5("parsePAREN, next token:",t);
+    p5("parsePAREN, next token:", t);
     if (t.id(T_PAROP)) {
       read(T_PAROP);
       e1 = parseALTERNATE();
@@ -185,80 +169,18 @@ public class TokenRegParse implements IParseRegExp {
       ToknUtils.addEdge(sA, code_set.elements(), sB);
       e1 = statePair(sA, sB);
     }
-//
-//
-//      char ch = peek(0);
-//    switch (ch) {
-//      case '(': {
-//        read();
-//        e1 = parseALTERNATE();
-//        read(')');
-//      }
-//      break;
-//      case '^':
-//        read();
-//        e1 = parsePAREN();
-//        e1 = construct_complement(e1);
-//        break;
-//      case '{':
-//      case '$':
-//        e1 = parseTokenDef();
-//        break;
-//      case '[':
-//        e1 = parseBracketExpr();
-//        break;
-//      default: {
-//        CodeSet code_set = parse_code_set(false);
-//        // Construct a pair of states with an edge between them
-//        // labelled with this code set
-//        OurState sA = new OurState();
-//        OurState sB = new OurState();
-//        ToknUtils.addEdge(sA, code_set.elements(), sB);
-//        e1 = statePair(sA, sB);
-//      }
-//      break;
     return e1;
   }
-
-
-//  private static final Pattern TOKENREF_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*");
 
   private StatePair parseRegExpReference() {
     var t = read(T_RXREF);
     var s = t.text();
-    checkArgument(s.startsWith("$"), "expected '$' start;", s);
-    p5("parseRegExpReference:", t);
-
-//    final String TOKEN_CHARS = "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-//    char delim = read();
-//    StringBuilder name = new StringBuilder();
-//    if (delim == '$') {
-//      while (true) {
-//        char q = peek(0);
-//        if (!charWithin(q, TOKEN_CHARS))
-//          break;
-//        read();
-//        name.append(q);
-//      }
-//    } else {
-//      while (true) {
-//        char q = read();
-//        if (q == '}')
-//          break;
-//        name.append(q);
-//      }
-//    }
-//    String nameStr = name.toString();
-//    if (!RegExp.patternMatchesString(TOKENREF_EXPR, nameStr))
-//      throw abort("Problem with token name");
     var nameStr = s.substring(1);
-    p5("looking for regexpr with token name:", nameStr);
     RegParse regExp = mTokenDefMap.get(nameStr);
     if (regExp == null)
       throw abortAtToken(t, "undefined token");
     return duplicateNFA(regExp.startState(), regExp.endState());
   }
-
 
   /**
    * Raise an IllegalArgumentException, with a helpful message indicating the
@@ -280,17 +202,6 @@ public class TokenRegParse implements IParseRegExp {
     throw token.failWith(msgs);
 //    throw badArg("Parse exception;", BasePrinter.toString(msgs), ":", s, mOrigLineNumber, mOrigScript);
   }
-
-//  // Read next character as a hex digit
-//  //
-//  private int read_hex() {
-//    char v = Character.toUpperCase(read());
-//    if (v >= 48 && v < 58)
-//      return v - 48;
-//    if (v >= 65 && v < 71)
-//      return v - 65 + 10;
-//    throw abort("missing hex digit");
-//  }
 
   private static CodeSet digit_code_set() {
     if (sDigitCodeSet == null) {
@@ -314,34 +225,14 @@ public class TokenRegParse implements IParseRegExp {
 
   private CodeSet parse_code_set(boolean within_bracket_expr) {
     int val;
-    char c;
     p5("parse_code_set, next token:", mScanner.peek());
-//    OTHER_ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
-//
-//# For some reason, I can't (yet?) use $_ESCAPE to refer to '\'
-//
-//    WORD_CHAR: \\ w
-//    DIGIT_CHAR: \\ d
-//    FORMFEED: \\ f
-//    CARRIAGERET: \\ r
-//    SPACE: \\ s
-//    TAB: \\ t
-//    NEWLINE: \\ n
-
-//    _HT: \x09
-//    _LF: \x0a
-//    _FF: \x0c
-//    _CR: \x0d
-//    _NL: ($_CR? $_LF)
-
-
     if (readIf(T_ASCII)) {
       var tx = mReadToken.text();
       return CodeSet.withValue(tx.charAt(0));
     } else if (readIf(T_WORD_CHAR)) {
-      return parse_word_code_set();
+      return wordchar_code_set().dup();
     } else if (readIf(T_DIGIT_CHAR)) {
-      return parse_digit_code_set();
+      return digit_code_set().dup();
     } else if (readIf(T_FORMFEED)) {
       return CodeSet.withValue(0x0c);
     } else if (readIf(T_CARRIAGERET)) {
@@ -352,86 +243,18 @@ public class TokenRegParse implements IParseRegExp {
       return CodeSet.withValue(0x09);
     } else if (readIf(T_NEWLINE)) {
       return CodeSet.withValue(0x0a);
-      // ----------------------------------------------------------------------------------------------
     } else if (readIf(T_OTHER_ESCAPE_SEQ)) {
       var tx = mReadToken.text();
       val = ((int) tx.charAt(1)) & 0xff;
-       if ((val >= 'A' && val <= 'Z')
-          || (val >= 'a' && val <= 'z')
-          || (val >= '0' && val <= '9')) {
-        throw abortAtToken(mReadToken, "unsupported escape sequence");
-      } else {
-        return CodeSet.withValue(val);
-      }
+      return CodeSet.withValue(val);
     } else if (readIf(T_HEXVALUE)) {
       var tx = mReadToken.text();
-      p5("HEXVALUE:",tx);
       var h1 = read_hex(tx.charAt(2));
       var h2 = read_hex(tx.charAt(3));
       return CodeSet.withValue((h1 << 4) + h2);
     }
     throw badState("shouldn't have got here; next token:", mScanner.peek());
   }
-//    readIf(T_ASCII)
-//    var t = read(T_ASCII);
-//    pr("...read ASCII:", t);
-//
-//    var tx = t.text();
-//    if (!tx.startsWith("\\")) {
-//      checkState(tx.length() == 1);
-//      val = ((int) tx.charAt(0)) & 0xff;
-//    } else {
-//      char c2 = tx.charAt(1);
-//      if (c2 == 'd')
-//        return parse_digit_code_set();
-//      if (c2 == 'w')
-//        return parse_word_code_set();
-//
-//
-//      c = read();
-//
-//      if (c == '0') {
-//        c = read();
-//        if (!charWithin(c, "xX"))
-//          throw abort("Unsupported escape sequence:", c);
-//        var h1 = read_hex();
-//        var h2 = read_hex();
-//        val = (h1 << 4) | h2;
-//      } else if (charWithin(c, "xX")) {
-//        val = (read_hex() << 4) | read_hex();
-//      } else if (charWithin(c, "uU")) {
-//        val = (read_hex() << 12) | (read_hex() << 8) | (read_hex() << 4) | read_hex();
-//      } else {
-//        switch (c) {
-//          case 'f':
-//            val = '\f';
-//            break;
-//          case 'r':
-//            val = '\r';
-//            break;
-//          case 'n':
-//            val = '\n';
-//            break;
-//          case 't':
-//            val = '\t';
-//            break;
-//          case 's':
-//            val = ' ';
-//            break;
-//          default:
-//            // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
-//            // that's a problem, since it is most likely not what the user intended
-//            final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-//
-//            if (charWithin(c, noEscapeChars))
-//              throw abort("Unsupported escape sequence:", quote(c));
-//            val = c;
-//            break;
-//        }
-//      }
-//    }
-//    return CodeSet.withValue(val);
-
 
   private static int read_hex(char ch) {
     if (ch >= 'a') {
@@ -443,35 +266,30 @@ public class TokenRegParse implements IParseRegExp {
     return (ch - 'A') + 10;
   }
 
-  private CodeSet parse_word_code_set() {
-//    read();
-//    read();
-    return wordchar_code_set().dup();
-  }
 
-
-  private CodeSet parse_digit_code_set() {
-//    read();
-//    read();
-    return digit_code_set().dup();
-  }
-
-
-  private CodeSet parseSetSeq() {
-//    if (peekIs(T_BRCL) || peekIs(T_BREXCEPT)) {
-//      throw abortAtToken(peekToken(),"Unexpected token within [...] expression");
-//    }
+  private CodeSet parseBracketSeq() {
     CodeSet result = null;
     while (true) {
       if (peekIs(T_BRCL) || peekIs(T_BREXCEPT)) {
         if (result == null) {
           // If the set is nothing at this point, set it to include all printable characters (space...7f)
           result = CodeSet.withRange(32, 128);
-          //  throw abortAtToken(peekToken(), "Unexpected token within [...] expression");
         }
         break;
       }
-      var nextResult = parseSET();
+      CodeSet nextResult;
+      {
+        var errToken = peekToken();
+        CodeSet code_set = parse_code_set(true);
+        if (readIf(T_RANGE)) {
+          int u = code_set.singleValue();
+          int v = parse_code_set(true).singleValue();
+          if (v < u)
+            throw abortAtToken(errToken, "Illegal range; u:", u, "v:", v);
+          code_set = CodeSet.withRange(u, v + 1);
+        }
+        nextResult = code_set;
+      }
       if (result == null)
         result = nextResult;
       else {
@@ -485,9 +303,9 @@ public class TokenRegParse implements IParseRegExp {
     var start = read(T_BROP);
 
     CodeSet rightSet = null;
-    CodeSet leftSet = parseSetSeq();
+    CodeSet leftSet = parseBracketSeq();
     if (readIf(T_BREXCEPT)) {
-      rightSet = parseSetSeq();
+      rightSet = parseBracketSeq();
     }
 
     read(T_BRCL);
@@ -511,12 +329,6 @@ public class TokenRegParse implements IParseRegExp {
     return statePair(sA, sB);
   }
 
-
-  private static boolean charWithin(char c, String string) {
-    return string.indexOf(c) >= 0;
-  }
-
-
   /**
    * If existing final state has outgoing edges, then create a new final state,
    * and add an e-transition to it from the old final state, so the final state
@@ -532,128 +344,14 @@ public class TokenRegParse implements IParseRegExp {
     return start_end_states;
   }
 
-//  private boolean read_if(char expChar) {
-//    boolean found = (peek(0) == expChar);
-//    if (found)
-//      read();
-//    return found;
-//  }
-
-//  /**
-//   * Construct an NFA that accepts the complement of an NFA
-//   */
-//  private StatePair construct_complement(StatePair statesp) {
-//
-//    OurState nfa_start = statesp.start;
-//    OurState nfa_end = statesp.end;
-//    checkArgument(!nfa_start.finalState() && !nfa_end.finalState());
-//
-//    //nfa_end = new OurState(false, nfa_end.edges());
-//
-//    NFAToDFA builder = new NFAToDFA();
-//    OurState dfa_start_state = builder.convertNFAToDFA(nfa_start);
-//
-//    List<OurState> states = ToknUtils.reachableStates(dfa_start_state);
-//
-//    //
-//    //        + Let S be the DFA's start state
-//    //        + Create F, a new final state
-//    //        + for each state X in the DFA (excluding F):
-//    //          + if X is a final state, clear its final state flag;
-//    //          + otherwise:
-//    //            + construct C, a set of labels that is the complement of the union of any existing edge labels from X
-//    //            + if C is nonempty, add transition on C from X to F
-//    //            + if X is not the start state, add e-transition from X to F
-//    //        + augment original NFA by copying each state X to a state X' (clearing final state flags)
-//    //        + return [S', F']
-//    //
-//    //     We don't process any final states in the above loop, because we've sort
-//    //     of "lost" once we reach a final state no matter what edges leave that
-//    //     state. This is because we're looking for substrings of the input string
-//    //     to find matches, instead of just answering a yes/no recognition question
-//    //     for an (entire) input string.
-//    //
-//
-//    OurState f = new OurState(false, null);
-//
-//    for (OurState x : states) {
-//      if (x.finalState())
-//        throw badState("unexpected final state");
-//      CodeSet codeset = CodeSet.withRange(OURCODEMIN, codeMax());
-//      for (OurEdge e : x.edges()) {
-//        codeset = codeset.difference(CodeSet.with(e.codeSets()));
-//      }
-//      if (codeset.elements().length != 0) {
-//        ToknUtils.addEdge(x, codeset.elements(), f);
-//      }
-//      ToknUtils.addEps(x, f);
-//    }
-//
-//    states.add(f);
-//
-//    // Build a map of old to new states for the NFA
-//    Map<OurState, OurState> new_state_map = hashMap();
-//    for (OurState x : states) {
-//      OurState x_new = new OurState();
-//      new_state_map.put(x, x_new);
-//    }
-//
-//    for (OurState x : states) {
-//      OurState x_new = new_state_map.get(x);
-//      for (OurEdge edge : x.edges()) {
-//        x_new.edges().add(new OurEdge(edge.codeSets(), new_state_map.get(edge.destinationState())));
-//      }
-//    }
-//    return statePair(new_state_map.get(dfa_start_state), new_state_map.get(f));
-//  }
-
-  private CodeSet parseSET() {
-    var errToken = peekToken();
-    CodeSet code_set = parse_code_set(true);
-    if (readIf(T_RANGE)) {
-      int u = code_set.singleValue();
-      int v = parse_code_set(true).singleValue();
-      if (v < u)
-        throw abortAtToken(errToken, "Illegal range; u:", u, "v:", v);
-      code_set = CodeSet.withRange(u, v + 1);
-    }
-    return code_set;
-  }
-
-//  private char peek(int position) {
-//    while (mCharBuffer.length() <= position) {
-//      char ch = 0;
-//      if (mCursor < mScript.length()) {
-//        ch = mScript.charAt(mCursor);
-//        mCursor++;
-//      }
-//      mCharBuffer.append(ch);
-//    }
-//    return mCharBuffer.charAt(position);
-//  }
-//
-//  private char read() {
-//    return read((char) 0);
-//  }
-//
-//  private char read(char expChar) {
-//    char ch = peek(0);
-//    mCharBuffer.deleteCharAt(0);
-//    if (ch != 0 && (expChar == 0 || ch == expChar))
-//      return ch;
-//    throw abort("Unexpected end of input");
-//  }
-
   private static CodeSet sDigitCodeSet;
   private static CodeSet sWordCharCodeSet;
 
   private OurState mStartState;
   private OurState mEndState;
   private Map<String, RegParse> mTokenDefMap;
-
-
   private Scanner mScanner;
-
+  private Token mReadToken;
 
   // Token Ids generated by 'dev dfa' tool (DO NOT EDIT BELOW)
   public static final int T_WHITESPACE = 0;

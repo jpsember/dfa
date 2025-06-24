@@ -27,27 +27,9 @@ public final class DFACompiler extends BaseObject {
 
   private void parseExpressions(String script, boolean debug) {
     var scanner = new Scanner(getDfa(), script);
-
-    if (false && ISSUE_5) {
-      pr("token names:");
-      pr(getDfa().tokenNames());
-    }
-    if (debug) {
-      if (ISSUE_5) scanner.setVerbose();
-    }
-
     while (scanner.hasNext()) {
       var exprId = scanner.read(TokenRegParse.T_TOKENID);
       var tokenName = chomp(exprId.text(), ":");
-//      if (tokenName.contains("_")) {
-//        throw exprId.failWith("Token names cannot include underscores or hyphens");
-//      }
-
-//    }
-//    String tokenName = line.substring(0, pos).trim();
-//
-//    String expr = line.substring(pos + 1);
-      //log(VERT_SP, "parsing regex:", tokenName);
 
       // Give it the next available token id, if it's not an anonymous token; else -1
 
@@ -63,7 +45,6 @@ public final class DFACompiler extends BaseObject {
         throw exprId.failWith("Duplicate token name");
 
       rex.parse(scanner, mTokenNameMap);
-
       p5("storing token name in map:", tokenName);
 
       mTokenNameMap.put(tokenName, rex);

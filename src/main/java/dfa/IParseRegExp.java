@@ -4,6 +4,7 @@ import java.util.Map;
 import js.parsing.Scanner;
 
 
+@Deprecated
 interface IParseRegExp {
 
   /**
