@@ -15,10 +15,11 @@ ONE_OR_MORE: \+
 ALTERNATE: \|
 RANGE: \-
 
-
-
 HEXVALUE: \\ x [0-9a-f] [0-9a-f]
-ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
+WORD_CHAR: $_ESCAPE w
+DIGIT_CHAR: $_ESCAPE d
+
+OTHER_ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
 ASCII: [_a-zA-Z0-9]
 
 #DIGIT: [0-9]

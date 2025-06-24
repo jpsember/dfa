@@ -272,7 +272,6 @@ public class TokenRegParse implements IParseRegExp {
     return duplicateNFA(regExp.startState(), regExp.endState());
   }
 
-// ----------------------------------------------------------------------------------------------
 
   /**
    * Raise an IllegalArgumentException, with a helpful message indicating the
