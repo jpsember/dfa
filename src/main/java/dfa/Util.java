@@ -4,7 +4,16 @@ import dfa.gen.DfaConfig;
 import js.json.JSMap;
 import js.parsing.DFA;
 
+import static js.base.Tools.*;
+
 public final class Util {
+
+  public static final boolean ISSUE_5 = true && alert("ISSUE_5 is in effect");
+
+  public static void p5(Object... messages) {
+    if (ISSUE_5)
+      pr(insertStringToFront("ISSUE_5 --->", messages));
+  }
 
   public static final String EXT_RXP = "rxp" //
       , EXT_DFA = "dfa" //

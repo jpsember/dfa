@@ -1,23 +1,15 @@
 package dfa;
 
-import js.base.BasePrinter;
 import js.file.Files;
 import js.parsing.DFA;
-import js.parsing.RegExp;
 import js.parsing.Scanner;
 import js.parsing.Token;
 
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static dfa.ToknUtils.*;
-import static dfa.ToknUtils.addEps;
-import static dfa.ToknUtils.statePair;
-import static dfa.Util.OURCODEMIN;
-import static dfa.Util.codeMax;
 import static js.base.Tools.*;
-import static js.base.Tools.hashMap;
+import static dfa.Util.*;
 
 //   Expressions have one of these types:
 //
@@ -96,6 +88,8 @@ public class TokenRegParse implements IParseRegExp {
     // Load the DFA
 
     mScanner = new Scanner(getDfa(), script, T_WHITESPACE);
+    if (ISSUE_5)
+      mScanner.setVerbose();
     parseScript();
     return new OurState[]{startState(), endState()};
   }
@@ -271,10 +265,10 @@ public class TokenRegParse implements IParseRegExp {
 //    String nameStr = name.toString();
 //    if (!RegExp.patternMatchesString(TOKENREF_EXPR, nameStr))
 //      throw abort("Problem with token name");
-var nameStr = s.substring(1);
+    var nameStr = s.substring(1);
     RegParse regExp = mTokenDefMap.get(nameStr);
     if (regExp == null)
-      throw abortAtToken(t,"undefined token");
+      throw abortAtToken(t, "undefined token");
     return duplicateNFA(regExp.startState(), regExp.endState());
   }
 
@@ -332,91 +326,132 @@ var nameStr = s.substring(1);
     return sWordCharCodeSet;
   }
 
-  private CodeSet parse_digit_code_set() {
-    read();
-    read();
-    return digit_code_set().dup();
-  }
-
-  private CodeSet parse_word_code_set() {
-    read();
-    read();
-    return wordchar_code_set().dup();
-  }
-
   private CodeSet parse_code_set(boolean within_bracket_expr) {
     int val;
     char c;
 
-    // If starts with \, special parsing required
-    if (peek(0) != '\\') {
-      c = read();
-      val = c;
-      if (within_bracket_expr && c == '^')
-        throw abort("Illegal character within [ ] expression:", c);
-    } else {
-      char c2 = peek(1);
-      if (c2 == 'd')
+    if (readIf(T_ASCII)) {
+      var tx = mReadToken.text();
+      return CodeSet.withValue(tx.charAt(0));
+    } else if (readIf(T_ESCAPE_SEQ)) {
+      var tx = mReadToken.text();
+      val = ((int) tx.charAt(1)) & 0xff;
+      // validate escaped char
+      if (val == 'd') {
         return parse_digit_code_set();
-      if (c2 == 'w')
+      } else if (val == 'w') {
         return parse_word_code_set();
-
-      read();
-
-      c = read();
-
-      if (c == '0') {
-        c = read();
-        if (!charWithin(c, "xX"))
-          throw abort("Unsupported escape sequence:", c);
-        var h1 = read_hex();
-        var h2 = read_hex();
-        val = (h1 << 4) | h2;
-      } else if (charWithin(c, "xX")) {
-        val = (read_hex() << 4) | read_hex();
-      } else if (charWithin(c, "uU")) {
-        val = (read_hex() << 12) | (read_hex() << 8) | (read_hex() << 4) | read_hex();
+      } else if ((val >= 'A' && val <= 'Z')
+          || (val >= 'a' && val <= 'z')
+          || (val >= '0' && val <= '9')) {
+        throw abortAtToken(mReadToken, "unsupported escape sequence");
       } else {
-        switch (c) {
-          case 'f':
-            val = '\f';
-            break;
-          case 'r':
-            val = '\r';
-            break;
-          case 'n':
-            val = '\n';
-            break;
-          case 't':
-            val = '\t';
-            break;
-          case 's':
-            val = ' ';
-            break;
-          default:
-            // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
-            // that's a problem, since it is most likely not what the user intended
-            final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-            if (charWithin(c, noEscapeChars))
-              throw abort("Unsupported escape sequence:", quote(c));
-            val = c;
-            break;
-        }
+        return CodeSet.withValue(val);
       }
+    } else if (readIf(T_HEXVALUE)) {
+      var tx = mReadToken.text();
+      var h1 = read_hex(tx.charAt(2));
+      var h2 = read_hex(tx.charAt(3));
+      return CodeSet.withValue((h1 << 4) + h2);
     }
-    return CodeSet.withValue(val);
+    throw badState("shouldn't have got here");
+  }
+//    readIf(T_ASCII)
+//    var t = read(T_ASCII);
+//    pr("...read ASCII:", t);
+//
+//    var tx = t.text();
+//    if (!tx.startsWith("\\")) {
+//      checkState(tx.length() == 1);
+//      val = ((int) tx.charAt(0)) & 0xff;
+//    } else {
+//      char c2 = tx.charAt(1);
+//      if (c2 == 'd')
+//        return parse_digit_code_set();
+//      if (c2 == 'w')
+//        return parse_word_code_set();
+//
+//
+//      c = read();
+//
+//      if (c == '0') {
+//        c = read();
+//        if (!charWithin(c, "xX"))
+//          throw abort("Unsupported escape sequence:", c);
+//        var h1 = read_hex();
+//        var h2 = read_hex();
+//        val = (h1 << 4) | h2;
+//      } else if (charWithin(c, "xX")) {
+//        val = (read_hex() << 4) | read_hex();
+//      } else if (charWithin(c, "uU")) {
+//        val = (read_hex() << 12) | (read_hex() << 8) | (read_hex() << 4) | read_hex();
+//      } else {
+//        switch (c) {
+//          case 'f':
+//            val = '\f';
+//            break;
+//          case 'r':
+//            val = '\r';
+//            break;
+//          case 'n':
+//            val = '\n';
+//            break;
+//          case 't':
+//            val = '\t';
+//            break;
+//          case 's':
+//            val = ' ';
+//            break;
+//          default:
+//            // If attempting to escape a letter (that doesn't appear in the list above) or a digit,
+//            // that's a problem, since it is most likely not what the user intended
+//            final String noEscapeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//
+//            if (charWithin(c, noEscapeChars))
+//              throw abort("Unsupported escape sequence:", quote(c));
+//            val = c;
+//            break;
+//        }
+//      }
+//    }
+//    return CodeSet.withValue(val);
+
+
+  private static int read_hex(char ch) {
+    if (ch >= 'a') {
+      ch = (char) (ch + ('A' - 'a'));
+    }
+    if (ch >= '0' && ch <= '9')
+      return ch - '0';
+    checkArgument(ch >= 'A' && ch <= 'F');
+    return (ch - 'A') + 10;
   }
 
+  private CodeSet parse_word_code_set() {
+//    read();
+//    read();
+    return wordchar_code_set().dup();
+  }
+
+
+  private CodeSet parse_digit_code_set() {
+//    read();
+//    read();
+    return digit_code_set().dup();
+  }
+
+
   private CodeSet parseSetSeq() {
+//    if (peekIs(T_BRCL) || peekIs(T_BREXCEPT)) {
+//      throw abortAtToken(peekToken(),"Unexpected token within [...] expression");
+//    }
     CodeSet result = null;
     while (true) {
-      {
-        var ch = peek(0);
-        if (ch == '^' || ch == ']')
-          break;
+      if (peekIs(T_BRCL) || peekIs(T_BREXCEPT)) {
+        if (result == null)
+          throw abortAtToken(peekToken(), "Unexpected token within [...] expression");
+        break;
       }
-
       var nextResult = parseSET();
       if (result == null)
         result = nextResult;
@@ -428,8 +463,8 @@ var nameStr = s.substring(1);
   }
 
   private StatePair parseBracketExpr() {
-    checkState(false,"not impl yet; bracket expr");
-   var start =  read(T_BROP);
+    checkState(false, "not impl yet; bracket expr");
+    var start = read(T_BROP);
 
 //    read('[');
 
@@ -442,7 +477,7 @@ var nameStr = s.substring(1);
     read(T_BRCL);
 
     if (leftSet == null && rightSet == null) {
-      throw abortAtToken(start,"Empty character range");
+      throw abortAtToken(start, "Empty character range");
     }
     if (leftSet == null)
       leftSet = CodeSet.withRange(1, 256);
@@ -452,7 +487,7 @@ var nameStr = s.substring(1);
       result = result.difference(rightSet);
 
     if (result.isEmpty())
-      throw abortAtToken(start,"Empty character range");
+      throw abortAtToken(start, "Empty character range");
 
     OurState sA = new OurState();
     OurState sB = new OurState();
@@ -557,12 +592,13 @@ var nameStr = s.substring(1);
 //  }
 
   private CodeSet parseSET() {
+    var errToken = peekToken();
     CodeSet code_set = parse_code_set(true);
-    if (read_if('-')) {
+    if (readIf(T_RANGE)) {
       int u = code_set.singleValue();
       int v = parse_code_set(true).singleValue();
       if (v < u)
-        throw abort("Illegal range; u:", u, "v:", v);
+        throw abortAtToken(errToken, "Illegal range; u:", u, "v:", v);
       code_set = CodeSet.withRange(u, v + 1);
     }
     return code_set;
@@ -606,7 +642,6 @@ var nameStr = s.substring(1);
 
   private static DFA getDfa() {
     todo("have utility method for caching DFAs, parsing from resources");
-    var dfa = getDfa();
     if (sDFA == null) {
       sDFA = DFA.parse(Files.readString(TokenRegParse.class, "rexp_parser.dfa"));
       return sDFA;
@@ -633,7 +668,9 @@ var nameStr = s.substring(1);
   public static final int T_ONE_OR_MORE = 10;
   public static final int T_ALTERNATE = 11;
   public static final int T_RANGE = 12;
-  public static final int T_ASCII = 13;
+  public static final int T_HEXVALUE = 13;
+  public static final int T_ESCAPE_SEQ = 14;
+  public static final int T_ASCII = 15;
   // End of token Ids generated by 'dev dfa' tool (DO NOT EDIT ABOVE)
 
 }

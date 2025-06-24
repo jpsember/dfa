@@ -1,9 +1,9 @@
-_HT: (\t)   // \0x09
-_LF:   (\n)	// \0x0a
-_FF:   (\f)
-_CR:   (\r) // \0x0d
+_HT: \x09
+_LF: \x0a
+_FF: \x0c
+_CR: \x0d
 _NL: ($_CR? $_LF)
-_SP: (\s)
+_SP: \x20
 _COLON: (\:)
 _COMMA: (\,)
 _EQUALS: (\=)
