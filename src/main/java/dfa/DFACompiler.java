@@ -106,16 +106,6 @@ public final class DFACompiler extends BaseObject {
    * We'll need to convert it to the compact form...
    */
   private JSMap constructOldDFAJSMap(List<TokenDefinition> token_records, State startState) {
-
-    // These optimizations are only useful to reduce the size of the DFA files on disk,
-    // and only by about 20%.  In memory, they have no effect; so for simplicity in
-    // parsing the files, probably best to omit them.
-
-    var withOpts = false;
-
-    var withOptA = withOpts;
-    var withOptB = withOpts;
-
     JSMap m = map();
 
     m.put("version", dfaConfig().version());
@@ -164,21 +154,11 @@ public final class DFACompiler extends BaseObject {
           int a = cr[i];
           int b = cr[i + 1];
 
-          // Optimization:  if b==a+1, represent ...a,b,... as ...(double)a,....
-
-          if (withOptA && b == a + 1)
-            out.add((double) a);
-          else {
-            out.add(a);
-            out.add(b);
-          }
+          out.add(a);
+          out.add(b);
         }
 
-        // Optimization: if resulting list has only one element, store that as a scalar
-        if (withOptB && out.size() == 1)
-          stateDesc.addUnsafe(out.getUnsafe(0));
-        else
-          stateDesc.add(out);
+        stateDesc.add(out);
 
         int destStateIndex = stateIndexMap.get(edge.destinationState());
 
