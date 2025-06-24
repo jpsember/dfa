@@ -59,19 +59,19 @@ import static dfa.Util.*;
 //
 public class TokenDefinitionParser {
 
-  public OurState[] parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
+  public State[] parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
     mTokenDefMap = tokenDefMap;
     mScanner = scanner;
     parseScript();
-    return new OurState[]{startState(), endState()};
+    return new State[]{startState(), endState()};
   }
 
-  public OurState startState() {
+  public State startState() {
     checkNotNull(mStartState);
     return mStartState;
   }
 
-  public OurState endState() {
+  public State endState() {
     checkNotNull(mEndState);
     return mEndState;
   }
@@ -109,12 +109,12 @@ public class TokenDefinitionParser {
 
     if (readIf(T_ALTERNATE)) {
       StatePair e2 = parseALTERNATE();
-      OurState u = new OurState();
-      OurState v = new OurState();
+      State u = new State();
+      State v = new State();
 
       addEps(u, e1.start);
       addEps(u, e2.start);
-      OurState w = e1.end;
+      State w = e1.end;
       addEps(w, v);
 
       addEps(e1.end, v);
@@ -163,8 +163,8 @@ public class TokenDefinitionParser {
       CodeSet code_set = parse_code_set(false);
       // Construct a pair of states with an edge between them
       // labelled with this code set
-      OurState sA = new OurState();
-      OurState sB = new OurState();
+      State sA = new State();
+      State sB = new State();
       ToknUtils.addEdge(sA, code_set.elements(), sB);
       e1 = statePair(sA, sB);
     }
@@ -322,8 +322,8 @@ public class TokenDefinitionParser {
     if (result.isEmpty())
       throw abortAtToken(start, "Empty character range");
 
-    OurState sA = new OurState();
-    OurState sB = new OurState();
+    State sA = new State();
+    State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
     return statePair(sA, sB);
   }
@@ -334,9 +334,9 @@ public class TokenDefinitionParser {
    * has no edges back
    */
   private StatePair create_new_final_state_if_nec(StatePair start_end_states) {
-    OurState end_state = start_end_states.end;
+    State end_state = start_end_states.end;
     if (!end_state.edges().isEmpty()) {
-      OurState new_final_state = new OurState();
+      State new_final_state = new State();
       ToknUtils.addEps(end_state, new_final_state);
       start_end_states.end = new_final_state;
     }
@@ -346,8 +346,8 @@ public class TokenDefinitionParser {
   private static CodeSet sDigitCodeSet;
   private static CodeSet sWordCharCodeSet;
 
-  private OurState mStartState;
-  private OurState mEndState;
+  private State mStartState;
+  private State mEndState;
   private Map<String, TokenDefinition> mTokenDefMap;
   private Scanner mScanner;
   private Token mReadToken;

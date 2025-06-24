@@ -20,6 +20,7 @@ class DFABuilder {
     var g = mGraph;
     var sc = states().length;
     mFirstDebugStateId = states()[0].debugId();
+todo("!we don't actually need the number of states, except for logging purposes?");
 
     // <graph> ::= <int: # of states> <state>*
     g.add(sc);
@@ -35,7 +36,7 @@ class DFABuilder {
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
-  private void addState(OurState s) {
+  private void addState(State s) {
     // <state> ::= <edge count> <edge>*
     var g = mGraph;
     mStateAddresses.add(g.size());
@@ -44,7 +45,7 @@ class DFABuilder {
       addEdge(edge);
   }
 
-  private void addEdge(OurEdge edge) {
+  private void addEdge(Edge edge) {
     // <edge>  ::= <int: number of char_range items> <char_range>* <dest_state_id>
     var g = mGraph;
 
@@ -65,7 +66,7 @@ class DFABuilder {
     return result;
   }
 
-  private int stateIndex(OurState s) {
+  private int stateIndex(State s) {
     return stateIndex(s.debugId());
   }
 
@@ -87,7 +88,7 @@ class DFABuilder {
     }
   }
 
-  private OurState[] states() {
+  private State[] states() {
     return mDfa.debStates();
   }
 

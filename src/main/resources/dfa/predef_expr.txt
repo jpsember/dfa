@@ -29,3 +29,6 @@ _UNSIGNEDINT:  (0 | ([1-9] \d*))
 _SIGNEDINT: ( \-? $_UNSIGNEDINT )
 _INTORFLOAT: $_SIGNEDINT (\. \d+ )? ([eE] (\- | \+)? \d+)?
 _FLOAT: $_SIGNEDINT (\. \d+ ) ([eE] (\- | \+)? \d+)?
+
+
+# TODO: add _UNICODE to specify all characters >= 128?

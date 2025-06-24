@@ -23,27 +23,23 @@
  **/
 package dfa;
 
-/**
- * This is our own, DISTINCT class, and no longer using the one (which may not exist soon)
- * in the core library; so I'm renaming it.
- */
-public class OurEdge {
+public class Edge {
 
-  public OurEdge(int[] codeSets, OurState destState) {
+  public Edge(int[] codeSets, State destState) {
     this(null, codeSets, destState);
   }
 
-  public OurEdge(OurState sourceState, int[] codeSets, OurState destState) {
+  public Edge(State sourceState, int[] codeSets, State destState) {
     mSourceState = sourceState;
     mCodeSets = codeSets;
     mDest = destState;
   }
 
-  public OurState sourceState() {
+  public State sourceState() {
     return mSourceState;
   }
 
-  public OurState destinationState() {
+  public State destinationState() {
     return mDest;
   }
 
@@ -51,8 +47,8 @@ public class OurEdge {
     return mCodeSets;
   }
 
-  private OurState mDest;
+  private State mDest;
   private int[] mCodeSets;
-  private OurState mSourceState;
+  private State mSourceState;
 
 }

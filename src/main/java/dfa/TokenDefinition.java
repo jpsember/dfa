@@ -36,18 +36,18 @@ public final class TokenDefinition {
     mEndState = states[1];
   }
 
-  public OurState startState() {
+  public State startState() {
     checkNotNull(mStartState);
     return mStartState;
   }
 
-  public OurState endState() {
+  public State endState() {
     checkNotNull(mEndState);
     return mEndState;
   }
 
-  private OurState mStartState;
-  private OurState mEndState;
+  private State mStartState;
+  private State mEndState;
 
   private final int mId;
   private final String mName;

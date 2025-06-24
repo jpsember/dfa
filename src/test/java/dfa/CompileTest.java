@@ -45,7 +45,7 @@ public class CompileTest extends MyTestCase {
   public void setup() {
     super.setup();
     // We need to reset the debug ids before each test, for deterministic behaviour
-    OurState.resetDebugIds();
+    State.resetIds();
   }
 
   @Test
@@ -115,10 +115,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void printStateMachine() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, cs('X'), a);
     addEdge(s, cs('Y'), b);
@@ -131,10 +131,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void reverseDFA() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, cs('X'), a);
     addEdge(s, cs('Y'), b);
@@ -142,17 +142,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs('W'), f);
 
     dump(s, "input");
-    OurState s2 = reverseNFA(s);
+    State s2 = reverseNFA(s);
     dump(s2, "reversed");
     assertSb();
   }
 
   @Test
   public void partition() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, cs("abcdefgh"), a);
     addEdge(s, cs("cde"), b);
@@ -160,17 +160,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    OurState s2 = partitionEdges(s);
+    State s2 = partitionEdges(s);
     dump(s2, "partitioned");
     assertSb();
   }
 
   @Test
   public void normalizeMergeLabels() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, cs("abcd"), a);
     addEdge(s, cs("efgh"), a);
@@ -179,17 +179,17 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    OurState s2 = normalizeStates(s);
+    State s2 = normalizeStates(s);
     dump(s2, "normalized");
     assertSb();
   }
 
   @Test
   public void normalizeOmitEmptyLabels() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, cs(""), a);
     addEdge(s, cs("cde"), b);
@@ -197,23 +197,23 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    OurState s2 = normalizeStates(s);
+    State s2 = normalizeStates(s);
     dump(s2, "normalized");
     assertSb();
   }
 
   @Test
   public void acceptsEmptyStringTrue() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, CodeSet.epsilon(), a);
     addEdge(s, cs("cde"), b);
 
     CodeSet ck = cs("uvwx");
-    ck.add(OurState.EPSILON);
+    ck.add(State.EPSILON);
 
     addEdge(a, ck, f);
     addEdge(b, cs("wxyz"), f);
@@ -225,10 +225,10 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void acceptsEmptyStringFalse() {
-    OurState s = new OurState(false);
-    OurState a = new OurState();
-    OurState b = new OurState();
-    OurState f = new OurState(true);
+    State s = new State(false);
+    State a = new State();
+    State b = new State();
+    State f = new State(true);
 
     addEdge(s, CodeSet.epsilon(), a);
     addEdge(s, cs("cde"), b);
@@ -242,7 +242,7 @@ public class CompileTest extends MyTestCase {
     assertFalse(acceptsEmptyString(s, f));
   }
 
-  private void dump(OurState state, Object... messages) {
+  private void dump(State state, Object... messages) {
     String message;
     if (messages.length == 0)
       message = name();

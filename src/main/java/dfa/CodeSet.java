@@ -35,7 +35,7 @@ public final class CodeSet implements Comparable<CodeSet> {
    * Construct a CodeSet with the single value EPSILON
    */
   public static CodeSet epsilon() {
-    return withValue(OurState.EPSILON);
+    return withValue(State.EPSILON);
   }
 
   /**

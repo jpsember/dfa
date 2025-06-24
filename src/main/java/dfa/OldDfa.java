@@ -30,7 +30,7 @@ public class OldDfa {
   }
 
   private void constructFromJson(JSMap map) {
-    OurState.bumpDebugIds();
+    State.bumpIds();
     if (map.getDouble("version") < 3.0)
       throw badArg("unsupported version:", map.prettyPrint());
 
@@ -40,14 +40,14 @@ public class OldDfa {
       mTokenNameIdMap.put(mTokenNames[i], i);
     JSList stateInfo = map.getList("states");
 
-    mStates = new OurState[stateInfo.size()];
+    mStates = new State[stateInfo.size()];
     for (int i = 0; i < mStates.length; i++)
-      mStates[i] = new OurState(i == finalStateIndex, null);
+      mStates[i] = new State(i == finalStateIndex, null);
 
-    List<OurEdge> compiledEdges = arrayList();
+    List<Edge> compiledEdges = arrayList();
     int stateId;
     for (stateId = 0; stateId < mStates.length; stateId++) {
-      OurState s = mStates[stateId];
+      State s = mStates[stateId];
       JSList edges = stateInfo.get(stateId);
       compiledEdges.clear();
       int cursorMax = edges.size();
@@ -68,7 +68,7 @@ public class OldDfa {
           destStateIndex = edges.getInt(cursor);
           cursor++;
         }
-        compiledEdges.add(new OurEdge(codeSetList, getState(destStateIndex)));
+        compiledEdges.add(new Edge(codeSetList, getState(destStateIndex)));
       }
       s.setEdges(compiledEdges);
       mStates[stateId] = s;
@@ -129,7 +129,7 @@ public class OldDfa {
         b = list.getInt(cursor);
         cursor++;
         if (b == 0)
-          b = OurState.CODEMAX;
+          b = State.CODEMAX;
       } else {
         a = ((Number) value).intValue();
         b = a + 1;
@@ -144,19 +144,19 @@ public class OldDfa {
     return mTokenNames;
   }
 
-  public OurState getStartState() {
+  public State getStartState() {
     return mStates[0];
   }
 
-  private OurState getState(int id) {
+  private State getState(int id) {
     return mStates[id];
   }
 
   private String[] mTokenNames;
   private Map<String, Integer> mTokenNameIdMap = hashMap();
-  private OurState[] mStates;
+  private State[] mStates;
 
-  public OurState[] debStates() {
+  public State[] debStates() {
     return mStates;
   }
 
@@ -267,10 +267,10 @@ public class OldDfa {
    * a DFA to parse (more elaborate) json content
    */
   public static OldDfa parseDfaFromJson(String source) {
-    OurState.bumpDebugIds();
+    State.bumpIds();
 
     var dfa = new OldDfa();
-    List<OurState> states = arrayList();
+    List<State> states = arrayList();
 
     // Parse the outer map {....} into a map of keys and values that are
     // json subexpressions that will need to be parsed separately.
@@ -355,13 +355,13 @@ public class OldDfa {
             i++;
             ia[i] = x;
           }
-          var edge = new OurEdge(ia, targetStatePtr);
+          var edge = new Edge(ia, targetStatePtr);
           currentState.edges().add(edge);
         }
         stateNumber++;
       }
       states.get(finalStateIndex).setFinal(true);
-      dfa.mStates = states.toArray(new OurState[0]);
+      dfa.mStates = states.toArray(new State[0]);
     }
     return dfa;
   }
@@ -369,9 +369,9 @@ public class OldDfa {
   // Extend a list of states to accomodate a particular state number (if necessary);
   // return that state
   //
-  private static OurState extendStates(List<OurState> states, int stateNumber) {
+  private static State extendStates(List<State> states, int stateNumber) {
     while (stateNumber >= states.size())
-      states.add(new OurState());
+      states.add(new State());
     return states.get(stateNumber);
   }
 
@@ -406,14 +406,14 @@ public class OldDfa {
     return m;
   }
 
-  private static Object edgeProblem(OurEdge edge, String message) {
+  private static Object edgeProblem(Edge edge, String message) {
     return "*** problem with edge: " + message + " ***; " + JSList.with(edge.codeSets());
   }
 
   /**
    * Get a description of an edge's code sets, for display as a map key
    */
-  private Object edgeDescription(OurEdge edge) {
+  private Object edgeDescription(Edge edge) {
     var cs = edge.codeSets();
     if (cs.length % 2 != 0) {
       return edgeProblem(edge, "odd number of elements");

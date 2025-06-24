@@ -28,34 +28,30 @@ import java.util.List;
 
 import static js.base.Tools.*;
 
-/**
- * This is our own, DISTINCT class, and no longer using the one (which may not exist soon)
- * in the core library; so I'm renaming it.
- */
-public final class OurState implements Comparable<OurState> {
+public final class State implements Comparable<State> {
 
-  public OurState(boolean finalState, List<OurEdge> edges) {
-    mDebugId = sNextDebugId++;
+  public State(boolean finalState, List<Edge> edges) {
+    mId = sNextId++;
     mFinalState = finalState;
     if (edges == null)
       edges = arrayList();
     setEdges(edges);
   }
 
-  public OurState() {
+  public State() {
     this(false, null);
   }
 
-  public OurState(boolean finalState) {
+  public State(boolean finalState) {
     this(finalState, null);
   }
 
   @Override
-  public int compareTo(OurState other) {
+  public int compareTo(State other) {
     return Integer.compare(debugId(), other.debugId());
   }
 
-  public List<OurEdge> edges() {
+  public List<Edge> edges() {
     return mEdges;
   }
 
@@ -63,8 +59,8 @@ public final class OurState implements Comparable<OurState> {
     return mFinalState;
   }
 
-  public void setEdges(List<OurEdge> edges) {
-    var edg = new ArrayList<OurEdge>(edges.size());
+  public void setEdges(List<Edge> edges) {
+    var edg = new ArrayList<Edge>(edges.size());
     edg.addAll(edges);
     mEdges = edg;
   }
@@ -74,7 +70,7 @@ public final class OurState implements Comparable<OurState> {
   }
 
   public int debugId() {
-    return mDebugId;
+    return mId;
   }
 
   public String toString(boolean includeEdges) {
@@ -83,7 +79,7 @@ public final class OurState implements Comparable<OurState> {
     sb.append(finalState() ? '*' : ' ');
     if (includeEdges) {
       sb.append("=>");
-      for (OurEdge e : edges()) {
+      for (Edge e : edges()) {
         sb.append(" ");
         sb.append(e.destinationState().debugId());
       }
@@ -96,25 +92,25 @@ public final class OurState implements Comparable<OurState> {
     return toString(false);
   }
 
-  public static void resetDebugIds() {
-    sNextDebugId = 100;
+  public static void resetIds() {
+    sNextId = 100;
   }
 
-  public static void setDebugIds(int nextMinValue) {
-    if (sNextDebugId > nextMinValue) {
-      int mod = sNextDebugId % 100;
+  public static void setIds(int nextMinValue) {
+    if (sNextId > nextMinValue) {
+      int mod = sNextId % 100;
       if (mod > 0)
-        nextMinValue = sNextDebugId - mod + 100;
+        nextMinValue = sNextId - mod + 100;
       else
-        nextMinValue = sNextDebugId;
+        nextMinValue = sNextId;
     }
-    sNextDebugId = nextMinValue;
+    sNextId = nextMinValue;
   }
 
-  public static String toString(Iterable<OurState> states) {
+  public static String toString(Iterable<State> states) {
     StringBuilder sb = new StringBuilder("(");
     int index = INIT_INDEX;
-    for (OurState s : states) {
+    for (State s : states) {
       index++;
       if (index != 0)
         sb.append(' ');
@@ -124,11 +120,11 @@ public final class OurState implements Comparable<OurState> {
     return sb.toString();
   }
 
-  public static void bumpDebugIds() {
-    setDebugIds(0);
+  public static void bumpIds() {
+    setIds(0);
   }
 
-  private static int sNextDebugId = 100;
+  private static int sNextId = 100;
 
   public static final int EPSILON = -1;
 
@@ -146,8 +142,8 @@ public final class OurState implements Comparable<OurState> {
     return EPSILON - 1 - tokenId;
   }
 
-  private final int mDebugId;
-  private List<OurEdge> mEdges;
+  private final int mId;
+  private List<Edge> mEdges;
   private boolean mFinalState;
 
 }

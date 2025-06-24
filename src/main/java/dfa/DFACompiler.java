@@ -3,14 +3,12 @@ package dfa;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import js.base.BaseObject;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
-import js.parsing.RegExp;
 import js.parsing.Scanner;
 
 import static js.base.Tools.*;
@@ -62,122 +60,40 @@ public final class DFACompiler extends BaseObject {
   }
 
   public DFA parse(String script) {
-    int next_token_id = 0;
     mTokenRecords = arrayList();
     mTokenNameMap = hashMap();
 
-//    ArrayList<Integer> originalLineNumbers = arrayList();
-    //  ArrayList<String> sourceLines = parseLines(script, originalLineNumbers);
-
     // Parse the predefined expressions, and insert those lines before the current ones
     {
-      var predefExpr = parsePredefinedExpressions();
+      var predefExpr = Files.readString(this.getClass(), "predef_expr.txt");
       if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
         predefExpr = "";
       }
-
       // Pretty confident these are working, so disable logging
       parseExpressions(predefExpr, false);
-
-//      sourceLines.addAll(0, predefinedLines);
-//      ArrayList<Integer> newLineNumbers = arrayList();
-//      for (int i = 0; i < predefinedLines.size(); i++)
-//        newLineNumbers.add(-1);
-//      newLineNumbers.addAll(originalLineNumbers);
-//      originalLineNumbers = newLineNumbers;
     }
 
-//    // Now that we've stitched together lines where there were trailing \ characters,
-//    // process each line as a complete token definition
-//
-//    int line_index = INIT_INDEX;
-//    for (String line : sourceLines) {
-//      line_index++;
-//      int line_number = 1 + originalLineNumbers.get(line_index);
-//
-//      // Strip whitespace only from the left side (which will strip all of
-//      // it, if the entire line is whitespace).  We want to preserve any
-//      // special escaped whitespace on the right side.
-//      line = leftTrim(line);
-//
-//      // If line is empty, or starts with '#', it's a comment
-//      if (line.isEmpty() || line.charAt(0) == '#')
-//        continue;
-//
-//      if (!RegExp.patternMatchesString(TOKENNAME_EXPR, line))
-//        throw badArg("Syntax error:", line_number, quote(line));
-//
-//      int pos = line.indexOf(":");
-
-
-    p5("parse script:", INDENT, script);
-
     parseExpressions(script, true);
-//    //var scanner = new Scanner(getDfa(), script);
-//
-//    String tokenName = line.substring(0, pos).trim();
-//
-//    String expr = line.substring(pos + 1);
-//    log("parsing regex:", tokenName);
-//
-//    // Give it the next available token id, if it's not an anonymous token; else -1
-//
-//    int token_id = -1;
-//    if (tokenName.charAt(0) != '_') {
-//      if (next_token_id == MAX_TOKEN_DEF)
-//        throw badArg("Too many token definitions");
-//      token_id = next_token_id;
-//      next_token_id++;
-//    }
-//    var rex = new RegParse(token_id, tokenName);
-//
-//    rex.parse(expr, tokenNameMap, line_number);
-//
-//    if (tokenNameMap.containsKey(tokenName))
-//      throw badArg("Duplicate token name", line_number, line);
-//
-//    tokenNameMap.put(tokenName, rex);
-//
-//    if (rex.id() < 0)
-//      continue;
-//
-//    if (ToknUtils.acceptsEmptyString(rex.startState(), rex.endState()))
-//      throw badArg("Zero-length tokens accepted:", line_number, line);
-//
-//    token_records.add(rex);
-//    if (verbose())
-//      log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
-//  }
 
-    OurState combined = combineNFAs(mTokenRecords);
-    if (
-        verbose())
-
+    State combined = combineNFAs(mTokenRecords);
+    if (verbose())
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
     NFAToDFA builder = new NFAToDFA();
     if (false) // takes too long on sizeable token files
-      builder.setVerbose(
-
-          verbose());
-    OurState dfa = builder.convertNFAToDFA(combined);
-    if (
-
-        verbose())
-
+      builder.setVerbose(verbose());
+    State dfa = builder.convertNFAToDFA(combined);
+    if (verbose())
       log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));
 
     List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, dfa);
-    if (
-
-        nonEmpty(redundantTokenNames))
-
+    if (nonEmpty(redundantTokenNames))
       badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
 
+    todo("!can we construct directly to a compact dfa here?");
     var jsmap =
         constructOldDFAJSMap(mTokenRecords, dfa);
     return
-
         convertOldDFAJSMapToCompactDFA(jsmap);
   }
 
@@ -187,72 +103,12 @@ public final class DFACompiler extends BaseObject {
     return mTokenIds;
   }
 
-//  private static ArrayList<String> parseLines(String script, ArrayList<Integer> originalLineNumbers) {
-//
-//    todo("better to parse these using the new regexp dfa, partitioning to tokens that start with 'xxxx:'");
-//
-//    ArrayList<String> sourceLines = arrayList();
-//
-//    // Join lines that have been ended with '\' to their following lines;
-//    // only do this if there's an odd number of '\' at the end
-//
-//    StringBuilder accum = null;
-//
-//    int accum_start_line = -1;
-//
-//    int originalLineNumber = 0;
-//
-//    for (String line : split(script, '\n')) {
-//      originalLineNumber++;
-//
-//      int trailing_backslash_count = 0;
-//      while (true) {
-//        if (line.length() <= trailing_backslash_count)
-//          break;
-//        int j = line.length() - 1 - trailing_backslash_count;
-//        if (j < 0)
-//          break;
-//        if (line.charAt(j) != '\\')
-//          break;
-//        trailing_backslash_count++;
-//      }
-//
-//      if (accum == null) {
-//        accum = new StringBuilder();
-//        accum_start_line = originalLineNumber;
-//      }
-//
-//      if ((trailing_backslash_count & 1) == 1) {
-//        accum.append(line.substring(0, line.length() - 1));
-//      } else {
-//        accum.append(line);
-//        sourceLines.add(accum.toString());
-//        if (originalLineNumbers != null)
-//          originalLineNumbers.add(accum_start_line);
-//        accum = null;
-//      }
-//    }
-//
-//    if (accum != null)
-//      badArg("Incomplete final line:", INDENT, script);
-//
-//    return sourceLines;
-//  }
-
-  private static String leftTrim(String s) {
-    String r = (s + "|").trim();
-    return r.substring(0, r.length() - 1);
-  }
-
-  // Regex for token names preceding regular expressions
-  private static Pattern TOKENNAME_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*\\s*:\\s*.*");
-
   /**
    * This constructs a JSMap representing the OLD (non-compact) DFA.
    *
    * We'll need to convert it to the compact form...
    */
-  private JSMap constructOldDFAJSMap(List<TokenDefinition> token_records, OurState startState) {
+  private JSMap constructOldDFAJSMap(List<TokenDefinition> token_records, State startState) {
 
     // These optimizations are only useful to reduce the size of the DFA files on disk,
     // and only by about 20%.  In memory, they have no effect; so for simplicity in
@@ -275,14 +131,14 @@ public final class DFACompiler extends BaseObject {
     }
     m.put("tokens", list);
 
-    List<OurState> reachable = ToknUtils.reachableStates(startState);
-    OurState finalState = null;
+    List<State> reachable = ToknUtils.reachableStates(startState);
+    State finalState = null;
 
-    Map<OurState, Integer> stateIndexMap = hashMap();
-    List<OurState> orderedStates = arrayList();
+    Map<State, Integer> stateIndexMap = hashMap();
+    List<State> orderedStates = arrayList();
 
     int index = 0;
-    for (OurState s : reachable) {
+    for (State s : reachable) {
       stateIndexMap.put(s, index);
       orderedStates.add(s);
       index++;
@@ -297,11 +153,11 @@ public final class DFACompiler extends BaseObject {
     m.put("final", finalStateIndex);
 
     JSList states = list();
-    for (OurState s : orderedStates) {
+    for (State s : orderedStates) {
       JSList stateDesc = list();
 
       int edgeIndex = INIT_INDEX;
-      for (OurEdge edge : s.edges()) {
+      for (Edge edge : s.edges()) {
         edgeIndex++;
         int[] cr = edge.codeSets();
         checkArgument(cr.length >= 2);
@@ -346,25 +202,25 @@ public final class DFACompiler extends BaseObject {
    * large NFA, each augmented with an edge labelled with the appropriate token
    * identifier to let the tokenizer see which token led to the final state.
    */
-  private OurState combineNFAs(List<TokenDefinition> token_records) {
+  private State combineNFAs(List<TokenDefinition> token_records) {
 
     // Create a new distinguished start state
     //
-    OurState start_state = new OurState();
+    State start_state = new State();
     for (TokenDefinition regParse : token_records) {
 
       StatePair newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
 
-      OurState dupStart = newStates.start;
+      State dupStart = newStates.start;
 
       // Transition from the expression's end state (not a final state)
       // to a new final state, with the transitioning edge
       // labelled with the token id (actually, a transformed token id to distinguish
       // it from character codes)
-      OurState dupEnd = newStates.end;
-      OurState dupfinal_state = new OurState(true);
+      State dupEnd = newStates.end;
+      State dupfinal_state = new State(true);
 
-      CodeSet cs = CodeSet.withValue(OurState.tokenIdToEdgeLabel(regParse.id()));
+      CodeSet cs = CodeSet.withValue(State.tokenIdToEdgeLabel(regParse.id()));
       ToknUtils.addEdge(dupEnd, cs.elements(), dupfinal_state);
 
       // Add an e-transition from the start state to this expression's start
@@ -377,13 +233,13 @@ public final class DFACompiler extends BaseObject {
   /**
    * Determine if any tokens are redundant, and report an error if so
    */
-  private List<String> applyRedundantTokenFilter(List<TokenDefinition> token_records, OurState start_state) {
+  private List<String> applyRedundantTokenFilter(List<TokenDefinition> token_records, State start_state) {
     Set<Integer> recognizedTokenIdsSet = treeSet();
-    for (OurState state : ToknUtils.reachableStates(start_state)) {
-      for (OurEdge edge : state.edges()) {
+    for (State state : ToknUtils.reachableStates(start_state)) {
+      for (Edge edge : state.edges()) {
         if (!edge.destinationState().finalState())
           continue;
-        int token_id = OurState.edgeLabelToTokenId(edge.codeSets()[0]);
+        int token_id = State.edgeLabelToTokenId(edge.codeSets()[0]);
         recognizedTokenIdsSet.add(token_id);
       }
     }
@@ -396,11 +252,6 @@ public final class DFACompiler extends BaseObject {
     }
 
     return unrecognized;
-  }
-
-  private String parsePredefinedExpressions() {
-    String content = Files.readString(this.getClass(), "predef_expr.txt");
-    return content;
   }
 
   private List<String> mTokenIds;
