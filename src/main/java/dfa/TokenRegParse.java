@@ -315,11 +315,7 @@ public class TokenRegParse implements IParseRegExp {
   private CodeSet parse_code_set(boolean within_bracket_expr) {
     int val;
     char c;
-
     p5("parse_code_set, next token:", mScanner.peek());
-    p5("next token id:", mScanner.peek().id());
-
-
 //    OTHER_ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
 //
 //# For some reason, I can't (yet?) use $_ESCAPE to refer to '\'
@@ -355,7 +351,7 @@ public class TokenRegParse implements IParseRegExp {
     } else if (readIf(T_TAB)) {
       return CodeSet.withValue(0x09);
     } else if (readIf(T_NEWLINE)) {
-      return CodeSet.withValue(0x0d);
+      return CodeSet.withValue(0x0a);
       // ----------------------------------------------------------------------------------------------
     } else if (readIf(T_OTHER_ESCAPE_SEQ)) {
       var tx = mReadToken.text();

@@ -27,6 +27,7 @@ import static js.base.Tools.*;
 import static org.junit.Assert.*;
 
 import js.parsing.DFA;
+import js.parsing.ScanException;
 import js.parsing.Scanner;
 import org.junit.Test;
 
@@ -77,7 +78,7 @@ public class CompileTest extends MyTestCase {
     proc("// comment\n1234\n  'hello'  ");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = ScanException.class)
   public void zerolen() {
     proc("hello");
   }
@@ -344,6 +345,7 @@ public class CompileTest extends MyTestCase {
 
       // Don't skip any tokens
       var s = new Scanner(dfa(), sampleText, -1);
+      s.setAcceptUnknownTokens();
       s.setVerbose(verbose());
       while (s.hasNext()) {
         sb.append(s.read());

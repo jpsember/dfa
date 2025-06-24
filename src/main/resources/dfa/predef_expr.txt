@@ -13,10 +13,10 @@ _HASH: (\#)
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-_JAVACOMMENT: ( ( // [^\n]* $_NL? )
+_JAVACOMMENT: ( ( // [^\n\r]* )
               | ( /\*  ((\** [^\*/] ) | [^\*])*  \*+ / ) )
 
-_HASHCOMMENT:  ( $_HASH [^\n\r]* $_NL? )
+_HASHCOMMENT:  ( $_HASH [^\n\r]* )
 
 # Disallow nonprintables (incl. tab) and unescaped quotes (")
 

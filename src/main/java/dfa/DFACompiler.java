@@ -25,21 +25,29 @@ public final class DFACompiler extends BaseObject {
   private int next_token_id;
 
 
-  private void parseExpressions(String script) {
-  p5("parseExpressions:",INDENT,script);
-
+  private void parseExpressions(String script, boolean debug) {
     var scanner = new Scanner(getDfa(), script);
-    if (ISSUE_5) scanner.setVerbose();
+
+    if (false && ISSUE_5) {
+      pr("token names:");
+      pr(getDfa().tokenNames());
+    }
+    if (debug) {
+      if (ISSUE_5) scanner.setVerbose();
+    }
 
     while (scanner.hasNext()) {
       var exprId = scanner.read(TokenRegParse.T_TOKENID);
-      var tokenName = chomp(exprId.text(),":");
+      var tokenName = chomp(exprId.text(), ":");
+//      if (tokenName.contains("_")) {
+//        throw exprId.failWith("Token names cannot include underscores or hyphens");
+//      }
 
 //    }
 //    String tokenName = line.substring(0, pos).trim();
 //
 //    String expr = line.substring(pos + 1);
-      log(VERT_SP, "parsing regex:", tokenName);
+      //log(VERT_SP, "parsing regex:", tokenName);
 
       // Give it the next available token id, if it's not an anonymous token; else -1
 
@@ -56,7 +64,7 @@ public final class DFACompiler extends BaseObject {
 
       rex.parse(scanner, mTokenNameMap);
 
-      p5("storing token name in map:",tokenName);
+      p5("storing token name in map:", tokenName);
 
       mTokenNameMap.put(tokenName, rex);
 
@@ -87,7 +95,10 @@ public final class DFACompiler extends BaseObject {
       if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
         predefExpr = "";
       }
-      parseExpressions(predefExpr);
+
+      // Pretty confident these are working, so disable logging
+      parseExpressions(predefExpr, false);
+
 //      sourceLines.addAll(0, predefinedLines);
 //      ArrayList<Integer> newLineNumbers = arrayList();
 //      for (int i = 0; i < predefinedLines.size(); i++)
@@ -118,7 +129,10 @@ public final class DFACompiler extends BaseObject {
 //
 //      int pos = line.indexOf(":");
 
-    parseExpressions(script);
+
+    p5("parse script:", INDENT, script);
+
+    parseExpressions(script, true);
 //    //var scanner = new Scanner(getDfa(), script);
 //
 //    String tokenName = line.substring(0, pos).trim();
