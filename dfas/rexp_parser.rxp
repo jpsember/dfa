@@ -1,0 +1,18 @@
+WHITESPACE: $_WHITESPACE | $_JAVACOMMENT | $_HASHCOMMENT
+
+PAROP: \(
+PARCL: \)
+RXREF: ( \$ $_ID ) | ( \{ $_ID \} )
+BROP: \[
+BRCL: \]
+TOKENID: $_ID $_COLON
+
+ZERO_OR_MORE: \*
+ZERO_OR_ONE: \?
+ONE_OR_MORE: \+
+ALTERNATE: \|
+RANGE: \-
+
+ASCII: [_a-zA-Z0-9] |  ( $_ESCAPE [\0x21-\x7e] )
+
+

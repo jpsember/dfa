@@ -1,0 +1,32 @@
+# These are some sample tokens for reg exp
+
+ALPHA: alpha
+BRAVO: bravo
+
+
+# This is copied from rexp_parser.rxp:
+#
+
+_HT: (\t)   // \0x09
+_LF:   (\n) // \0x0a
+_FF:   (\f)
+_CR:   (\r) // \0x0d
+_NL: ($_CR? $_LF)
+_SP: (\s)
+_COLON: (\:)
+_COMMA: (\,)
+_EQUALS: (\=)
+_ESCAPE: (\\)
+_TILDE: (\^)
+_HASH: (\#)
+
+_WHITESPACE: ([\f\r\s\t\n]+)
+
+# Disallow nonprintables (incl. tab) and unescaped quotes (")
+
+_ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
+
+_UNSIGNEDINT:  (0 | ([1-9] \d*))
+_SIGNEDINT: ( \-? $_UNSIGNEDINT )
+_INTORFLOAT: $_SIGNEDINT (\. \d+ )? ([eE] (\- | \+)? \d+)?
+_FLOAT: $_SIGNEDINT (\. \d+ ) ([eE] (\- | \+)? \d+)?
