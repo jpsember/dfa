@@ -5,6 +5,8 @@ PARCL: \)
 RXREF: ( \$ $_ID ) | ( \{ $_ID \} )
 BROP: \[
 BRCL: \]
+BREXCEPT: \^
+
 TOKENID: $_ID $_COLON
 
 ZERO_OR_MORE: \*
