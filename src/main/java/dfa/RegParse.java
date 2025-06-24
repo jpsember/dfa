@@ -24,17 +24,14 @@ public final class RegParse {
   /**
    * Parse a regular expression
    *
-   * @param scanner          scanner
-   * @param tokenDefMap      a map of previously parsed regular expressions (mapping names to
-   *                         ids) to be consulted if a curly brace expression appears in the
-   *                         script
+   * @param scanner     scanner
+   * @param tokenDefMap a map of previously parsed regular expressions (mapping names to
+   *                    ids) to be consulted if a curly brace expression appears in the
+   *                    script
    */
-  public void parse(Scanner scanner, Map<String, RegParse> tokenDefMap ) {
-    IParseRegExp p;
-    p = new TokenRegParse();
-//    if (false)
-//      p = new BespokeRegParse();
-    var states = p.parse(scanner, tokenDefMap );
+  public void parse(Scanner scanner, Map<String, RegParse> tokenDefMap) {
+    var p = new TokenRegParse();
+    var states = p.parse(scanner, tokenDefMap);
     mStartState = states[0];
     mEndState = states[1];
   }
@@ -48,7 +45,6 @@ public final class RegParse {
     checkNotNull(mEndState);
     return mEndState;
   }
-
 
   private OurState mStartState;
   private OurState mEndState;

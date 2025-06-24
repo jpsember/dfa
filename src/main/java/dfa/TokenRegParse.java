@@ -57,7 +57,7 @@ import static dfa.Util.*;
 // each method returns an NFA represented by
 // a pair of states: the start and end states.
 //
-public class TokenRegParse implements IParseRegExp {
+public class TokenRegParse {
 
   public OurState[] parse(Scanner scanner, Map<String, RegParse> tokenDefMap) {
     mTokenDefMap = tokenDefMap;
