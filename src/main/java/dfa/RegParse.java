@@ -1,5 +1,7 @@
 package dfa;
 
+import js.parsing.Scanner;
+
 import static js.base.Tools.*;
 
 import java.util.Map;
@@ -22,19 +24,17 @@ public final class RegParse {
   /**
    * Parse a regular expression
    *
-   * @param script           script to parse
+   * @param scanner          scanner
    * @param tokenDefMap      a map of previously parsed regular expressions (mapping names to
    *                         ids) to be consulted if a curly brace expression appears in the
    *                         script
-   * @param sourceLineNumber for error reporting, the line number where the regular expression
-   *                         came from
    */
-  public void parse(String script, Map<String, RegParse> tokenDefMap, int sourceLineNumber) {
+  public void parse(Scanner scanner, Map<String, RegParse> tokenDefMap ) {
     IParseRegExp p;
     p = new TokenRegParse();
-    if (false)
-      p = new BespokeRegParse();
-    var states = p.parse(script, tokenDefMap, sourceLineNumber);
+//    if (false)
+//      p = new BespokeRegParse();
+    var states = p.parse(scanner, tokenDefMap );
     mStartState = states[0];
     mEndState = states[1];
   }

@@ -12,61 +12,32 @@ import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
 import js.parsing.RegExp;
+import js.parsing.Scanner;
 
 import static js.base.Tools.*;
 import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
-  public DFA parse(String script) {
-    int next_token_id = 0;
-    List<RegParse> token_records = arrayList();
+  private List<RegParse> mTokenRecords;
+  // Maps token name to token entry
+  private Map<String, RegParse> mTokenNameMap;
+  private int next_token_id;
 
-    // Maps token name to token entry
-    Map<String, RegParse> tokenNameMap = hashMap();
 
-    ArrayList<Integer> originalLineNumbers = arrayList();
-    ArrayList<String> sourceLines = parseLines(script, originalLineNumbers);
+  private void parseExpressions(String script) {
 
-    // Parse the predefined expressions, and insert those lines before the current ones
-    {
-      List<String> predefinedLines = parsePredefinedExpressions();
-      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
-        predefinedLines.clear();
-      }
-      sourceLines.addAll(0, predefinedLines);
-      ArrayList<Integer> newLineNumbers = arrayList();
-      for (int i = 0; i < predefinedLines.size(); i++)
-        newLineNumbers.add(-1);
-      newLineNumbers.addAll(originalLineNumbers);
-      originalLineNumbers = newLineNumbers;
-    }
+    var scanner = new Scanner(getDfa(), script);
+    if (ISSUE_5) scanner.setVerbose();
 
-    // Now that we've stitched together lines where there were trailing \ characters,
-    // process each line as a complete token definition
+    while (scanner.hasNext()) {
+      var exprId = scanner.read(TokenRegParse.T_TOKENID);
+      var tokenName = exprId.text();
 
-    int line_index = INIT_INDEX;
-    for (String line : sourceLines) {
-      line_index++;
-      int line_number = 1 + originalLineNumbers.get(line_index);
-
-      // Strip whitespace only from the left side (which will strip all of
-      // it, if the entire line is whitespace).  We want to preserve any
-      // special escaped whitespace on the right side.
-      line = leftTrim(line);
-
-      // If line is empty, or starts with '#', it's a comment
-      if (line.isEmpty() || line.charAt(0) == '#')
-        continue;
-
-      if (!RegExp.patternMatchesString(TOKENNAME_EXPR, line))
-        throw badArg("Syntax error:", line_number, quote(line));
-
-      int pos = line.indexOf(":");
-
-      String tokenName = line.substring(0, pos).trim();
-
-      String expr = line.substring(pos + 1);
+//    }
+//    String tokenName = line.substring(0, pos).trim();
+//
+//    String expr = line.substring(pos + 1);
       log("parsing regex:", tokenName);
 
       // Give it the next available token id, if it's not an anonymous token; else -1
@@ -79,100 +50,199 @@ public final class DFACompiler extends BaseObject {
         next_token_id++;
       }
       var rex = new RegParse(token_id, tokenName);
+      if (mTokenNameMap.containsKey(tokenName))
+        throw exprId.failWith("Duplicate token name");
 
-      rex.parse(expr, tokenNameMap, line_number);
+      rex.parse(scanner, mTokenNameMap);
 
-      if (tokenNameMap.containsKey(tokenName))
-        throw badArg("Duplicate token name", line_number, line);
+      p5("storing token name in map:",tokenName);
 
-      tokenNameMap.put(tokenName, rex);
+      mTokenNameMap.put(tokenName, rex);
 
       if (rex.id() < 0)
         continue;
 
       if (ToknUtils.acceptsEmptyString(rex.startState(), rex.endState()))
-        throw badArg("Zero-length tokens accepted:", line_number, line);
+        throw exprId.failWith("Accepts zero-length tokens");
 
-      token_records.add(rex);
+      mTokenRecords.add(rex);
       if (verbose())
         log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
     }
-    OurState combined = combineNFAs(token_records);
-    if (verbose())
+
+  }
+
+  public DFA parse(String script) {
+    int next_token_id = 0;
+    mTokenRecords = arrayList();
+    mTokenNameMap = hashMap();
+
+//    ArrayList<Integer> originalLineNumbers = arrayList();
+    //  ArrayList<String> sourceLines = parseLines(script, originalLineNumbers);
+
+    // Parse the predefined expressions, and insert those lines before the current ones
+    {
+      var predefExpr = parsePredefinedExpressions();
+      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
+        predefExpr = "";
+      }
+      parseExpressions(predefExpr);
+//      sourceLines.addAll(0, predefinedLines);
+//      ArrayList<Integer> newLineNumbers = arrayList();
+//      for (int i = 0; i < predefinedLines.size(); i++)
+//        newLineNumbers.add(-1);
+//      newLineNumbers.addAll(originalLineNumbers);
+//      originalLineNumbers = newLineNumbers;
+    }
+
+//    // Now that we've stitched together lines where there were trailing \ characters,
+//    // process each line as a complete token definition
+//
+//    int line_index = INIT_INDEX;
+//    for (String line : sourceLines) {
+//      line_index++;
+//      int line_number = 1 + originalLineNumbers.get(line_index);
+//
+//      // Strip whitespace only from the left side (which will strip all of
+//      // it, if the entire line is whitespace).  We want to preserve any
+//      // special escaped whitespace on the right side.
+//      line = leftTrim(line);
+//
+//      // If line is empty, or starts with '#', it's a comment
+//      if (line.isEmpty() || line.charAt(0) == '#')
+//        continue;
+//
+//      if (!RegExp.patternMatchesString(TOKENNAME_EXPR, line))
+//        throw badArg("Syntax error:", line_number, quote(line));
+//
+//      int pos = line.indexOf(":");
+
+    parseExpressions(script);
+//    //var scanner = new Scanner(getDfa(), script);
+//
+//    String tokenName = line.substring(0, pos).trim();
+//
+//    String expr = line.substring(pos + 1);
+//    log("parsing regex:", tokenName);
+//
+//    // Give it the next available token id, if it's not an anonymous token; else -1
+//
+//    int token_id = -1;
+//    if (tokenName.charAt(0) != '_') {
+//      if (next_token_id == MAX_TOKEN_DEF)
+//        throw badArg("Too many token definitions");
+//      token_id = next_token_id;
+//      next_token_id++;
+//    }
+//    var rex = new RegParse(token_id, tokenName);
+//
+//    rex.parse(expr, tokenNameMap, line_number);
+//
+//    if (tokenNameMap.containsKey(tokenName))
+//      throw badArg("Duplicate token name", line_number, line);
+//
+//    tokenNameMap.put(tokenName, rex);
+//
+//    if (rex.id() < 0)
+//      continue;
+//
+//    if (ToknUtils.acceptsEmptyString(rex.startState(), rex.endState()))
+//      throw badArg("Zero-length tokens accepted:", line_number, line);
+//
+//    token_records.add(rex);
+//    if (verbose())
+//      log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
+//  }
+
+    OurState combined = combineNFAs(mTokenRecords);
+    if (
+        verbose())
+
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
     NFAToDFA builder = new NFAToDFA();
     if (false) // takes too long on sizeable token files
-      builder.setVerbose(verbose());
+      builder.setVerbose(
+
+          verbose());
     OurState dfa = builder.convertNFAToDFA(combined);
-    if (verbose())
+    if (
+
+        verbose())
+
       log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));
 
-    List<String> redundantTokenNames = applyRedundantTokenFilter(token_records, dfa);
-    if (nonEmpty(redundantTokenNames))
+    List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, dfa);
+    if (
+
+        nonEmpty(redundantTokenNames))
+
       badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
 
     var jsmap =
-        constructOldDFAJSMap(token_records, dfa);
-    return convertOldDFAJSMapToCompactDFA(jsmap);
+        constructOldDFAJSMap(mTokenRecords, dfa);
+    return
+
+        convertOldDFAJSMapToCompactDFA(jsmap);
   }
+
 
   public List<String> tokenNames() {
     checkState(mTokenIds != null, "not yet available");
     return mTokenIds;
   }
 
-  private static ArrayList<String> parseLines(String script, ArrayList<Integer> originalLineNumbers) {
-
-    todo("better to parse these using the new regexp dfa, partitioning to tokens that start with 'xxxx:'");
-
-    ArrayList<String> sourceLines = arrayList();
-
-    // Join lines that have been ended with '\' to their following lines;
-    // only do this if there's an odd number of '\' at the end
-
-    StringBuilder accum = null;
-
-    int accum_start_line = -1;
-
-    int originalLineNumber = 0;
-
-    for (String line : split(script, '\n')) {
-      originalLineNumber++;
-
-      int trailing_backslash_count = 0;
-      while (true) {
-        if (line.length() <= trailing_backslash_count)
-          break;
-        int j = line.length() - 1 - trailing_backslash_count;
-        if (j < 0)
-          break;
-        if (line.charAt(j) != '\\')
-          break;
-        trailing_backslash_count++;
-      }
-
-      if (accum == null) {
-        accum = new StringBuilder();
-        accum_start_line = originalLineNumber;
-      }
-
-      if ((trailing_backslash_count & 1) == 1) {
-        accum.append(line.substring(0, line.length() - 1));
-      } else {
-        accum.append(line);
-        sourceLines.add(accum.toString());
-        if (originalLineNumbers != null)
-          originalLineNumbers.add(accum_start_line);
-        accum = null;
-      }
-    }
-
-    if (accum != null)
-      badArg("Incomplete final line:", INDENT, script);
-
-    return sourceLines;
-  }
+//  private static ArrayList<String> parseLines(String script, ArrayList<Integer> originalLineNumbers) {
+//
+//    todo("better to parse these using the new regexp dfa, partitioning to tokens that start with 'xxxx:'");
+//
+//    ArrayList<String> sourceLines = arrayList();
+//
+//    // Join lines that have been ended with '\' to their following lines;
+//    // only do this if there's an odd number of '\' at the end
+//
+//    StringBuilder accum = null;
+//
+//    int accum_start_line = -1;
+//
+//    int originalLineNumber = 0;
+//
+//    for (String line : split(script, '\n')) {
+//      originalLineNumber++;
+//
+//      int trailing_backslash_count = 0;
+//      while (true) {
+//        if (line.length() <= trailing_backslash_count)
+//          break;
+//        int j = line.length() - 1 - trailing_backslash_count;
+//        if (j < 0)
+//          break;
+//        if (line.charAt(j) != '\\')
+//          break;
+//        trailing_backslash_count++;
+//      }
+//
+//      if (accum == null) {
+//        accum = new StringBuilder();
+//        accum_start_line = originalLineNumber;
+//      }
+//
+//      if ((trailing_backslash_count & 1) == 1) {
+//        accum.append(line.substring(0, line.length() - 1));
+//      } else {
+//        accum.append(line);
+//        sourceLines.add(accum.toString());
+//        if (originalLineNumbers != null)
+//          originalLineNumbers.add(accum_start_line);
+//        accum = null;
+//      }
+//    }
+//
+//    if (accum != null)
+//      badArg("Incomplete final line:", INDENT, script);
+//
+//    return sourceLines;
+//  }
 
   private static String leftTrim(String s) {
     String r = (s + "|").trim();
@@ -333,9 +403,9 @@ public final class DFACompiler extends BaseObject {
     return unrecognized;
   }
 
-  private List<String> parsePredefinedExpressions() {
+  private String parsePredefinedExpressions() {
     String content = Files.readString(this.getClass(), "predef_expr.txt");
-    return parseLines(content, null);
+    return content;
   }
 
   private List<String> mTokenIds;

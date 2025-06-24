@@ -73,7 +73,7 @@ import static js.base.Tools.hashMap;
 // each method returns an NFA represented by
 // a pair of states: the start and end states.
 //
-public class BespokeRegParse implements IParseRegExp {
+public class BespokeRegParse {
 
   /**
    * Parse a regular expression

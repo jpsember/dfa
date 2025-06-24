@@ -1,6 +1,7 @@
 package dfa;
 
 import dfa.gen.DfaConfig;
+import js.file.Files;
 import js.json.JSMap;
 import js.parsing.DFA;
 
@@ -75,4 +76,17 @@ public final class Util {
     var b = new DFABuilder(oldDfa);
     return b.build();
   }
+
+
+  public static DFA getDfa() {
+    todo("have utility method for caching DFAs, parsing from resources");
+    if (sDFA == null) {
+      sDFA = DFA.parse(Files.readString(TokenRegParse.class, "rexp_parser.dfa"));
+      return sDFA;
+    }
+
+    return sDFA;
+  }
+  private static DFA sDFA;
+
 }
