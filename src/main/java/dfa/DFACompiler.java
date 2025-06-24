@@ -39,7 +39,7 @@ public final class DFACompiler extends BaseObject {
 //    String tokenName = line.substring(0, pos).trim();
 //
 //    String expr = line.substring(pos + 1);
-      log("parsing regex:", tokenName);
+      log(VERT_SP, "parsing regex:", tokenName);
 
       // Give it the next available token id, if it's not an anonymous token; else -1
 
