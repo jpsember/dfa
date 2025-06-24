@@ -124,6 +124,8 @@ public final class DFACompiler extends BaseObject {
 
   private static ArrayList<String> parseLines(String script, ArrayList<Integer> originalLineNumbers) {
 
+    todo("better to parse these using the new regexp dfa, partitioning to tokens that start with 'xxxx:'");
+
     ArrayList<String> sourceLines = arrayList();
 
     // Join lines that have been ended with '\' to their following lines;
