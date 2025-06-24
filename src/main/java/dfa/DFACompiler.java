@@ -26,13 +26,14 @@ public final class DFACompiler extends BaseObject {
 
 
   private void parseExpressions(String script) {
+  p5("parseExpressions:",INDENT,script);
 
     var scanner = new Scanner(getDfa(), script);
     if (ISSUE_5) scanner.setVerbose();
 
     while (scanner.hasNext()) {
       var exprId = scanner.read(TokenRegParse.T_TOKENID);
-      var tokenName = exprId.text();
+      var tokenName = chomp(exprId.text(),":");
 
 //    }
 //    String tokenName = line.substring(0, pos).trim();

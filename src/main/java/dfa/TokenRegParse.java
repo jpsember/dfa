@@ -142,7 +142,7 @@ public class TokenRegParse implements IParseRegExp {
 
   private StatePair parseCONCAT() {
     StatePair e1 = parseQUANTIFIED();
-    if (hasNext() && !peekIs(T_TOKENID) && !peekIs(T_ALTERNATE) && !peekIs(T_PARCL)  ) {
+    if (hasNext() && !peekIs(T_TOKENID) && !peekIs(T_ALTERNATE) && !peekIs(T_PARCL)) {
       StatePair e2 = parseCONCAT();
       ToknUtils.addEps(e1.end, e2.start);
       e1 = statePair(e1.start, e2.end);
@@ -172,7 +172,7 @@ public class TokenRegParse implements IParseRegExp {
       e1 = parseALTERNATE();
       read(T_PARCL);
     } else if (t.id(T_RXREF)) {
-      e1 = parseTokenDef();
+      e1 = parseRegExpReference();
     } else if (t.id(T_BROP)) {
       e1 = parseBracketExpr();
     } else {
@@ -222,10 +222,11 @@ public class TokenRegParse implements IParseRegExp {
 
 //  private static final Pattern TOKENREF_EXPR = RegExp.pattern("[_A-Za-z][_A-Za-z0-9]*");
 
-  private StatePair parseTokenDef() {
+  private StatePair parseRegExpReference() {
     var t = read(T_RXREF);
     var s = t.text();
     checkArgument(s.startsWith("$"), "expected '$' start;", s);
+    p5("parseRegExpReference:", t);
 
 //    final String TOKEN_CHARS = "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 //    char delim = read();
@@ -250,6 +251,7 @@ public class TokenRegParse implements IParseRegExp {
 //    if (!RegExp.patternMatchesString(TOKENREF_EXPR, nameStr))
 //      throw abort("Problem with token name");
     var nameStr = s.substring(1);
+    p5("looking for regexpr with token name:", nameStr);
     RegParse regExp = mTokenDefMap.get(nameStr);
     if (regExp == null)
       throw abortAtToken(t, "undefined token");
@@ -313,8 +315,8 @@ public class TokenRegParse implements IParseRegExp {
     int val;
     char c;
 
-    p5("parse_code_set, next token:",mScanner.peek());
-    p5("next token id:",mScanner.peek().id());
+    p5("parse_code_set, next token:", mScanner.peek());
+    p5("next token id:", mScanner.peek().id());
 
     if (readIf(T_ASCII)) {
       var tx = mReadToken.text();
@@ -340,7 +342,8 @@ public class TokenRegParse implements IParseRegExp {
       var h2 = read_hex(tx.charAt(3));
       return CodeSet.withValue((h1 << 4) + h2);
     }
-    throw badState("shouldn't have got here; next token:",mScanner.peek());}
+    throw badState("shouldn't have got here; next token:", mScanner.peek());
+  }
 //    readIf(T_ASCII)
 //    var t = read(T_ASCII);
 //    pr("...read ASCII:", t);
