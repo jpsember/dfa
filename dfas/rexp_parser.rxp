@@ -1,8 +1,7 @@
 
 # Include an escape \ followed by a linefeed as whitespace, since we no longer are doing the 'stitching'?
 
-WHITESPACE: $_WHITESPACE  | $_HASHCOMMENT
-#| ($_ESCAPE \n)
+WHITESPACE: $_WHITESPACE  | $_HASHCOMMENT | ($_ESCAPE \n)
 
 PAROP: \(
 PARCL: \)
