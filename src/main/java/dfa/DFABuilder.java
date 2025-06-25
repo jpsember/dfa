@@ -105,7 +105,6 @@ class DFABuilder {
 
   private List<State> states() {
     return mStates;
-//    return mDfa.debStates();
   }
 
   private void convertStateIdsToAddresses() {
@@ -139,7 +138,6 @@ class DFABuilder {
   }
 
   private List<State> mStates;
-  //private OldDfa mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
   private List<Integer> mStateAddresses = arrayList();
   private DFA mBuilt;

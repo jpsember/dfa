@@ -96,16 +96,153 @@ public final class DFACompiler extends BaseObject {
 //      builder.setStartState(startState);
 //    }
 
-    var jsmap =
-        constructOldDFAJSMap(mTokenRecords, startState);
-    return
-        convertOldDFAJSMapToCompactDFA(jsmap);
+    if (true) {
+      var bld = createBuilder(mTokenRecords, startState);
+      return bld.build();
+    } else {
+      var jsmap =
+          constructOldDFAJSMap(mTokenRecords, startState);
+      return
+          convertOldDFAJSMapToCompactDFA(jsmap);
+    }
   }
 
 
   public List<String> tokenNames() {
     checkState(mTokenIds != null, "not yet available");
     return mTokenIds;
+  }
+
+  private DFABuilder createBuilder(List<TokenDefinition> token_records, State startState) {
+    var b = new DFABuilder();
+
+    List<String> tokenNames = arrayList();
+    for (TokenDefinition ent : token_records) {
+      tokenNames.add(ent.name());
+    }
+    b.setTokenNames(tokenNames);
+
+
+    List<State> reachable = ToknUtils.reachableStates(startState);
+    State finalState = null;
+
+    Map<State, Integer> stateIndexMap = hashMap();
+    List<State> orderedStates = arrayList();
+
+    int index = 0;
+    for (State s : reachable) {
+      pr("reachable state:", s, INDENT, "==> index", index);
+      stateIndexMap.put(s, index);
+      orderedStates.add(s);
+      index++;
+      if (!s.finalState())
+        continue;
+      checkState(finalState == null, "multiple final states");
+      finalState = s;
+    }
+    checkState(stateIndexMap.get(startState) == 0, "unexpected start state index");
+    checkState(finalState != null, "no final state found");
+    int finalStateIndex = stateIndexMap.get(finalState);
+
+
+    // Construct new states from the renamed versions
+
+    {
+      List<State> newStates = arrayList();
+
+      for (int i = 0; i < orderedStates.size(); i++) {
+        newStates.add(new State());
+      }
+
+      for (State origState : orderedStates) {
+
+        var newState = newStates.get(stateIndexMap.get(origState));
+
+        List<Edge> newEdges = arrayList();
+
+        int edgeIndex = INIT_INDEX;
+        for (Edge edge : origState.edges()) {
+          edgeIndex++;
+
+          // Construct a new edge from this edge
+          var newEdge = new Edge(edge.codeSets(), newStates.get(stateIndexMap.get(edge.destinationState())));
+          newEdges.add(newEdge);
+
+//
+//
+//         // var newEdge = new Edge();
+//
+//          int[] cr = edge.codeSets();
+//          checkArgument(cr.length >= 2);
+//
+//
+//          for (int i = 0; i < cr.length; i += 2) {
+//            int a = cr[i];
+//            int b = cr[i + 1];
+//
+//            out.add(a);
+//            out.add(b);
+//          }
+//
+//          stateDesc.add(out);
+//
+//          int destStateIndex = stateIndexMap.get(edge.destinationState());
+//
+//          // Optimization: if last edge, and destination state is the final state, omit it
+//          if (edgeIndex == s.edges().size() - 1 && destStateIndex == finalStateIndex)
+//            continue;
+//
+//          stateDesc.add(destStateIndex);
+        }
+        newState.setEdges(newEdges);
+//        states.add(stateDesc);
+      }
+//      m.put("states", states);
+      b.setStates(newStates);
+
+    }
+
+
+    //      m.put("final", finalStateIndex);
+
+    //
+
+//    b.setStates(orderedStates);
+//      List<State> stateList = arrayList();
+//      JSList states = list();
+//      for (State s : orderedStates) {
+//        //JSList stateDesc = list();
+//
+//        int edgeIndex = INIT_INDEX;
+//        for (Edge edge : s.edges()) {
+//          edgeIndex++;
+//          int[] cr = edge.codeSets();
+//          checkArgument(cr.length >= 2);
+//
+//          JSList out = list();
+//          for (int i = 0; i < cr.length; i += 2) {
+//            int a = cr[i];
+//            int b = cr[i + 1];
+//
+//            out.add(a);
+//            out.add(b);
+//          }
+//
+//          stateDesc.add(out);
+//
+//          int destStateIndex = stateIndexMap.get(edge.destinationState());
+//
+//          // Optimization: if last edge, and destination state is the final state, omit it
+//          if (edgeIndex == s.edges().size() - 1 && destStateIndex == finalStateIndex)
+//            continue;
+//
+//          stateDesc.add(destStateIndex);
+//        }
+//        states.add(stateDesc);
+//      }
+//      m.put("states", states);
+//      return m;
+    return b;
   }
 
   /**
