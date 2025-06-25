@@ -58,8 +58,8 @@ public class DfaOper extends AppOper {
 
     {
       var v = config().version();
-      pr("v:",v,"version_5:",DFA_VERSION_5);
-      if (v != DFA_VERSION_5)
+      pr("v:", v, "version_5:", DFA_VERSION_5);
+      if ("" + v != "" + DFA_VERSION_5)
         app().setError("Unsupported version:", versionString(config().version()));
     }
 
