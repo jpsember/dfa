@@ -16,7 +16,7 @@ public class DfaMain extends App {
 
   @Override
   public String getVersion() {
-    return String.format("%.1f", Util.DFA_VERSION_4);
+    return String.format("%.1f", Util.DFA_VERSION_5);
   }
 
   @Override

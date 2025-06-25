@@ -54,23 +54,8 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
-  public void rexpparser() {
-    proc();
-  }
-
-  @Test
   public void simple() {
     proc("abbaaa");
-  }
-
-  @Test
-  public void unicode() {
-    if (true)
-      return;
-    // I changed the unicode rxp to allow the single character 255, which is supposed to mean
-    // allow anything at or above 255; but I don't think that change has been made to the scanner
-    // class yet.
-    proc("\"here is a unicode char: \u0116  <-- \"");
   }
 
   @Test
@@ -329,7 +314,6 @@ public class CompileTest extends MyTestCase {
     mDFAJson = c.parse(mScript);
 
     files().writeString(generatedFile("dfa.json"), mDFAJson.toString());
-    todo("refactor the describe() method to work with the compact dfa");
     //files().writeString(generatedFile("dfa_description.json"), new DFA(mDFAJson).describe().prettyPrint());
 
     if (sampleText == null) {

@@ -27,6 +27,10 @@ class DFABuilder {
   public DFABuilder() {
   }
 
+  private static final
+  boolean DEBUG = false && alert("debug is on");
+
+
   public DFA build() {
     if (mBuilt != null) return mBuilt;
     mFirstDebugStateId = states().get(0).debugId();
@@ -36,6 +40,7 @@ class DFABuilder {
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
+
 //
 //    // Our new version uses an array of (unsigned) bytes, instead of shorts;
 //    // convert them to a short array for now...
@@ -45,32 +50,13 @@ class DFABuilder {
 //      sh.add((short) (b & 0xff));
 //    }
 
-    pr("length of graph:", graph.length);
-
-    pr(DataUtil.hexDump(graph, 0, graph.length, true));
-
+    if (DEBUG) {
+      pr("length of graph:", graph.length);
+      pr(DataUtil.hexDump(graph, 0, graph.length, true));
+    }
     // // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
-    // It generated:
-    //
-    //      id #e
-    //  0: | 00 02
-    //             #r r0..... destid ($0010)
-    //             01 61 | 62 10 00
-    //                              #r   r0... destid ($000c)
-    //                              01 | 60 61 0c 00 |
-    //       id (1)  #e
-    //       01      00    |  ...a b... `a.. ....
-    // 10: | 02          |             |             |             |  ..
 
-//
-//     | 00 02 01 61 | 62 10 00 01 | 60 61 0c 00 | 01 00 00 00 |  02 00
-//      state (t0 e2)
-//          edge0 (01 61 62 10 00)
-//          edge1 (01 60 61 0c 00)
-//      state (t1 e0) 01 00
-
-
-    if (true) {
+    if (DEBUG && false) {
       // Generate a JSON representation of this as the new DFA would (if it were implemented)
       var m = map();
       m.put("version", "$2");
@@ -79,15 +65,15 @@ class DFABuilder {
       pr("xxx.dfa:", INDENT, m.toString());
     }
 
+    if (false) {
+      // Our new version uses an array of (unsigned) bytes, instead of shorts;
+      // convert them to a short array for now...
 
-    // Our new version uses an array of (unsigned) bytes, instead of shorts;
-    // convert them to a short array for now...
-
-    var sh = ShortArray.newBuilder();
-    for (var b : graph) {
-      sh.add((short) (b & 0xff));
+      var sh = ShortArray.newBuilder();
+      for (var b : graph) {
+        sh.add((short) (b & 0xff));
+      }
     }
-
     mBuilt = new DFA(DFA.VERSION, mTokenNames.toArray(new String[0]), graph);
     return mBuilt;
   }
@@ -95,8 +81,8 @@ class DFABuilder {
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
   private void addState(State s) {
-    pr(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
-
+    if (DEBUG)
+      pr(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
 
     // <state> ::= <1 + token_id> <edge_count> <edge>*
     var g = mGraph;
@@ -104,7 +90,8 @@ class DFABuilder {
 
     // If the state has no edges, it will never be reached; so store nothing
     if (s.edges().isEmpty()) {
-      pr("...no edges, skipping");
+      if (DEBUG)
+        pr("...no edges, skipping");
       return;
     }
 
@@ -133,11 +120,6 @@ class DFABuilder {
               compiledTokenId = tokenIndex + 1;
               checkArgument(compiledTokenId > 0 && compiledTokenId < 256, "token index", tokenIndex, "yields out-of-range token id", compiledTokenId);
             }
-//            if (prevTokenId != -1)
-//              badState("state already has an associated token:", prevTokenId, "; cannot add", tokenIndex);
-//            prevTokenId = tokenIndex;
-//            checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
-
           } else {
             filteredEdges.add(edge);
           }

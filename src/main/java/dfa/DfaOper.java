@@ -58,7 +58,7 @@ public class DfaOper extends AppOper {
 
     {
       var v = config().version();
-      if (v != DFA_VERSION_4)
+      if (v != DFA_VERSION_5)
         app().setError("Unsupported version:", versionString(config().version()));
     }
 
@@ -267,7 +267,7 @@ public class DfaOper extends AppOper {
       if (!results.equals(expectedResults)) {
         pr("*** Results have changed");
         if (config().exampleVerify()) {
-          var sampleResultsInvalidFile = new File(sampleTextFile  + ".invalid");
+          var sampleResultsInvalidFile = new File(sampleTextFile + ".invalid");
           try {
             files().writeString(sampleResultsInvalidFile, results);
             SystemCall sc = new SystemCall();

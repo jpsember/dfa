@@ -20,7 +20,7 @@ public final class Util {
       , FTYPE_RUST = 1 //
       ;
 
-  public static final double DFA_VERSION_4 = 4.0;
+  public static final double DFA_VERSION_5 = 5.1;
 
   /**
    * One plus the maximum code represented
