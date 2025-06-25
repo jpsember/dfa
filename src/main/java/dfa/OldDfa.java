@@ -140,10 +140,6 @@ public class OldDfa {
     return mTokenNames;
   }
 
-  public State getStartState() {
-    return mStates[0];
-  }
-
   private State getState(int id) {
     return mStates[id];
   }

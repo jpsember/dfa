@@ -4,6 +4,7 @@ import js.data.IntArray;
 import js.data.ShortArray;
 import js.parsing.DFA;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static js.base.Tools.*;
@@ -11,15 +12,29 @@ import static js.base.Tools.*;
 class DFABuilder {
 
   public DFABuilder(OldDfa dfa) {
-    mDfa = dfa;
+    setStates(arrayList(dfa.debStates()));
+    setTokenNames(arrayList(dfa.tokenNames()));
+  }
+
+  public DFABuilder setStates(List<State> states) {
+    mStates = new ArrayList<>(states);
+    return this;
+  }
+
+  public DFABuilder setTokenNames(List<String> tokenNames) {
+    mTokenNames = new ArrayList<>(tokenNames);
+    return this;
+  }
+
+  public DFABuilder() {
   }
 
   public DFA build() {
     if (mBuilt != null) return mBuilt;
-    var dfa = mDfa;
+    // var dfa = mDfa;
     var g = mGraph;
-    var sc = states().length;
-    mFirstDebugStateId = states()[0].debugId();
+    var sc = states().size();
+    mFirstDebugStateId = states().get(0).debugId();
     todo("!we don't actually need the number of states, except for logging purposes?");
 
     // <graph> ::= <int: # of states> <state>*
@@ -30,7 +45,7 @@ class DFABuilder {
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
-    mBuilt = new DFA(DFA.VERSION, dfa.tokenNames(), graph);
+    mBuilt = new DFA(DFA.VERSION, mTokenNames.toArray(new String[0]), graph);
     return mBuilt;
   }
 
@@ -62,7 +77,7 @@ class DFABuilder {
 
   private int stateIndex(int debugStateId) {
     var result = debugStateId - mFirstDebugStateId;
-    checkArgument(result >= 0 && result < states().length, "can't find state index for:", debugStateId);
+    checkArgument(result >= 0 && result < states().size(), "can't find state index for:", debugStateId);
     return result;
   }
 
@@ -88,8 +103,9 @@ class DFABuilder {
     }
   }
 
-  private State[] states() {
-    return mDfa.debStates();
+  private List<State> states() {
+    return mStates;
+//    return mDfa.debStates();
   }
 
   private void convertStateIdsToAddresses() {
@@ -119,13 +135,14 @@ class DFABuilder {
   }
 
   private int numTokens() {
-    return mDfa.tokenNames().length;
+    return mTokenNames.size();
   }
 
-  private OldDfa mDfa;
+  private List<State> mStates;
+  //private OldDfa mDfa;
   private IntArray.Builder mGraph = IntArray.newBuilder();
   private List<Integer> mStateAddresses = arrayList();
   private DFA mBuilt;
   private Integer mFirstDebugStateId;
-
+  private List<String> mTokenNames;
 }

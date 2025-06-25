@@ -78,18 +78,26 @@ public final class DFACompiler extends BaseObject {
     if (verbose())
       log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
 
-    NFAToDFA builder = new NFAToDFA();
-    State dfa = builder.convertNFAToDFA(combined);
-    if (verbose())
-      log(ToknUtils.dumpStateMachine(dfa, "nfa to dfa"));
+    State startState;
+    {
+      NFAToDFA builder = new NFAToDFA();
+      startState = builder.convertNFAToDFA(combined);
+      if (verbose())
+        log(ToknUtils.dumpStateMachine(startState, "nfa to dfa"));
 
-    List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, dfa);
-    if (nonEmpty(redundantTokenNames))
-      badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
-
+      List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, startState);
+      if (nonEmpty(redundantTokenNames))
+        badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
+    }
     todo("!can we construct directly to a compact dfa here?");
+
+//    {
+//      var builder = new DFABuilder();
+//      builder.setStartState(startState);
+//    }
+
     var jsmap =
-        constructOldDFAJSMap(mTokenRecords, dfa);
+        constructOldDFAJSMap(mTokenRecords, startState);
     return
         convertOldDFAJSMapToCompactDFA(jsmap);
   }
