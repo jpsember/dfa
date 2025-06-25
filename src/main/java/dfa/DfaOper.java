@@ -37,7 +37,7 @@ public class DfaOper extends AppOper {
 
   @Override
   protected void longHelp(BasePrinter b) {
-    b.pr(" \n", "\n\nExisting tokens can be included in regular expressions as $NAME or {NAME}, and");
+    b.pr(" \n", "\n\nExisting tokens can be included in regular expressions as $NAME, and");
     b.pr("can include these predefined anonymous tokens:");
     b.pr(" \n", "\n\n");
     b.pr(Files.readString(TokenDefinition.class, "predef_expr.txt"));
