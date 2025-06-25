@@ -11,5 +11,6 @@ TOK="src/main/java/dfa/"
 #
 dfa input dfas/rexp_parser.rxp \
     output "${DEST}rexp_parser.dfa" \
-    ids "${TOK}TokenRegParse.java"
-    example_text dfas/sample.txt $@
+    ids "${TOK}TokenDefinitionParser.java" \
+    example_text dfas/sample.txt \
+    "$@"
