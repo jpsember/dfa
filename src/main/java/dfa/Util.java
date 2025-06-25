@@ -64,10 +64,7 @@ public final class Util {
 
   private static DfaConfig sDfaConfig;
 
-
-
   public static DFA getDfa() {
-    todo("have utility method for caching DFAs, parsing from resources");
     if (sDFA == null) {
       sDFA = DFA.parse(Files.readString(TokenDefinitionParser.class, "rexp_parser.dfa"));
       return sDFA;
