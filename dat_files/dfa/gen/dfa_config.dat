@@ -1,4 +1,4 @@
-fields {
+class {
   // Source file, e.g. foo.rxp
   //
   File input;
@@ -19,7 +19,7 @@ fields {
   // If true, and example text file exists, verifies its contents haven't changed
   bool example_verify;
 
-  float version = 4.0;
+  float version = 5.1;
 
   // If true, generates ASCII table and quits
   bool ascii;

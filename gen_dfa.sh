@@ -9,13 +9,7 @@ TOK="src/main/java/dfa/"
 # This is the dfa that is used to parse regular expressions (the new one, as opposed
 # to the bespoke parser that doesn't use tokens)
 #
-
 dfa input dfas/rexp_parser.rxp \
     output "${DEST}rexp_parser.dfa" \
     ids "${TOK}TokenRegParse.java"
-
-
-# dfa input dfas/rexp_parser.rxp \
-#     output "${DEST}rexp_parser.dfa" \
-#     ids "${TOK}TokenRegParse.java" \
-#     example_text dfas/sample.txt
+    example_text dfas/sample.txt

@@ -106,7 +106,7 @@ public class DfaConfig implements AbstractData {
       }
     }
     mExampleVerify = m.opt(_4, false);
-    mVersion = m.opt(_5, 4.0f);
+    mVersion = m.opt(_5, 5.1f);
     mAscii = m.opt(_6, false);
   }
 
@@ -246,7 +246,7 @@ public class DfaConfig implements AbstractData {
     mOutput = Files.DEFAULT;
     mIds = Files.DEFAULT;
     mExampleText = Files.DEFAULT;
-    mVersion = 4.0f;
+    mVersion = 5.1f;
   }
 
 }
