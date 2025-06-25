@@ -13,8 +13,19 @@ _HASH: (\#)
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-_JAVACOMMENT: ( ( // [^\n\r]* )
-              | ( /\*  ((\** [^\*/] ) | [^\*])*  \*+ / ) )
+# Java multline comments (/* ....  */) are very tricky.
+# I will be able to simplify this greatly once I support
+# the 'minus' regex expression.
+
+
+_ML_FWDSLASH:  /          # '/'
+_ML_STAR:      \*         # '*'
+
+_JAVAML:  $_ML_FWDSLASH $_ML_STAR+
+         ( [^ \* ] | ( \* *  [^ / \* ]) )*
+         $_ML_STAR+ $_ML_FWDSLASH
+
+_JAVACOMMENT:  ( // [^\n\r]* ) | $_JAVAML
 
 _HASHCOMMENT:  ( $_HASH [^\n\r]* )
 
@@ -30,5 +41,5 @@ _SIGNEDINT: ( \-? $_UNSIGNEDINT )
 _INTORFLOAT: $_SIGNEDINT (\. \d+ )? ([eE] (\- | \+)? \d+)?
 _FLOAT: $_SIGNEDINT (\. \d+ ) ([eE] (\- | \+)? \d+)?
 
-
-# TODO: add _UNICODE to specify all characters >= 128?
+# This represents ASCII 127 as well as all non-ascii byte values from $80...$ff (-128..-1).
+_UNICODE: \x7f+

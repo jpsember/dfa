@@ -1,0 +1,18 @@
+WS:  $_WHITESPACE
+
+CHAR: [a-z/\*]
+
+_A: /
+_B: \*
+
+_OPENCM:  $_A $_B+
+_CLOSECM: $_B+ $_A
+
+JAVAML:  $_OPENCM
+         ( [^ \* ] | ( \* *  [^ / \* ]) )*
+         $_CLOSECM
+
+
+
+
+

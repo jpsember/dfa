@@ -54,6 +54,17 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void datagen1() {
+    proc();
+  }
+
+  @Test
+  public void multiline1() {
+    disallowUnknown();
+    proc();
+  }
+
+  @Test
   public void simple() {
     proc("abbaaa");
   }
@@ -299,9 +310,14 @@ public class CompileTest extends MyTestCase {
 
   private String mTestName;
   private int mVersion = -1;
+  private boolean mDisallowUnknown;
 
   private void proc() {
     proc(null);
+  }
+
+  private void disallowUnknown() {
+    mDisallowUnknown = true;
   }
 
   private void proc(String sampleText) {
@@ -334,10 +350,14 @@ public class CompileTest extends MyTestCase {
 
       // Don't skip any tokens
       var s = new Scanner(dfa(), sampleText, -1);
-      s.setAcceptUnknownTokens();
+      if (!mDisallowUnknown)
+        s.setAcceptUnknownTokens();
       s.setVerbose(verbose());
       while (s.hasNext()) {
-        sb.append(s.read());
+        var t = s.read();
+        if (verbose())
+          pr(">>", t);
+        sb.append(t);
         sb.append('\n');
       }
       String result = sb.toString();
@@ -351,7 +371,9 @@ public class CompileTest extends MyTestCase {
   private DFA dfa() {
     return mDFAJson;
   }
+/* * / * */
 
+  /* /* /* /*   /   *  */
   private String mScript;
   private DFA mDFAJson;
 }
