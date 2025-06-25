@@ -2,7 +2,7 @@
 
   "entries" : [
     {
-      "repo_name":"jpsember/java-core",  //"commit_hash" : "962efa2","version": "962efa2",
+      "repo_name":"jpsember/java-core", //   "commit_hash" : "fe0d1e0","version": "fe0d1e0",
     },
     {
       "repo_name":"jpsember/java-testutil",

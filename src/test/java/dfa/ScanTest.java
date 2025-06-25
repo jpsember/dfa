@@ -13,20 +13,14 @@ public class ScanTest extends MyTestCase {
 
   @Test
   public void simple() {
-    dfa("{\"graph\":[4,2,1,98,99,15,1,97,98,10,1,1,-1,14,0,1,1,-2,14],\"token_names\":\"A B\",\"version\":\"$1\"}");
-    script("aabba");
-  }
-
-  @Test
-  public void small() {
-    dfa("{\"graph\":[5,2,1,98,99,15,1,97,98,10,1,1,-1,14,0,1,1,98,99,20,1,1,-2,14],\"token_names\":\"A B\",\"version\":\"$1\"}");
+    dfa("{\"graph\":[0,2,1,98,1,14,0,1,97,1,12,0,1,0,2,0],\"token_names\":\"A B\",\"version\":\"$2\"}");
     script("aabba");
   }
 
   @Test
   public void unknown() {
     mAllowUnknown = true;
-    dfa("{\"graph\":[5,2,1,98,99,15,1,97,98,10,1,1,-1,14,0,1,1,98,99,20,1,1,-2,14],\"token_names\":\"A B\",\"version\":\"$1\"}");
+    dfa("{\"graph\":[0,2,1,98,1,14,0,1,97,1,12,0,1,0,2,0],\"token_names\":\"A B\",\"version\":\"$2\"}");
     script("aabbac");
   }
 

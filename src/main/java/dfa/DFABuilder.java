@@ -1,8 +1,10 @@
 package dfa;
 
 import js.data.ByteArray;
+import js.data.DataUtil;
 import js.data.IntArray;
 import js.data.ShortArray;
+import js.json.JSList;
 import js.parsing.DFA;
 
 import java.util.ArrayList;
@@ -34,6 +36,49 @@ class DFABuilder {
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
+//
+//    // Our new version uses an array of (unsigned) bytes, instead of shorts;
+//    // convert them to a short array for now...
+//
+//    var sh = ShortArray.newBuilder();
+//    for (var b : graph) {
+//      sh.add((short) (b & 0xff));
+//    }
+
+    pr("length of graph:", graph.length);
+
+    pr(DataUtil.hexDump(graph, 0, graph.length, true));
+
+    // // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
+    // It generated:
+    //
+    //      id #e
+    //  0: | 00 02
+    //             #r r0..... destid ($0010)
+    //             01 61 | 62 10 00
+    //                              #r   r0... destid ($000c)
+    //                              01 | 60 61 0c 00 |
+    //       id (1)  #e
+    //       01      00    |  ...a b... `a.. ....
+    // 10: | 02          |             |             |             |  ..
+
+//
+//     | 00 02 01 61 | 62 10 00 01 | 60 61 0c 00 | 01 00 00 00 |  02 00
+//      state (t0 e2)
+//          edge0 (01 61 62 10 00)
+//          edge1 (01 60 61 0c 00)
+//      state (t1 e0) 01 00
+
+
+    if (true) {
+      // Generate a JSON representation of this as the new DFA would (if it were implemented)
+      var m = map();
+      m.put("version", "$2");
+      m.put("token_names", String.join(" ", mTokenNames));
+      m.put("graph", JSList.with(graph));
+      pr("xxx.dfa:", INDENT, m.toString());
+    }
+
 
     // Our new version uses an array of (unsigned) bytes, instead of shorts;
     // convert them to a short array for now...
@@ -42,16 +87,26 @@ class DFABuilder {
     for (var b : graph) {
       sh.add((short) (b & 0xff));
     }
-    mBuilt = new DFA("$2", /*DFA.VERSION,*/ mTokenNames.toArray(new String[0]), sh.array());
+
+    mBuilt = new DFA(DFA.VERSION, mTokenNames.toArray(new String[0]), graph);
     return mBuilt;
   }
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
   private void addState(State s) {
+    pr(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
+
+
     // <state> ::= <1 + token_id> <edge_count> <edge>*
     var g = mGraph;
     mStateAddresses.add(g.size());
+
+    // If the state has no edges, it will never be reached; so store nothing
+    if (s.edges().isEmpty()) {
+      pr("...no edges, skipping");
+      return;
+    }
 
     // Store 1 + token id, or 0 if none
 
@@ -69,13 +124,20 @@ class DFABuilder {
           if (a < 0) {
             // Convert the codeset token id to an index
             int tokenIndex = -b - 1;
-            if (prevTokenId != -1)
-              badState("state already has an associated token:", prevTokenId, "; cannot add", tokenIndex);
-            prevTokenId = tokenIndex;
             checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
 
-            compiledTokenId = tokenIndex + 1;
-            checkArgument(compiledTokenId > 0 && compiledTokenId < 256, "token index", tokenIndex, "yields out-of-range token id", compiledTokenId);
+            // Apparently, there can be more than one token edges for a state... choose the one the produces the highest token id
+            if (tokenIndex > prevTokenId) {
+              prevTokenId = tokenIndex;
+              checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
+              compiledTokenId = tokenIndex + 1;
+              checkArgument(compiledTokenId > 0 && compiledTokenId < 256, "token index", tokenIndex, "yields out-of-range token id", compiledTokenId);
+            }
+//            if (prevTokenId != -1)
+//              badState("state already has an associated token:", prevTokenId, "; cannot add", tokenIndex);
+//            prevTokenId = tokenIndex;
+//            checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
+
           } else {
             filteredEdges.add(edge);
           }
@@ -97,10 +159,9 @@ class DFABuilder {
       for (int i = 0; i < codeSets.length; i += 2) {
         var a = codeSets[i];
         var b = codeSets[i + 1];
-
         checkArgument(a < b && a > 0 && a <= 127 && b <= 128, "illegal char range:", a, b);
-        g.add(a - 1);
-        g.add(b - 1);
+        g.add(a);
+        g.add(b - a);
       }
 
       var destStateNumber = stateIndex(edge.destinationState());

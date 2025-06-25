@@ -54,6 +54,11 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void rexpparser() {
+    proc();
+  }
+
+  @Test
   public void simple() {
     proc("abbaaa");
   }
