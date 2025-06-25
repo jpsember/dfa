@@ -61,11 +61,7 @@ public final class Util {
 
   private static DfaConfig sDfaConfig;
 
-  public static DFA convertOldDFAJSMapToCompactDFA(JSMap oldDFAJSMap) {
-    var oldDfa = OldDfa.parseDfaUsingBespokeParser(oldDFAJSMap.toString());
-    var b = new DFABuilder(oldDfa);
-    return b.build();
-  }
+
 
   public static DFA getDfa() {
     todo("have utility method for caching DFAs, parsing from resources");

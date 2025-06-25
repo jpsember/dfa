@@ -77,13 +77,13 @@ public class DfaOper extends AppOper {
 
     DFACompiler compiler = new DFACompiler();
     compiler.setVerbose(verbose());
-    var compactDFA = compiler.parse(Files.readString(sourceFile));
-    String str = compactDFA.toString();
+    var dfa = compiler.parse(Files.readString(sourceFile));
+    String str = dfa.toString();
     log("Size of dfa:", str.length(), "version:", config().version());
     files().writeIfChanged(targetFile, str);
 
-    procIdsFile(compiler.tokenNames());
-    processExampleText(compactDFA);
+    procIdsFile(dfa);
+    processExampleText(dfa);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class DfaOper extends AppOper {
   /**
    * If an ids source file argument was given, write the token ids to it
    */
-  private void procIdsFile(List<String> tokenNames) {
+  private void procIdsFile(DFA dfa) {//List<String> tokenNames) {
     var mIdSourceFile = config().ids();
 
     if (Files.empty(mIdSourceFile))
@@ -193,8 +193,9 @@ public class DfaOper extends AppOper {
     sb.append(marker0);
 
     String tab = spaces(indent);
+
     int index = INIT_INDEX;
-    for (String tokenName : tokenNames) {
+    for (String tokenName : dfa.tokenNames()) {
       index++;
       sb.append(tab);
 

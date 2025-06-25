@@ -11,11 +11,6 @@ import static js.base.Tools.*;
 
 class DFABuilder {
 
-  public DFABuilder(OldDfa dfa) {
-    setStates(arrayList(dfa.debStates()));
-    setTokenNames(arrayList(dfa.tokenNames()));
-  }
-
   public DFABuilder setStates(List<State> states) {
     mStates = new ArrayList<>(states);
     return this;
@@ -31,7 +26,6 @@ class DFABuilder {
 
   public DFA build() {
     if (mBuilt != null) return mBuilt;
-    // var dfa = mDfa;
     var g = mGraph;
     var sc = states().size();
     mFirstDebugStateId = states().get(0).debugId();

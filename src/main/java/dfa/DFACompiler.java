@@ -6,8 +6,6 @@ import java.util.Set;
 
 import js.base.BaseObject;
 import js.file.Files;
-import js.json.JSList;
-import js.json.JSMap;
 import js.parsing.DFA;
 import js.parsing.Scanner;
 
@@ -16,13 +14,42 @@ import static dfa.Util.*;
 
 public final class DFACompiler extends BaseObject {
 
-  private List<TokenDefinition> mTokenRecords;
-  // Maps token name to token entry
-  private Map<String, TokenDefinition> mTokenNameMap;
-  private int next_token_id;
+  public DFA parse(String script) {
+    mTokenRecords = arrayList();
+    mTokenNameMap = hashMap();
 
+    // Parse the predefined expressions, and insert those lines before the current ones
+    {
+      var predefExpr = Files.readString(this.getClass(), "predef_expr.txt");
+      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
+        predefExpr = "";
+      }
+      parseExpressions(predefExpr);
+    }
 
-  private void parseExpressions(String script, boolean debug) {
+    parseExpressions(script);
+
+    State combined = combineNFAs(mTokenRecords);
+    if (verbose())
+      log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
+
+    State startState;
+    {
+      NFAToDFA builder = new NFAToDFA();
+      startState = builder.convertNFAToDFA(combined);
+      if (verbose())
+        log(ToknUtils.dumpStateMachine(startState, "nfa to dfa"));
+
+      List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, startState);
+      if (nonEmpty(redundantTokenNames))
+        badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
+    }
+
+    var bld = createBuilder(mTokenRecords, startState);
+    return bld.build();
+  }
+
+  private void parseExpressions(String script) {
     var scanner = new Scanner(getDfa(), script);
     while (scanner.hasNext()) {
       var exprId = scanner.read(TokenDefinitionParser.T_TOKENID);
@@ -32,10 +59,10 @@ public final class DFACompiler extends BaseObject {
 
       int token_id = -1;
       if (tokenName.charAt(0) != '_') {
-        if (next_token_id == MAX_TOKEN_DEF)
+        if (mNextTokenId == MAX_TOKEN_DEF)
           throw badArg("Too many token definitions");
-        token_id = next_token_id;
-        next_token_id++;
+        token_id = mNextTokenId;
+        mNextTokenId++;
       }
       var rex = new TokenDefinition(token_id, tokenName);
       if (mTokenNameMap.containsKey(tokenName))
@@ -55,73 +82,16 @@ public final class DFACompiler extends BaseObject {
       if (verbose())
         log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
     }
-
-  }
-
-  public DFA parse(String script) {
-    mTokenRecords = arrayList();
-    mTokenNameMap = hashMap();
-
-    // Parse the predefined expressions, and insert those lines before the current ones
-    {
-      var predefExpr = Files.readString(this.getClass(), "predef_expr.txt");
-      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
-        predefExpr = "";
-      }
-      // Pretty confident these are working, so disable logging
-      parseExpressions(predefExpr, false);
-    }
-
-    parseExpressions(script, true);
-
-    State combined = combineNFAs(mTokenRecords);
-    if (verbose())
-      log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
-
-    State startState;
-    {
-      NFAToDFA builder = new NFAToDFA();
-      startState = builder.convertNFAToDFA(combined);
-      if (verbose())
-        log(ToknUtils.dumpStateMachine(startState, "nfa to dfa"));
-
-      List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, startState);
-      if (nonEmpty(redundantTokenNames))
-        badArg("Subsumed token(s) found (move them lower down in the .rxp file!):", redundantTokenNames);
-    }
-    todo("!can we construct directly to a compact dfa here?");
-
-//    {
-//      var builder = new DFABuilder();
-//      builder.setStartState(startState);
-//    }
-
-    if (true) {
-      var bld = createBuilder(mTokenRecords, startState);
-      return bld.build();
-    } else {
-      var jsmap =
-          constructOldDFAJSMap(mTokenRecords, startState);
-      return
-          convertOldDFAJSMapToCompactDFA(jsmap);
-    }
-  }
-
-
-  public List<String> tokenNames() {
-    checkState(mTokenIds != null, "not yet available");
-    return mTokenIds;
   }
 
   private DFABuilder createBuilder(List<TokenDefinition> token_records, State startState) {
-    var b = new DFABuilder();
+    var dfaBuilder = new DFABuilder();
 
     List<String> tokenNames = arrayList();
     for (TokenDefinition ent : token_records) {
       tokenNames.add(ent.name());
     }
-    b.setTokenNames(tokenNames);
-
+    dfaBuilder.setTokenNames(tokenNames);
 
     List<State> reachable = ToknUtils.reachableStates(startState);
     State finalState = null;
@@ -131,7 +101,6 @@ public final class DFACompiler extends BaseObject {
 
     int index = 0;
     for (State s : reachable) {
-      pr("reachable state:", s, INDENT, "==> index", index);
       stateIndexMap.put(s, index);
       orderedStates.add(s);
       index++;
@@ -142,181 +111,28 @@ public final class DFACompiler extends BaseObject {
     }
     checkState(stateIndexMap.get(startState) == 0, "unexpected start state index");
     checkState(finalState != null, "no final state found");
-    int finalStateIndex = stateIndexMap.get(finalState);
-
 
     // Construct new states from the renamed versions
-
     {
       List<State> newStates = arrayList();
-
       for (int i = 0; i < orderedStates.size(); i++) {
         newStates.add(new State());
       }
 
       for (State origState : orderedStates) {
-
         var newState = newStates.get(stateIndexMap.get(origState));
-
         List<Edge> newEdges = arrayList();
-
-        int edgeIndex = INIT_INDEX;
         for (Edge edge : origState.edges()) {
-          edgeIndex++;
-
           // Construct a new edge from this edge
-          var newEdge = new Edge(edge.codeSets(), newStates.get(stateIndexMap.get(edge.destinationState())));
+          var newDestStateIndex = stateIndexMap.get(edge.destinationState());
+          var newEdge = new Edge(edge.codeSets(), newStates.get(newDestStateIndex));
           newEdges.add(newEdge);
-
-//
-//
-//         // var newEdge = new Edge();
-//
-//          int[] cr = edge.codeSets();
-//          checkArgument(cr.length >= 2);
-//
-//
-//          for (int i = 0; i < cr.length; i += 2) {
-//            int a = cr[i];
-//            int b = cr[i + 1];
-//
-//            out.add(a);
-//            out.add(b);
-//          }
-//
-//          stateDesc.add(out);
-//
-//          int destStateIndex = stateIndexMap.get(edge.destinationState());
-//
-//          // Optimization: if last edge, and destination state is the final state, omit it
-//          if (edgeIndex == s.edges().size() - 1 && destStateIndex == finalStateIndex)
-//            continue;
-//
-//          stateDesc.add(destStateIndex);
         }
         newState.setEdges(newEdges);
-//        states.add(stateDesc);
       }
-//      m.put("states", states);
-      b.setStates(newStates);
-
+      dfaBuilder.setStates(newStates);
     }
-
-
-    //      m.put("final", finalStateIndex);
-
-    //
-
-//    b.setStates(orderedStates);
-//      List<State> stateList = arrayList();
-//      JSList states = list();
-//      for (State s : orderedStates) {
-//        //JSList stateDesc = list();
-//
-//        int edgeIndex = INIT_INDEX;
-//        for (Edge edge : s.edges()) {
-//          edgeIndex++;
-//          int[] cr = edge.codeSets();
-//          checkArgument(cr.length >= 2);
-//
-//          JSList out = list();
-//          for (int i = 0; i < cr.length; i += 2) {
-//            int a = cr[i];
-//            int b = cr[i + 1];
-//
-//            out.add(a);
-//            out.add(b);
-//          }
-//
-//          stateDesc.add(out);
-//
-//          int destStateIndex = stateIndexMap.get(edge.destinationState());
-//
-//          // Optimization: if last edge, and destination state is the final state, omit it
-//          if (edgeIndex == s.edges().size() - 1 && destStateIndex == finalStateIndex)
-//            continue;
-//
-//          stateDesc.add(destStateIndex);
-//        }
-//        states.add(stateDesc);
-//      }
-//      m.put("states", states);
-//      return m;
-    return b;
-  }
-
-  /**
-   * This constructs a JSMap representing the OLD (non-compact) DFA.
-   *
-   * We'll need to convert it to the compact form...
-   */
-  private JSMap constructOldDFAJSMap(List<TokenDefinition> token_records, State startState) {
-    JSMap m = map();
-
-    m.put("version", dfaConfig().version());
-
-    JSList list = list();
-    mTokenIds = arrayList();
-    for (TokenDefinition ent : token_records) {
-      list.add(ent.name());
-      mTokenIds.add(ent.name());
-    }
-    m.put("tokens", list);
-
-    List<State> reachable = ToknUtils.reachableStates(startState);
-    State finalState = null;
-
-    Map<State, Integer> stateIndexMap = hashMap();
-    List<State> orderedStates = arrayList();
-
-    int index = 0;
-    for (State s : reachable) {
-      stateIndexMap.put(s, index);
-      orderedStates.add(s);
-      index++;
-      if (!s.finalState())
-        continue;
-      checkState(finalState == null, "multiple final states");
-      finalState = s;
-    }
-    checkState(stateIndexMap.get(startState) == 0, "unexpected start state index");
-    checkState(finalState != null, "no final state found");
-    int finalStateIndex = stateIndexMap.get(finalState);
-    m.put("final", finalStateIndex);
-
-    JSList states = list();
-    for (State s : orderedStates) {
-      JSList stateDesc = list();
-
-      int edgeIndex = INIT_INDEX;
-      for (Edge edge : s.edges()) {
-        edgeIndex++;
-        int[] cr = edge.codeSets();
-        checkArgument(cr.length >= 2);
-
-        JSList out = list();
-        for (int i = 0; i < cr.length; i += 2) {
-          int a = cr[i];
-          int b = cr[i + 1];
-
-          out.add(a);
-          out.add(b);
-        }
-
-        stateDesc.add(out);
-
-        int destStateIndex = stateIndexMap.get(edge.destinationState());
-
-        // Optimization: if last edge, and destination state is the final state, omit it
-        if (edgeIndex == s.edges().size() - 1 && destStateIndex == finalStateIndex)
-          continue;
-
-        stateDesc.add(destStateIndex);
-      }
-      states.add(stateDesc);
-    }
-    m.put("states", states);
-    return m;
+    return dfaBuilder;
   }
 
   /**
@@ -376,5 +192,9 @@ public final class DFACompiler extends BaseObject {
     return unrecognized;
   }
 
-  private List<String> mTokenIds;
+  private List<TokenDefinition> mTokenRecords;
+  // Maps token name to token entry
+  private Map<String, TokenDefinition> mTokenNameMap;
+  private int mNextTokenId;
+
 }
