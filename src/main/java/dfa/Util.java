@@ -329,7 +329,7 @@ public final class Util {
     BasePrinter.registerClassHandler(Edge.class, (x, p) -> p.append(toString((Edge) x)));
   }
 
-  public static void validateDFA(State startState) {
+  public static State validateDFA(State startState) {
     for (State s : reachableStates(startState)) {
       CodeSet prevSet = new CodeSet();
       for (Edge e : s.edges()) {
@@ -344,6 +344,7 @@ public final class Util {
         prevSet.addSet(ours);
       }
     }
+    return startState;
   }
 
   public static final String EXT_RXP = "rxp" //

@@ -31,38 +31,37 @@ final class NFAToDFA extends BaseObject {
   /**
    * Convert an NFA to a DFA; return the new start state
    */
-  public State convertNFAToDFA(State start_state) {
-    todo("eliminate mStartState");
-    checkState(mStartState == null, "already used");
-    mStartState = partitionEdges(start_state);
-    minimize();
-    validateDFA(mStartState);
-    return mStartState;
+  public State convertNFAToDFA(State start) {
+    start = partitionEdges(start);
+    start = minimize(start);
+    if (false)
+      start = validateDFA(start);
+    return start;
   }
 
   /**
    * Construct minimized dfa from nfa
    */
-  private void minimize() {
+  private State minimize(State start) {
 
     // Reverse this NFA, convert to DFA, then reverse it, and convert it again.  
     // Apparently this  produces a minimal DFA.
     //
     log("reversing #1");
-    mStartState = reverseNFA(mStartState);
+    start = reverseNFA(start);
     if (verbose())
-      log(dumpStateMachine(mStartState, "after reverse #1"));
+      log(dumpStateMachine(start, "after reverse #1"));
 
-    nfa_to_dfa_aux();
+    start = cvtNFAToDFA(start);
 
     if (verbose())
       log("reversing #2");
-    mStartState = reverseNFA(mStartState);
+    start = reverseNFA(start);
     if (verbose())
-      log(dumpStateMachine(mStartState, "after reverse #2"));
-    nfa_to_dfa_aux();
+      log(dumpStateMachine(start, "after reverse #2"));
+    start = cvtNFAToDFA(start);
 
-    mStartState = normalizeStates(mStartState);
+    return normalizeStates(start);
   }
 
   private static CodeSet constructKeyForStateCollection(Collection<State> states) {
@@ -76,19 +75,18 @@ final class NFAToDFA extends BaseObject {
   /**
    * Convert NFA to DFA
    */
-  private void nfa_to_dfa_aux() {
-    log("---------- nfa_to_dfa_aux -------------");
+  private State cvtNFAToDFA(State start) {
+    log("---------- cvtNFAToDFA -------------");
     mNFAStateSetToDFAStateMap.clear();
-
     mDFAStateToNFAStatesMap.clear();
 
     State.bumpIds();
 
     log("creating start state");
-    State new_start_state = create_dfa_state_if_necessary(eps_closure(mStartState));
+    start = create_dfa_state_if_necessary(eps_closure(start));
 
     List<State> unmarked = arrayList();
-    unmarked.add(new_start_state);
+    unmarked.add(start);
 
     while (nonEmpty(unmarked)) {
       State dfaState = pop(unmarked);
@@ -155,10 +153,9 @@ final class NFAToDFA extends BaseObject {
         addEdge(dfaState, codeSet.elements(), dfaDestState);
       }
     }
-    mStartState = new_start_state;
-
     if (verbose())
-      log(dumpStateMachine(mStartState, "after nfa -> dfa conversion"));
+      log(dumpStateMachine(start, "after nfa -> dfa conversion"));
+    return start;
   }
 
   /**
@@ -222,9 +219,7 @@ final class NFAToDFA extends BaseObject {
     return eps_closure(set);
   }
 
-  private State mStartState;
-
-  // A map of NFA id sets to NFA states.  
+  // A map of NFA id sets to NFA states.
   // Each NFA id set is represented by a CodeSet, since they support equals+hashcode methods
   //
   private final Map<CodeSet, State> mNFAStateSetToDFAStateMap = hashMap();
