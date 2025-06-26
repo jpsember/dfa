@@ -212,12 +212,9 @@ public final class Util {
   }
 
   /**
-   * Modify a state machine's edges so each is labelled with a disjoint subset
-   * of characters.
+   * Return a copy of a state machine, one whose edges are labelled with a disjoint subset of codes
    */
   public static State partitionEdges(State startState) {
-
-    alert("Does this return a new state machine, or does it actually modify the provided one?");
     RangePartition par = new RangePartition();
 
     StateRenamer ren = new StateRenamer();

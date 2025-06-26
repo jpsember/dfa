@@ -1,6 +1,7 @@
 package dfa;
 
 import js.base.BaseObject;
+
 import static js.base.Tools.*;
 import static dfa.Util.*;
 
@@ -14,17 +15,16 @@ import java.util.TreeSet;
 
 /**
  * Converts NFAs (nondeterministic, finite state automata) to minimal DFAs.
- * 
+ *
  * Performs the subset construction algorithm described in (among other places)
  * http://en.wikipedia.org/wiki/Powerset_construction
- * 
+ *
  * Also implements an innovative algorithm to partition a set of edge labels
  * into a set that has the property that no two elements have overlapping
  * regions. This allows us to perform the subset construction (and closure
  * operations) efficiently while supporting large possible character sets (e.g.,
  * unicode, which ranges from 0..0x10ffff. See RangePartition.rb for more
  * details.
- *
  */
 final class NFAToDFA extends BaseObject {
 
@@ -32,10 +32,9 @@ final class NFAToDFA extends BaseObject {
    * Convert an NFA to a DFA; return the new start state
    */
   public State convertNFAToDFA(State start_state) {
+    todo("eliminate mStartState");
     checkState(mStartState == null, "already used");
-    mStartState = start_state;
-
-    mStartState = partitionEdges(mStartState);
+    mStartState = partitionEdges(start_state);
     minimize();
     validateDFA(mStartState);
     return mStartState;
@@ -167,7 +166,7 @@ final class NFAToDFA extends BaseObject {
    * not. Sets mDFAStateCreatedFlag true iff a new state was created
    *
    * @return DFA state; also, mDFAStateCreatedFlag will be set iff a new state
-   *         was created
+   * was created
    */
   private State create_dfa_state_if_necessary(Collection<State> stateSet) {
     mDFAStateCreatedFlag = false;
