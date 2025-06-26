@@ -150,7 +150,7 @@ public final class DFACompiler extends BaseObject {
     State start_state = new State();
     for (TokenDefinition regParse : token_records) {
 
-      StatePair newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
+      NFA newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
 
       State dupStart = newStates.start;
 

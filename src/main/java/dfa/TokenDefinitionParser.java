@@ -74,10 +74,9 @@ public class TokenDefinitionParser {
   }
 
   private void parseScript() {
-    alert("should StatePair be renamed to NFA?");
-    StatePair sp = parseALTERNATE();
-    mStartState = sp.start;
-    mEndState = sp.end;
+    var nfa = parseALTERNATE();
+    mStartState = nfa.start;
+    mEndState = nfa.end;
   }
 
   private boolean hasNext() {
@@ -102,11 +101,11 @@ public class TokenDefinitionParser {
     return mScanner.read(expectedTokenId);
   }
 
-  private StatePair parseALTERNATE() {
-    StatePair e1 = parseCONCAT();
+  private NFA parseALTERNATE() {
+    NFA e1 = parseCONCAT();
 
     if (readIf(T_ALTERNATE)) {
-      StatePair e2 = parseALTERNATE();
+      NFA e2 = parseALTERNATE();
       State u = new State();
       State v = new State();
 
@@ -117,23 +116,23 @@ public class TokenDefinitionParser {
 
       addEps(e1.end, v);
       addEps(e2.end, v);
-      e1 = statePair(u, v);
+      e1 = nfa(u, v);
     }
     return e1;
   }
 
-  private StatePair parseCONCAT() {
-    StatePair e1 = parseQUANTIFIED();
+  private NFA parseCONCAT() {
+    NFA e1 = parseQUANTIFIED();
     if (hasNext() && !peekIs(T_TOKENID) && !peekIs(T_ALTERNATE) && !peekIs(T_PARCL)) {
-      StatePair e2 = parseCONCAT();
+      NFA e2 = parseCONCAT();
       ToknUtils.addEps(e1.end, e2.start);
-      e1 = statePair(e1.start, e2.end);
+      e1 = nfa(e1.start, e2.end);
     }
     return e1;
   }
 
-  private StatePair parseQUANTIFIED() {
-    StatePair e1 = parsePAREN();
+  private NFA parseQUANTIFIED() {
+    NFA e1 = parsePAREN();
     if (readIf(T_ZERO_OR_MORE)) {
       ToknUtils.addEps(e1.start, e1.end);
       ToknUtils.addEps(e1.end, e1.start);
@@ -142,11 +141,11 @@ public class TokenDefinitionParser {
     } else if (readIf(T_ZERO_OR_ONE)) {
       ToknUtils.addEps(e1.start, e1.end);
     }
-    return create_new_final_state_if_nec(e1);
+    return withEndStateNoOutgoingEdges(e1);
   }
 
-  private StatePair parsePAREN() {
-    StatePair e1;
+  private NFA parsePAREN() {
+    NFA e1;
     var t = peekToken();
     if (t.id(T_PAROP)) {
       read(T_PAROP);
@@ -157,18 +156,18 @@ public class TokenDefinitionParser {
     } else if (t.id(T_BROP)) {
       e1 = parseBracketExpr();
     } else {
-      CodeSet code_set = parse_code_set(false);
+      CodeSet code_set = parse_code_set();
       // Construct a pair of states with an edge between them
       // labelled with this code set
       State sA = new State();
       State sB = new State();
       ToknUtils.addEdge(sA, code_set.elements(), sB);
-      e1 = statePair(sA, sB);
+      e1 = nfa(sA, sB);
     }
     return e1;
   }
 
-  private StatePair parseRegExpReference() {
+  private NFA parseRegExpReference() {
     var t = read(T_RXREF);
     var s = t.text();
     var nameStr = s.substring(1);
@@ -220,7 +219,7 @@ public class TokenDefinitionParser {
     return sWordCharCodeSet;
   }
 
-  private CodeSet parse_code_set(boolean within_bracket_expr) {
+  private CodeSet parse_code_set() {
     int val;
     if (readIf(T_ASCII)) {
       var tx = mReadToken.text();
@@ -262,7 +261,6 @@ public class TokenDefinitionParser {
     return (ch - 'A') + 10;
   }
 
-
   private CodeSet parseBracketSeq() {
     CodeSet result = null;
     while (true) {
@@ -276,10 +274,10 @@ public class TokenDefinitionParser {
       CodeSet nextResult;
       {
         var errToken = peekToken();
-        CodeSet code_set = parse_code_set(true);
+        CodeSet code_set = parse_code_set();
         if (readIf(T_RANGE)) {
           int u = code_set.singleValue();
-          int v = parse_code_set(true).singleValue();
+          int v = parse_code_set().singleValue();
           if (v < u)
             throw abortAtToken(errToken, "Illegal range; u:", u, "v:", v);
           code_set = CodeSet.withRange(u, v + 1);
@@ -295,7 +293,7 @@ public class TokenDefinitionParser {
     return result;
   }
 
-  private StatePair parseBracketExpr() {
+  private NFA parseBracketExpr() {
     var start = read(T_BROP);
 
     CodeSet rightSet = null;
@@ -322,22 +320,21 @@ public class TokenDefinitionParser {
     State sA = new State();
     State sB = new State();
     ToknUtils.addEdge(sA, result.elements(), sB);
-    return statePair(sA, sB);
+    return nfa(sA, sB);
   }
 
   /**
-   * If existing final state has outgoing edges, then create a new final state,
-   * and add an e-transition to it from the old final state, so the final state
-   * has no edges back
+   * If necessary, ensure end state has no outgoing edges, by adding e-transition
+   * from existing end state to a new one
    */
-  private StatePair create_new_final_state_if_nec(StatePair start_end_states) {
-    State end_state = start_end_states.end;
+  private NFA withEndStateNoOutgoingEdges(NFA nfa) {
+    State end_state = nfa.end;
     if (!end_state.edges().isEmpty()) {
       State new_final_state = new State();
       ToknUtils.addEps(end_state, new_final_state);
-      start_end_states.end = new_final_state;
+      return nfa(nfa.start, new_final_state);
     }
-    return start_end_states;
+    return nfa;
   }
 
   private static CodeSet sDigitCodeSet;

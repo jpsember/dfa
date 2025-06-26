@@ -46,10 +46,6 @@ public final class ToknUtils {
 
   /**
    * Construct the reverse of an NFA
-   * 
-   * @param startState
-   *          start state for NFA
-   * @return start state of reversed NFA
    */
   public static State reverseNFA(State startState) {
     State.bumpIds();
@@ -91,11 +87,8 @@ public final class ToknUtils {
 
   /**
    * Duplicate the NFA reachable from a state
-   * 
-   * @param origToDupStateMap
-   *          where to construct map of original state ids to new states
    */
-  public static StatePair duplicateNFA(State startState, State endState) {
+  public static NFA duplicateNFA(State startState, State endState) {
 
     Map<State, State> origToDupStateMap = hashMap();
 
@@ -114,10 +107,10 @@ public final class ToknUtils {
         addEdge(s2, edge.codeSets(), newTargetState);
       }
     }
-    return statePair(origToDupStateMap.get(startState), origToDupStateMap.get(endState));
+    return nfa(origToDupStateMap.get(startState), origToDupStateMap.get(endState));
   }
 
-  private static int[] EPSILON_RANGE = { State.EPSILON, 1 + State.EPSILON };
+  private static int[] EPSILON_RANGE = {State.EPSILON, 1 + State.EPSILON};
 
   /**
    * Add an epsilon transition to a state
@@ -126,13 +119,8 @@ public final class ToknUtils {
     addEdge(source, EPSILON_RANGE, target);
   }
 
-  public static StatePair statePair(State start, State end) {
-    checkNotNull(start);
-    checkNotNull(end);
-    StatePair sp = new StatePair();
-    sp.start = start;
-    sp.end = end;
-    return sp;
+  public static NFA nfa(State start, State end) {
+    return new NFA(start, end);
   }
 
   public static String dumpCodeSet(int[] elements) {
@@ -176,10 +164,9 @@ public final class ToknUtils {
   public static String dumpStateMachine(State initialState, Object... title) {
     final var dashes = "--------------------------------------------------------------------------\n";
     StringBuilder sb = new StringBuilder();
-//    sb.append(dashes);
     sb.append("\nState Machine\n");
     sb.append(dashes);
-    
+
     if (title.length != 0) {
       sb.append(" : ");
       sb.append(BasePrinter.toString(title));
@@ -260,13 +247,12 @@ public final class ToknUtils {
 
   /**
    * Normalize a state
-   * 
+   *
    * [] merge edges that go to a common state
-   * 
+   *
    * [] sort edges by destination state debug ids
-   * 
+   *
    * [] delete edges that have empty labels
-   * 
    */
   private static void normalizeState(State state) {
     // Sort edges by destination state ids
