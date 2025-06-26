@@ -195,7 +195,8 @@ public class TokenDefinitionParser {
 //    s.append(" !!! ");
 //    for (int j = i; j < Math.min(mScript.length(), i + 3); j++)
 //      s.append(mScript.charAt(j));
-
+    if (token == null)
+      throw badState(insertStringToFront("Unexpected end of file:", msgs));
     todo("embed original line number somehow?");
     throw token.failWith(msgs);
 //    throw badArg("Parse exception;", BasePrinter.toString(msgs), ":", s, mOrigLineNumber, mOrigScript);
@@ -250,7 +251,7 @@ public class TokenDefinitionParser {
       var h2 = read_hex(tx.charAt(3));
       return CodeSet.withValue((h1 << 4) + h2);
     }
-    throw badState("shouldn't have got here; next token:", mScanner.peek());
+    throw abortAtToken(peekToken(), "unexpected token within [...] expression");
   }
 
   private static int read_hex(char ch) {

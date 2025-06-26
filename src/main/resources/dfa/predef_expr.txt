@@ -1,3 +1,4 @@
+# These are now unnecessary; use \
 _HT: \x09
 _LF: \x0a
 _FF: \x0c
@@ -11,12 +12,15 @@ _ESCAPE: (\\)
 _TILDE: (\^)
 _HASH: (\#)
 
+
+# Java escape sequences reference:
+#    https://docs.oracle.com/javase/tutorial/java/data/characters.html
+
 _WHITESPACE: ([\f\r\s\t\n]+)
 
 # Java multline comments (/* ....  */) are very tricky.
 # I will be able to simplify this greatly once I support
 # the 'minus' regex expression.
-
 
 _ML_FWDSLASH:  /          # '/'
 _ML_STAR:      \*         # '*'
