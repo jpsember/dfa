@@ -29,10 +29,16 @@ import java.util.TreeSet;
  */
 final class NFAToDFA extends BaseObject {
 
+  public static State convert(State nfaStartState) {
+    var converter = new NFAToDFA();
+    var dfaStartState = converter.convertNFAToDFA(nfaStartState);
+    return dfaStartState;
+  }
+
   /**
    * Convert an NFA to a DFA; return the new start state
    */
-  public State convertNFAToDFA(State start) {
+  private State convertNFAToDFA(State start) {
     start = partitionEdges(start);
     start = minimize(start);
     if (false)

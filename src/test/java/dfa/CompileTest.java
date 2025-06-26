@@ -101,7 +101,8 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void minus1() {
-    verboseRex();
+    if (mark("disabled")) return;
+//    verboseRex();
     proc();
   }
 

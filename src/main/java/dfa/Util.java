@@ -168,13 +168,13 @@ public final class Util {
   public static String dumpStateMachine(State initialState, Object... title) {
     final var dashes = "--------------------------------------------------------------------------\n";
     StringBuilder sb = new StringBuilder();
-    sb.append("\nState Machine\n");
-    sb.append(dashes);
-
+    sb.append("\nState Machine");
     if (title.length != 0) {
-      sb.append(" : ");
+      sb.append(": ");
       sb.append(BasePrinter.toString(title));
     }
+    sb.append('\n');
+    sb.append(dashes);
     sb.append('\n');
 
     List<State> reachableStates = reachableStates(initialState);

@@ -140,9 +140,9 @@ public class TokenDefinitionParser {
   private NFA parseBINARY() {
     NFA e1 = parseCONCAT();
     if (readIf(T_MINUS)) {
-      pr("...read MINUS");
+//      pr("...read MINUS");
       var e2 = parseBINARY();
-      pr("...parsed binary:", dumpStateMachine(e2.start, "BINARY"));
+//      pr("...parsed binary:", dumpStateMachine(e2.start, "BINARY"));
       return BinaryOper.aMinusB(e1, e2);
     }
     // .... conjunction, disjunction not supported yet...

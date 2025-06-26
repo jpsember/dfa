@@ -38,8 +38,7 @@ public final class DFACompiler extends BaseObject {
 
     State startState;
     {
-      NFAToDFA builder = new NFAToDFA();
-      startState = builder.convertNFAToDFA(combined);
+      startState = NFAToDFA.convert(combined);
       if (verbose())
         log(dumpStateMachine(startState, "nfa to dfa"));
 

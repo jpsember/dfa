@@ -73,6 +73,10 @@ public final class State implements Comparable<State> {
     return mId;
   }
 
+  public void setId(int id) {
+    mId = id;
+  }
+
   public String toString(boolean includeEdges) {
     StringBuilder sb = new StringBuilder();
     sb.append(id());
@@ -142,7 +146,7 @@ public final class State implements Comparable<State> {
     return EPSILON - 1 - tokenId;
   }
 
-  private final int mId;
+  private int mId;
   private List<Edge> mEdges;
   private boolean mFinalState;
 
