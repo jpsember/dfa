@@ -68,7 +68,7 @@ final class NFAToDFA extends BaseObject {
   private static CodeSet constructKeyForStateCollection(Collection<State> states) {
     CodeSet keySet = new CodeSet();
     for (State s : states)
-      keySet.add(s.debugId());
+      keySet.add(s.id());
     return keySet;
   }
 
@@ -129,7 +129,7 @@ final class NFAToDFA extends BaseObject {
           }
           nfaStates.add(nfaEdge.destinationState());
           if (verbose())
-            log("adding state:", nfaEdge.destinationState().debugId(), "to the list corresponding to CodeSet",
+            log("adding state:", nfaEdge.destinationState().id(), "to the list corresponding to CodeSet",
                 codeSet);
         }
       }

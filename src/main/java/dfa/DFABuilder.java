@@ -1,7 +1,6 @@
 package dfa;
 
 import js.data.ByteArray;
-import js.data.DataUtil;
 import js.data.IntArray;
 import js.data.ShortArray;
 import js.json.JSList;
@@ -33,7 +32,7 @@ class DFABuilder {
 
   public DFA build() {
     if (mBuilt != null) return mBuilt;
-    mFirstDebugStateId = states().get(0).debugId();
+    mFirstDebugStateId = states().get(0).id();
 
     for (var state : states())
       addState(state);
@@ -149,7 +148,7 @@ class DFABuilder {
   }
 
   private int stateIndex(State s) {
-    return stateIndex(s.debugId());
+    return stateIndex(s.id());
   }
 
   private List<State> states() {

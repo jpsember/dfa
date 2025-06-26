@@ -48,7 +48,7 @@ public final class State implements Comparable<State> {
 
   @Override
   public int compareTo(State other) {
-    return Integer.compare(debugId(), other.debugId());
+    return Integer.compare(id(), other.id());
   }
 
   public List<Edge> edges() {
@@ -69,19 +69,19 @@ public final class State implements Comparable<State> {
     mFinalState = flag;
   }
 
-  public int debugId() {
+  public int id() {
     return mId;
   }
 
   public String toString(boolean includeEdges) {
     StringBuilder sb = new StringBuilder();
-    sb.append(debugId());
+    sb.append(id());
     sb.append(finalState() ? '*' : ' ');
     if (includeEdges) {
       sb.append("=>");
       for (Edge e : edges()) {
         sb.append(" ");
-        sb.append(e.destinationState().debugId());
+        sb.append(e.destinationState().id());
       }
     }
     return sb.toString();
@@ -114,7 +114,7 @@ public final class State implements Comparable<State> {
       index++;
       if (index != 0)
         sb.append(' ');
-      sb.append(s.debugId());
+      sb.append(s.id());
     }
     sb.append(')');
     return sb.toString();

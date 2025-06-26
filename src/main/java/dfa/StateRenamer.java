@@ -17,7 +17,6 @@ final class StateRenamer {
    * @param oldStartState old starting state
    */
   public void constructNewVersions(State oldStartState) {
-    todo("can the state map be based on state ids, instead of the states themselves?");
     State.bumpIds();
     List<State> oldStates = reachableStates(oldStartState);
     for (State oldState : oldStates)
@@ -63,7 +62,7 @@ final class StateRenamer {
     State newState = newStateOrNull;
     if (newState == null)
       newState = new State(oldState.finalState());
-    State prevMapping = mMap.put(oldState, newState);
+    State prevMapping = mMap.put(oldState.id(), newState);
     if (prevMapping != null)
       badState("state already had a mapping!", oldState, prevMapping, "; cannot remap to", newState);
     mOldStateList.add(oldState);
@@ -76,12 +75,12 @@ final class StateRenamer {
    */
   public State get(State oldState) {
     checkArgument(oldState != null);
-    State newState = mMap.get(oldState);
+    State newState = mMap.get(oldState.id());
     if (newState == null)
       badArg("no mapping found for key:", oldState);
     return newState;
   }
 
-  private final Map<State, State> mMap = hashMap();
+  private final Map<Integer, State> mMap = hashMap();
   private final List<State> mOldStateList = arrayList();
 }

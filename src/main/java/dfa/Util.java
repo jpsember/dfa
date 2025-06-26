@@ -1,6 +1,5 @@
 package dfa;
 
-import dfa.gen.DfaConfig;
 import js.base.BasePrinter;
 import js.file.Files;
 import js.json.JSList;
@@ -196,13 +195,13 @@ public final class Util {
 
   public static String toString(State state, boolean includeEdges) {
     StringBuilder sb = new StringBuilder();
-    sb.append(state.debugId());
+    sb.append(state.id());
     sb.append(state.finalState() ? '*' : ' ');
     if (includeEdges) {
       sb.append("=>\n");
       for (Edge e : state.edges()) {
         sb.append("       ");
-        sb.append(e.destinationState().debugId());
+        sb.append(e.destinationState().id());
         sb.append(' ');
         sb.append(dumpCodeSet(e.codeSets()));
         sb.append('\n');
@@ -259,7 +258,7 @@ public final class Util {
   private static void normalizeState(State state) {
     // Sort edges by destination state ids
     state.edges()
-        .sort((e1, e2) -> Integer.compare(e1.destinationState().debugId(), e2.destinationState().debugId()));
+        .sort((e1, e2) -> Integer.compare(e1.destinationState().id(), e2.destinationState().id()));
 
     List<Edge> new_edges = arrayList();
     CodeSet prev_label = null;
@@ -321,7 +320,7 @@ public final class Util {
     StringBuilder sb = new StringBuilder();
     sb.append(dumpCodeSet(edge.codeSets()));
     sb.append(" => ");
-    sb.append(edge.destinationState().debugId());
+    sb.append(edge.destinationState().id());
     return sb.toString();
   }
 
@@ -382,7 +381,7 @@ public final class Util {
   public static JSMap describe(List<State> states, List<String> tokenNames) {
     var m = map();
     for (var s : states) {
-      var stateKey = "" + s.debugId();
+      var stateKey = "" + s.id();
       var altKey = stateKey + "*";
 
       if (m.containsKey(stateKey) || m.containsKey(altKey)) {
@@ -394,9 +393,9 @@ public final class Util {
       for (var edge : s.edges()) {
         var ds = edge.destinationState();
         String edgeKey =
-            ds.finalState() ? "*  " : String.format("%3d", edge.destinationState().debugId());
+            ds.finalState() ? "*  " : String.format("%3d", edge.destinationState().id());
         if (edgeMap.containsKey(edgeKey))
-          edgeMap.put("**ERR** " + edge.destinationState().debugId(), "duplicate destination state");
+          edgeMap.put("**ERR** " + edge.destinationState().id(), "duplicate destination state");
         else {
           edgeMap.putUnsafe(edgeKey, edgeDescription(edge, tokenNames));
         }
