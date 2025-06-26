@@ -1,0 +1,13 @@
+WS: $_WHITESPACE
+
+ID:  $_ID
+
+HTAB: a\ta
+NL: a\na
+CR: a\ra
+FF: a\fa
+SP: a\sa
+
+# This demonstrates that the escape sequences can be used inside brace expressions:
+
+BRACED: b[\t\n\r\f\s]+b

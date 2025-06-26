@@ -59,6 +59,11 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void escape1() {
+    proc();
+  }
+
+  @Test
   public void multiline1() {
     disallowUnknown();
     proc();

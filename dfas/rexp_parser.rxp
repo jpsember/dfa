@@ -25,6 +25,9 @@ OTHER_ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
 
 # For some reason, I can't (yet?) use $_ESCAPE to refer to '\'
 
+# Java escape sequences reference:
+#    https://docs.oracle.com/javase/tutorial/java/data/characters.html
+
 WORD_CHAR: \\ w
 DIGIT_CHAR: \\ d
 FORMFEED: \\ f
