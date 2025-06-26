@@ -37,7 +37,7 @@ import js.file.Files;
 import js.parsing.RegExp;
 import js.testutil.MyTestCase;
 
-import static dfa.ToknUtils.*;
+import static dfa.Util.*;
 
 public class CompileTest extends MyTestCase {
 

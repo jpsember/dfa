@@ -5,7 +5,7 @@ import js.parsing.Token;
 
 import java.util.Map;
 
-import static dfa.ToknUtils.*;
+import static dfa.Util.*;
 import static js.base.Tools.*;
 
 //   One or more expressions separated by '|':
@@ -125,7 +125,7 @@ public class TokenDefinitionParser {
     NFA e1 = parseQUANTIFIED();
     if (hasNext() && !peekIs(T_TOKENID) && !peekIs(T_ALTERNATE) && !peekIs(T_PARCL)) {
       NFA e2 = parseCONCAT();
-      ToknUtils.addEps(e1.end, e2.start);
+      addEps(e1.end, e2.start);
       e1 = nfa(e1.start, e2.end);
     }
     return e1;
@@ -134,12 +134,12 @@ public class TokenDefinitionParser {
   private NFA parseQUANTIFIED() {
     NFA e1 = parsePAREN();
     if (readIf(T_ZERO_OR_MORE)) {
-      ToknUtils.addEps(e1.start, e1.end);
-      ToknUtils.addEps(e1.end, e1.start);
+      addEps(e1.start, e1.end);
+      addEps(e1.end, e1.start);
     } else if (readIf(T_ONE_OR_MORE)) {
-      ToknUtils.addEps(e1.end, e1.start);
+      addEps(e1.end, e1.start);
     } else if (readIf(T_ZERO_OR_ONE)) {
-      ToknUtils.addEps(e1.start, e1.end);
+      addEps(e1.start, e1.end);
     }
     return withEndStateNoOutgoingEdges(e1);
   }
@@ -161,7 +161,7 @@ public class TokenDefinitionParser {
       // labelled with this code set
       State sA = new State();
       State sB = new State();
-      ToknUtils.addEdge(sA, code_set.elements(), sB);
+      addEdge(sA, code_set.elements(), sB);
       e1 = nfa(sA, sB);
     }
     return e1;
@@ -319,7 +319,7 @@ public class TokenDefinitionParser {
 
     State sA = new State();
     State sB = new State();
-    ToknUtils.addEdge(sA, result.elements(), sB);
+    addEdge(sA, result.elements(), sB);
     return nfa(sA, sB);
   }
 
@@ -331,7 +331,7 @@ public class TokenDefinitionParser {
     State end_state = nfa.end;
     if (!end_state.edges().isEmpty()) {
       State new_final_state = new State();
-      ToknUtils.addEps(end_state, new_final_state);
+      addEps(end_state, new_final_state);
       return nfa(nfa.start, new_final_state);
     }
     return nfa;

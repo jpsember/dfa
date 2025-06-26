@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 /**
  * Maintains a map of old to new states
@@ -12,34 +13,32 @@ final class StateRenamer {
 
   /**
    * Construct new versions of all reachable states, omitting edges
-   * 
-   * @param oldStartState
-   *          old starting state
+   *
+   * @param oldStartState old starting state
    */
   public void constructNewVersions(State oldStartState) {
     todo("can the state map be based on state ids, instead of the states themselves?");
     State.bumpIds();
-    List<State> oldStates = ToknUtils.reachableStates(oldStartState);
+    List<State> oldStates = reachableStates(oldStartState);
     for (State oldState : oldStates)
       put(oldState, null);
   }
 
   /**
    * Construct new versions of all reachable states, including edges
-   * 
-   * @param oldStartState
-   *          old starting state
+   *
+   * @param oldStartState old starting state
    */
   public void constructNewVersionsWithEdges(State oldStartState) {
     State.bumpIds();
-    List<State> oldStates = ToknUtils.reachableStates(oldStartState);
+    List<State> oldStates = reachableStates(oldStartState);
     for (State oldState : oldStates) {
       put(oldState, null);
     }
     for (State oldState : oldStates) {
       State newState = get(oldState);
       for (Edge e : oldState.edges()) {
-        ToknUtils.addEdge(newState, e.codeSets(), get(e.destinationState()));
+        addEdge(newState, e.codeSets(), get(e.destinationState()));
       }
     }
   }
@@ -53,11 +52,10 @@ final class StateRenamer {
 
   /**
    * Map an old state to a new one
-   * 
+   *
    * @param oldState
-   * @param newStateOrNull
-   *          new state; if null, creates a copy of the old state, but without
-   *          any edges
+   * @param newStateOrNull new state; if null, creates a copy of the old state, but without
+   *                       any edges
    * @return new state
    */
   public State put(State oldState, State newStateOrNull) {

@@ -2,6 +2,7 @@ package dfa;
 
 import js.base.BaseObject;
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,9 +35,9 @@ final class NFAToDFA extends BaseObject {
     checkState(mStartState == null, "already used");
     mStartState = start_state;
 
-    mStartState = ToknUtils.partitionEdges(mStartState);
+    mStartState = partitionEdges(mStartState);
     minimize();
-    ToknUtils.validateDFA(mStartState);
+    validateDFA(mStartState);
     return mStartState;
   }
 
@@ -49,20 +50,20 @@ final class NFAToDFA extends BaseObject {
     // Apparently this  produces a minimal DFA.
     //
     log("reversing #1");
-    mStartState = ToknUtils.reverseNFA(mStartState);
+    mStartState = reverseNFA(mStartState);
     if (verbose())
-      log(ToknUtils.dumpStateMachine(mStartState, "after reverse #1"));
+      log(dumpStateMachine(mStartState, "after reverse #1"));
 
     nfa_to_dfa_aux();
 
     if (verbose())
       log("reversing #2");
-    mStartState = ToknUtils.reverseNFA(mStartState);
+    mStartState = reverseNFA(mStartState);
     if (verbose())
-      log(ToknUtils.dumpStateMachine(mStartState, "after reverse #2"));
+      log(dumpStateMachine(mStartState, "after reverse #2"));
     nfa_to_dfa_aux();
 
-    mStartState = ToknUtils.normalizeStates(mStartState);
+    mStartState = normalizeStates(mStartState);
   }
 
   private static CodeSet constructKeyForStateCollection(Collection<State> states) {
@@ -152,13 +153,13 @@ final class NFAToDFA extends BaseObject {
           unmarked.add(dfaDestState);
         }
         log(VERT_SP, "...adding DFA edge", dfaState, codeSet, "==>", dfaDestState, VERT_SP);
-        ToknUtils.addEdge(dfaState, codeSet.elements(), dfaDestState);
+        addEdge(dfaState, codeSet.elements(), dfaDestState);
       }
     }
     mStartState = new_start_state;
 
     if (verbose())
-      log(ToknUtils.dumpStateMachine(mStartState, "after nfa -> dfa conversion"));
+      log(dumpStateMachine(mStartState, "after nfa -> dfa conversion"));
   }
 
   /**

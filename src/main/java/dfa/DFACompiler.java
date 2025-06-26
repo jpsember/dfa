@@ -34,14 +34,14 @@ public final class DFACompiler extends BaseObject {
 
     State combined = combineNFAs(mTokenRecords);
     if (verbose())
-      log(ToknUtils.dumpStateMachine(combined, "combined regex state machines"));
+      log(dumpStateMachine(combined, "combined regex state machines"));
 
     State startState;
     {
       NFAToDFA builder = new NFAToDFA();
       startState = builder.convertNFAToDFA(combined);
       if (verbose())
-        log(ToknUtils.dumpStateMachine(startState, "nfa to dfa"));
+        log(dumpStateMachine(startState, "nfa to dfa"));
 
       List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, startState);
       if (nonEmpty(redundantTokenNames))
@@ -78,12 +78,12 @@ public final class DFACompiler extends BaseObject {
       if (rex.id() < 0)
         continue;
 
-      if (ToknUtils.acceptsEmptyString(rex.startState(), rex.endState()))
+      if (acceptsEmptyString(rex.startState(), rex.endState()))
         throw exprId.failWith("Accepts zero-length tokens");
 
       mTokenRecords.add(rex);
       if (verbose())
-        log(ToknUtils.dumpStateMachine(rex.startState(), "regex for", tokenName));
+        log(dumpStateMachine(rex.startState(), "regex for", tokenName));
     }
   }
 
@@ -96,7 +96,7 @@ public final class DFACompiler extends BaseObject {
     }
     dfaBuilder.setTokenNames(tokenNames);
 
-    List<State> reachable = ToknUtils.reachableStates(startState);
+    List<State> reachable = reachableStates(startState);
     State finalState = null;
 
     Map<State, Integer> stateIndexMap = hashMap();
@@ -150,7 +150,7 @@ public final class DFACompiler extends BaseObject {
     State start_state = new State();
     for (TokenDefinition regParse : token_records) {
 
-      NFA newStates = ToknUtils.duplicateNFA(regParse.startState(), regParse.endState());
+      NFA newStates = duplicateNFA(regParse.startState(), regParse.endState());
 
       State dupStart = newStates.start;
 
@@ -162,11 +162,11 @@ public final class DFACompiler extends BaseObject {
       State dupfinal_state = new State(true);
 
       CodeSet cs = CodeSet.withValue(State.tokenIdToEdgeLabel(regParse.id()));
-      ToknUtils.addEdge(dupEnd, cs.elements(), dupfinal_state);
+      addEdge(dupEnd, cs.elements(), dupfinal_state);
 
       // Add an e-transition from the start state to this expression's start
 
-      ToknUtils.addEps(start_state, dupStart);
+      addEps(start_state, dupStart);
     }
     return start_state;
   }
@@ -176,7 +176,7 @@ public final class DFACompiler extends BaseObject {
    */
   private List<String> applyRedundantTokenFilter(List<TokenDefinition> token_records, State start_state) {
     Set<Integer> recognizedTokenIdsSet = treeSet();
-    for (State state : ToknUtils.reachableStates(start_state)) {
+    for (State state : reachableStates(start_state)) {
       for (Edge edge : state.edges()) {
         if (!edge.destinationState().finalState())
           continue;

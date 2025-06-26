@@ -4,6 +4,7 @@ import js.data.DataUtil;
 import js.data.IntArray;
 
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 import java.util.Arrays;
 
@@ -219,7 +220,7 @@ public final class CodeSet implements Comparable<CodeSet> {
 
   @Override
   public String toString() {
-    return ToknUtils.dumpCodeSet(mElements);
+    return dumpCodeSet(mElements);
   }
 
   public int[] elements() {
