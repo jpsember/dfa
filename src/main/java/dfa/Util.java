@@ -357,25 +357,6 @@ public final class Util {
 
   public static final double DFA_VERSION_5 = 5.1;
 
-  /**
-   * One plus the maximum code represented
-   *
-   * Doesn't make a difference in the DFA size if the code max is reduced to 256
-   * (i.e. for utf8 only)
-   */
-  public static int codeMax() {
-    todo("This can be replaced by the constant 127");
-    // The maximum code we can represent is 255, which is the largest code
-    // that can fit in a byte.
-    //
-    // If a DFA is being used to scan utf8 or unicode, then a character range that
-    // includes 255 will also accept any value > 255.
-    //
-
-    // TODO: actually, if a range includes 127, it will also include 127...255
-    return 255;
-  }
-
   public static final int MAX_TOKEN_DEF = 1_000;
 
   public static String versionString(float v) {

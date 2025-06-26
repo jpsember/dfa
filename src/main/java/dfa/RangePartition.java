@@ -44,8 +44,9 @@ final class RangePartition {
     mUniqueCodeSets = hashSet();
     // Make the root node hold the largest possible CodeSet. 
     // We want to be able to include all the token ids as well.
-
-    mRootNode = buildNode(CodeSet.withRange(-MAX_TOKEN_DEF, codeMax()));
+    // The maximum code is 127, which by convention indicates that all (unsigned) byte values 128...255
+    // should be accepted as well.
+    mRootNode = buildNode(CodeSet.withRange(-MAX_TOKEN_DEF, 1 + 127));
     // Add epsilon immediately, so it's always in its own subset
     addSet(CodeSet.epsilon());
   }
