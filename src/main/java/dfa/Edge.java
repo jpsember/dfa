@@ -25,26 +25,15 @@ package dfa;
 
 public class Edge {
 
+
   public Edge(CodeSet codeSet, State destState) {
-    this(null, codeSet, destState);
-  }
-
-
-  public Edge(State sourceState, CodeSet codeSet, State destState) {
-    mSourceState = sourceState;
     mCodeSet = codeSet;
     mDest = destState;
-  }
-
-  // !!!! source state is unused!
-  public State sourceState() {
-    return mSourceState;
   }
 
   public State destinationState() {
     return mDest;
   }
-
 
   public int[] codeSets() {
     return mCodeSet.elements();
@@ -56,6 +45,5 @@ public class Edge {
 
   private State mDest;
   private CodeSet mCodeSet;
-  private State mSourceState;
 
 }

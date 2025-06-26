@@ -14,17 +14,13 @@ import static js.base.Tools.*;
 
 public final class Util {
 
-  private static Edge newEdge(State sourceState, CodeSet codeSet, State destinationState) {
-    return new Edge(sourceState, codeSet, destinationState);
+  private static Edge newEdge(CodeSet codeSet, State destinationState) {
+    return new Edge(codeSet, destinationState);
   }
 
   public static void addEdge(State sourceState, CodeSet codeSet, State destinationState) {
-    sourceState.edges().add(new Edge(sourceState, codeSet, destinationState));
+    sourceState.edges().add(new Edge(codeSet, destinationState));
   }
-
-//  public static void addEdge(State sourceState, CodeSet codeSet, State destinationState) {
-//    addEdge(sourceState, codeSet , destinationState);
-//  }
 
   /**
    * Build set of states reachable from this state
@@ -108,7 +104,7 @@ public final class Util {
       State s2 = origToDupStateMap.get(s);
       for (Edge edge : s.edges()) {
         State newTargetState = origToDupStateMap.get(edge.destinationState());
-        addEdge(s2, edge.codeSet (), newTargetState);
+        addEdge(s2, edge.codeSet(), newTargetState);
       }
     }
     return nfa(origToDupStateMap.get(startState), origToDupStateMap.get(endState));
@@ -275,7 +271,7 @@ public final class Util {
         if (prev_dest != null) {
           // Omit edges with no labels
           if (prev_label.elements().length != 0)
-            new_edges.add(newEdge(state, prev_label, prev_dest));
+            new_edges.add(newEdge(prev_label, prev_dest));
         }
         // Must start a fresh copy!  Don't want to modify the original label.
         prev_label = CodeSet.with(label);
@@ -286,7 +282,7 @@ public final class Util {
     if (prev_dest != null) {
       // Omit edges with no labels
       if (prev_label.elements().length != 0)
-        new_edges.add(new Edge(prev_label , prev_dest));
+        new_edges.add(new Edge(prev_label, prev_dest));
     }
 
     state.setEdges(new_edges);
