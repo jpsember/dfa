@@ -1,6 +1,7 @@
 package dfa;
 
 import js.base.BaseObject;
+import js.base.Pair;
 
 import static js.base.Tools.*;
 import static dfa.Util.*;
@@ -83,7 +84,7 @@ final class NFAToDFA extends BaseObject {
     State.bumpIds();
 
     log("creating start state");
-    start = create_dfa_state_if_necessary(eps_closure(start));
+    start = create_dfa_state_if_necessary(eps_closure(start)).first;
 
     List<State> unmarked = arrayList();
     unmarked.add(start);
@@ -143,9 +144,11 @@ final class NFAToDFA extends BaseObject {
         eps_closure(nfaStates);
         log("NFA states e-closure:", nfaStates);
 
-        State dfaDestState = create_dfa_state_if_necessary(nfaStates);
+        var result =
+            create_dfa_state_if_necessary(nfaStates);
+        State dfaDestState = result.first;
         log("DFA state for this set of NFA states:", dfaDestState);
-        if (mDFAStateCreatedFlag) {
+        if (result.second) {
           log("...this was a new DFA state; marking it for exploration");
           unmarked.add(dfaDestState);
         }
@@ -160,13 +163,12 @@ final class NFAToDFA extends BaseObject {
 
   /**
    * Determine if a DFA state exists for a set of NFA states, and add one if
-   * not. Sets mDFAStateCreatedFlag true iff a new state was created
+   * not.
    *
-   * @return DFA state; also, mDFAStateCreatedFlag will be set iff a new state
-   * was created
+   * Returns DFA state, and true if state did not already exist
    */
-  private State create_dfa_state_if_necessary(Collection<State> stateSet) {
-    mDFAStateCreatedFlag = false;
+  private Pair<State, Boolean> create_dfa_state_if_necessary(Collection<State> stateSet) {
+    boolean createdFlag = false;
 
     CodeSet keySet = constructKeyForStateCollection(stateSet);
     if (verbose())
@@ -177,7 +179,7 @@ final class NFAToDFA extends BaseObject {
       log("...existing state:", newState);
 
     if (newState == null) {
-      mDFAStateCreatedFlag = true;
+      createdFlag = true;
       newState = new State();
       // Determine if any of the NFA states were final states
       for (State nfaState : stateSet)
@@ -189,10 +191,9 @@ final class NFAToDFA extends BaseObject {
       mDFAStateToNFAStatesMap.put(newState, stateSet);
       log("...stored new DFA state:", newState.toString(true));
     }
-    return newState;
+    return pair(newState, createdFlag);
   }
 
-  private boolean mDFAStateCreatedFlag;
 
   /**
    * Calculate the epsilon closure of a set of NFA states
