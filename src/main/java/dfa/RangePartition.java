@@ -10,19 +10,19 @@ import static dfa.Util.*;
 /**
  * A data structure that transforms a set of CodeSets to a disjoint set of them,
  * such that no two range sets overlap.
- * 
+ *
  * This is to improve the efficiency of the NFA => DFA algorithm, which involves
  * gathering information about what states are reachable on certain characters.
  * We can't afford to treat each character as a singleton, since the ranges can
  * be quite large. Hence, we want to treat ranges of characters as single
  * entities; this will only work if no two such ranges overlap.
- * 
+ *
  * It works by starting with a tree whose node is labelled with the maximal
  * superset of character values. Then, for each edge in the NFA, performs a DFS
  * on this tree, splitting any node that only partially intersects any one set
  * that appears in the edge label. The running time is O(n log k), where n is
  * the size of the NFA, and k is the height of the resulting tree.
- * 
+ *
  * We encourage k to be small by sorting the NFA edges by their label
  * complexity.
  */
@@ -45,8 +45,7 @@ final class RangePartition {
     // Make the root node hold the largest possible CodeSet. 
     // We want to be able to include all the token ids as well.
 
-    todo("get rid of OURCODEMIN constant, as it is only used here");
-    mRootNode = buildNode(CodeSet.withRange(OURCODEMIN, codeMax()));
+    mRootNode = buildNode(CodeSet.withRange(-MAX_TOKEN_DEF, codeMax()));
     // Add epsilon immediately, so it's always in its own subset
     addSet(CodeSet.epsilon());
   }
@@ -76,10 +75,10 @@ final class RangePartition {
 
   /**
    * Apply the partition to a code set
-   * 
+   *
    * @return array of subsets from the partition whose union equals the code set
-   *         (this array will be the single element s if no partitioning was
-   *         necessary)
+   * (this array will be the single element s if no partitioning was
+   * necessary)
    */
   public List<CodeSet> apply(CodeSet codeSet) {
     if (!mPrepared)

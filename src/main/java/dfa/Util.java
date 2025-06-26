@@ -378,12 +378,6 @@ public final class Util {
 
   public static final int MAX_TOKEN_DEF = 1_000;
 
-  /**
-   * Minimum code possible. Negative values indicate token ids, so we need this
-   * to include the value -(# tokens)
-   */
-  public static final int OURCODEMIN = -MAX_TOKEN_DEF;
-
   public static String versionString(float v) {
     return String.format("%.1f", v);
   }
