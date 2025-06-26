@@ -45,7 +45,6 @@ public class DfaOper extends AppOper {
 
   @Override
   public void perform() {
-    setConfig(config());
     if (config().ascii()) {
       generateASCIITable();
       return;

@@ -363,18 +363,6 @@ public final class Util {
     return String.format("%.1f", v);
   }
 
-  public static DfaConfig dfaConfig() {
-    if (sDfaConfig == null)
-      setConfig(DfaConfig.DEFAULT_INSTANCE);
-    return sDfaConfig;
-  }
-
-  public static void setConfig(DfaConfig c) {
-    sDfaConfig = c.build();
-  }
-
-  private static DfaConfig sDfaConfig;
-
   public static DFA getDfa() {
     if (sDFA == null) {
       sDFA = DFA.parse(Files.readString(TokenDefinitionParser.class, "rexp_parser.dfa"));
