@@ -52,8 +52,14 @@ public final class DFACompiler extends BaseObject {
     return bld.build();
   }
 
+  static boolean sVerbosity;
+
   private void parseExpressions(String script) {
     var scanner = new Scanner(getDfa(), script);
+
+    if (sVerbosity) {
+      scanner.setVerbose();
+    }
     while (scanner.hasNext()) {
       var exprId = scanner.read(TokenDefinitionParser.T_TOKENID);
       var tokenName = chomp(exprId.text(), ":");

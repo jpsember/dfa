@@ -9,6 +9,9 @@ BROP: \[
 BRCL: \]
 BREXCEPT: \^
 
+
+MINUS: \-\-
+
 TOKENID: $_ID $_COLON
 
 ZERO_OR_MORE: \*

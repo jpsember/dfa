@@ -1,0 +1,4 @@
+WS:  $_WHITESPACE
+
+VALID: ( [ab]+ ) -- ( bb )
+

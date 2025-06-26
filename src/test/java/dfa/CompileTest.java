@@ -46,6 +46,7 @@ public class CompileTest extends MyTestCase {
     super.setup();
     // We need to reset the debug ids before each test, for deterministic behaviour
     State.resetIds();
+    DFACompiler.sVerbosity = false;
   }
 
   @Test
@@ -91,6 +92,16 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void complex1() {
+    proc();
+  }
+
+  private void verboseRex() {
+    DFACompiler.sVerbosity = true;
+  }
+
+  @Test
+  public void minus1() {
+    verboseRex();
     proc();
   }
 
@@ -376,7 +387,7 @@ public class CompileTest extends MyTestCase {
   private DFA dfa() {
     return mDFAJson;
   }
-/* * / * */
+  /* * / * */
 
   /* /* /* /*   /   *  */
   private String mScript;
