@@ -224,6 +224,8 @@ public final class ToknUtils {
    * of characters.
    */
   public static State partitionEdges(State startState) {
+
+    alert("Does this return a new state machine, or does it actually modify the provided one?");
     RangePartition par = new RangePartition();
 
     StateRenamer ren = new StateRenamer();

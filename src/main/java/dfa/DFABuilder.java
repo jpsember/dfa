@@ -12,6 +12,9 @@ import java.util.List;
 
 import static js.base.Tools.*;
 
+/**
+ * Converts a state machine to a DFA object, suitable for use by client programs
+ */
 class DFABuilder {
 
   public DFABuilder setStates(List<State> states) {
@@ -22,9 +25,6 @@ class DFABuilder {
   public DFABuilder setTokenNames(List<String> tokenNames) {
     mTokenNames = new ArrayList<>(tokenNames);
     return this;
-  }
-
-  public DFABuilder() {
   }
 
   private static final
@@ -41,19 +41,6 @@ class DFABuilder {
     convertStateIdsToAddresses();
     var graph = encodeGraph();
 
-//
-//    // Our new version uses an array of (unsigned) bytes, instead of shorts;
-//    // convert them to a short array for now...
-//
-//    var sh = ShortArray.newBuilder();
-//    for (var b : graph) {
-//      sh.add((short) (b & 0xff));
-//    }
-
-    if (DEBUG) {
-      pr("length of graph:", graph.length);
-      pr(DataUtil.hexDump(graph, 0, graph.length, true));
-    }
     // // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
 
     if (DEBUG && false) {

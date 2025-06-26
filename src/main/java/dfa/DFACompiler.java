@@ -12,6 +12,9 @@ import js.parsing.Scanner;
 import static js.base.Tools.*;
 import static dfa.Util.*;
 
+/**
+ * Compiles a DFA from a script of token definitions
+ */
 public final class DFACompiler extends BaseObject {
 
   public DFA parse(String script) {

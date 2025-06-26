@@ -17,6 +17,7 @@ final class StateRenamer {
    *          old starting state
    */
   public void constructNewVersions(State oldStartState) {
+    todo("can the state map be based on state ids, instead of the states themselves?");
     State.bumpIds();
     List<State> oldStates = ToknUtils.reachableStates(oldStartState);
     for (State oldState : oldStates)

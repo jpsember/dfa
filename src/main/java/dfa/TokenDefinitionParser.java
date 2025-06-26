@@ -7,7 +7,6 @@ import java.util.Map;
 
 import static dfa.ToknUtils.*;
 import static js.base.Tools.*;
-import static dfa.Util.*;
 
 //   One or more expressions separated by '|':
 //   ------------------------------------------------
@@ -41,11 +40,9 @@ import static dfa.Util.*;
 //   SET -> CODE_SET
 //      | CODE_SET '-' CODE_SET
 //
-//   CODE_SET ->
-//         a |  b |  c  ...   any printable except {,},[, etc.
+//   CODE_SET ->         (see rexp_parser.rxp for token definitions)
+//    a |  b |  c  ...   any printable except {,},[, etc.
 //      |  \xhh                  hex value from 00...ff
-//      |  \0xhh                 hex value from 00...ff
-//      |  \ u hhhh                hex value from 0000...ffff (e.g., unicode)
 //      |  \f | \n | \r | \t     formfeed, linefeed, return, tab
 //      |  \s                    a space (' ')
 //      |  \d                    digit
@@ -77,6 +74,7 @@ public class TokenDefinitionParser {
   }
 
   private void parseScript() {
+    alert("should StatePair be renamed to NFA?");
     StatePair sp = parseALTERNATE();
     mStartState = sp.start;
     mEndState = sp.end;

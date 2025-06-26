@@ -29,6 +29,8 @@ public final class Util {
    * (i.e. for utf8 only)
    */
   public static int codeMax() {
+    todo("move contents of this class into ToknUtils (or vice versa)");
+    todo("This can be replaced by the constant 127");
     // The maximum code we can represent is 255, which is the largest code
     // that can fit in a byte.
     //
@@ -74,13 +76,8 @@ public final class Util {
 
   private static DFA sDFA;
 
-
-
-  // ----------------------------------------------------------------------------------------------
-
   /**
    * Get a description of a DFA; for development purposes only
-   *
    *
    * What we really could use though is a decompiler that takes a DFA (in json form)
    * and generates the States and whatnot, for this describe method to work with

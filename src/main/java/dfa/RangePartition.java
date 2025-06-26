@@ -44,6 +44,8 @@ final class RangePartition {
     mUniqueCodeSets = hashSet();
     // Make the root node hold the largest possible CodeSet. 
     // We want to be able to include all the token ids as well.
+
+    todo("get rid of OURCODEMIN constant, as it is only used here");
     mRootNode = buildNode(CodeSet.withRange(OURCODEMIN, codeMax()));
     // Add epsilon immediately, so it's always in its own subset
     addSet(CodeSet.epsilon());
