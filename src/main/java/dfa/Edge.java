@@ -35,12 +35,16 @@ public class Edge {
     return mDest;
   }
 
-  public int[] codeSets() {
+  public int[] labels() {
     return mCodeSet.elements();
   }
 
   public CodeSet codeSet() {
     return mCodeSet;
+  }
+
+  public boolean contains(int code) {
+    return codeSet().contains(code);
   }
 
   private State mDest;

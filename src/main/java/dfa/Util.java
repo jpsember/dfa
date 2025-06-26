@@ -199,7 +199,7 @@ public final class Util {
         sb.append("       ");
         sb.append(e.destinationState().id());
         sb.append(' ');
-        sb.append(dumpCodeSet(e.codeSets()));
+        sb.append(dumpCodeSet(e.labels()));
         sb.append('\n');
       }
     }
@@ -217,13 +217,13 @@ public final class Util {
 
     for (State s : ren.oldStates()) {
       for (Edge edge : s.edges())
-        par.addSet(CodeSet.with(edge.codeSets()));
+        par.addSet(edge.codeSet());
     }
 
     for (State s : ren.oldStates()) {
       State sNew = ren.get(s);
       for (Edge edge : s.edges()) {
-        List<CodeSet> newLbls = par.apply(CodeSet.with(edge.codeSets()));
+        List<CodeSet> newLbls = par.apply( edge.codeSet());
         for (CodeSet x : newLbls) {
           addEdge(sNew, x, ren.get(edge.destinationState()));
         }
@@ -261,7 +261,7 @@ public final class Util {
     State prev_dest = null;
 
     for (Edge edge : state.edges()) {
-      int[] label = edge.codeSets();
+      int[] label = edge.codeSet().elements();
       State dest = edge.destinationState();
 
       // If this edge goes to the same state as the previous one (they are in sorted order already), merge with that one...
@@ -305,7 +305,7 @@ public final class Util {
         return true;
 
       for (Edge edge : state.edges()) {
-        if (CodeSet.contains(edge.codeSets(), State.EPSILON))
+        if (edge.contains(State.EPSILON))
           push(stateStack, edge.destinationState());
       }
     }
@@ -314,7 +314,7 @@ public final class Util {
 
   private static String toString(Edge edge) {
     StringBuilder sb = new StringBuilder();
-    sb.append(dumpCodeSet(edge.codeSets()));
+    sb.append(dumpCodeSet(edge.labels()));
     sb.append(" => ");
     sb.append(edge.destinationState().id());
     return sb.toString();
@@ -328,11 +328,11 @@ public final class Util {
     for (State s : reachableStates(startState)) {
       CodeSet prevSet = new CodeSet();
       for (Edge e : s.edges()) {
-        if (CodeSet.contains(e.codeSets(), State.EPSILON))
+        if (e.contains(State.EPSILON))
           badArg("edge accepts epsilon:", INDENT, toString(s, true));
 
         // See if the code set intersects union of previous edges' code sets
-        CodeSet ours = CodeSet.with(e.codeSets());
+        CodeSet ours =  e.codeSet();
         CodeSet inter = ours.intersect(prevSet);
         if (!inter.isEmpty())
           badArg("multiple edges on inputs:", inter, INDENT, toString(s, true));
@@ -401,14 +401,14 @@ public final class Util {
   }
 
   private static Object edgeProblem(Edge edge, String message) {
-    return "*** problem with edge: " + message + " ***; " + JSList.with(edge.codeSets());
+    return "*** problem with edge: " + message + " ***; " + JSList.with(edge.labels());
   }
 
   /**
    * Get a description of an edge's code sets, for display as a map key
    */
   private static Object edgeDescription(Edge edge, List<String> tokenNames) {
-    var cs = edge.codeSets();
+    var cs = edge.labels();
     if (cs.length % 2 != 0) {
       return edgeProblem(edge, "odd number of elements");
     }

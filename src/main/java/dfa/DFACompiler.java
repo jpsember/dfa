@@ -185,7 +185,7 @@ public final class DFACompiler extends BaseObject {
       for (Edge edge : state.edges()) {
         if (!edge.destinationState().finalState())
           continue;
-        int token_id = State.edgeLabelToTokenId(edge.codeSets()[0]);
+        int token_id = State.edgeLabelToTokenId(edge.labels()[0]);
         recognizedTokenIdsSet.add(token_id);
       }
     }

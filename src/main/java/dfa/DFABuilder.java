@@ -89,7 +89,7 @@ class DFABuilder {
       int prevTokenId = -1;
       int compiledTokenId = 0;
       for (var edge : s.edges()) {
-        var codeSets = edge.codeSets();
+        var codeSets = edge.labels();
         for (int i = 0; i < codeSets.length; i += 2) {
           var a = codeSets[i];
           var b = codeSets[i + 1];
@@ -119,7 +119,7 @@ class DFABuilder {
 
     // Add edges (omitting any associated with token ids)
     for (var edge : filteredEdges) {
-      var codeSets = edge.codeSets();
+      var codeSets = edge.labels();
 
       // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
 

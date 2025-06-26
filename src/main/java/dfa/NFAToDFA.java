@@ -116,7 +116,7 @@ final class NFAToDFA extends BaseObject {
         for (Edge nfaEdge : nfaState.edges()) {
           log("......edge:", nfaEdge);
 
-          CodeSet codeSet = CodeSet.with(nfaEdge.codeSets());
+          CodeSet codeSet =  nfaEdge.codeSet() ;
 
           // This CodeSet is guaranteed to not overlap any other (distinct) CodeSet.
           // Add the destination state to a list keyed to this CodeSet.
@@ -210,7 +210,7 @@ final class NFAToDFA extends BaseObject {
     while (nonEmpty(stk)) {
       State s = pop(stk);
       for (Edge edge : s.edges()) {
-        if (CodeSet.contains(edge.codeSets(), State.EPSILON)) {
+        if (edge. contains(State.EPSILON)) {
           if (stateSet.add(edge.destinationState()))
             push(stk, edge.destinationState());
         }
