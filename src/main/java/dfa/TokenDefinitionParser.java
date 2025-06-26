@@ -189,7 +189,7 @@ public class TokenDefinitionParser {
       // labelled with this code set
       State sA = new State();
       State sB = new State();
-      addEdge(sA, code_set.elements(), sB);
+      addEdge(sA, code_set , sB);
       e1 = nfa(sA, sB);
     }
     return e1;
@@ -347,7 +347,7 @@ public class TokenDefinitionParser {
 
     State sA = new State();
     State sB = new State();
-    addEdge(sA, result.elements(), sB);
+    addEdge(sA, result , sB);
     return nfa(sA, sB);
   }
 

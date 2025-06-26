@@ -133,7 +133,7 @@ public final class DFACompiler extends BaseObject {
         for (Edge edge : origState.edges()) {
           // Construct a new edge from this edge
           var newDestStateIndex = stateIndexMap.get(edge.destinationState());
-          var newEdge = new Edge(edge.codeSets(), newStates.get(newDestStateIndex));
+          var newEdge = new Edge(edge.codeSet(), newStates.get(newDestStateIndex));
           newEdges.add(newEdge);
         }
         newState.setEdges(newEdges);
@@ -167,7 +167,7 @@ public final class DFACompiler extends BaseObject {
       State dupfinal_state = new State(true);
 
       CodeSet cs = CodeSet.withValue(State.tokenIdToEdgeLabel(regParse.id()));
-      addEdge(dupEnd, cs.elements(), dupfinal_state);
+      addEdge(dupEnd, cs , dupfinal_state);
 
       // Add an e-transition from the start state to this expression's start
 

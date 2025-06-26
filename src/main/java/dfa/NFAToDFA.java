@@ -159,7 +159,7 @@ final class NFAToDFA extends BaseObject {
           unmarked.add(dfaDestState);
         }
         log(VERT_SP, "...adding DFA edge", dfaState, codeSet, "==>", dfaDestState, VERT_SP);
-        addEdge(dfaState, codeSet.elements(), dfaDestState);
+        addEdge(dfaState, codeSet, dfaDestState);
       }
     }
     if (verbose())

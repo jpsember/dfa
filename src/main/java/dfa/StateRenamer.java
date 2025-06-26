@@ -37,7 +37,7 @@ final class StateRenamer {
     for (State oldState : oldStates) {
       State newState = get(oldState);
       for (Edge e : oldState.edges()) {
-        addEdge(newState, e.codeSets(), get(e.destinationState()));
+        addEdge(newState, e.codeSet(), get(e.destinationState()));
       }
     }
   }
