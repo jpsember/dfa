@@ -1,10 +1,4 @@
-# These are now unnecessary; use \
-_HT: \x09
-_LF: \x0a
-_FF: \x0c
-_CR: \x0d
-_NL: ($_CR? $_LF)
-_SP: \x20
+_NL: (\r? \n)   # This captures cr / newline sequences for windows, OSX, and Linux
 _COLON: (\:)
 _COMMA: (\,)
 _EQUALS: (\=)

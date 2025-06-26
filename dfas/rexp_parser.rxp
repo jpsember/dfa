@@ -24,13 +24,13 @@ OTHER_ESCAPE_SEQ: $_ESCAPE [\x21-\x7e]
 # Java escape sequences reference:
 #    https://docs.oracle.com/javase/tutorial/java/data/characters.html
 
-WORD_CHAR: $_ESCAPE w
-DIGIT_CHAR: $_ESCAPE d
-FORMFEED: $_ESCAPE f
-CARRIAGERET: $_ESCAPE r
-SPACE: $_ESCAPE s
-TAB: $_ESCAPE t
-NEWLINE: $_ESCAPE n
+WORD_CHAR: \\ w
+DIGIT_CHAR: \\ d
+FORMFEED: \\ f
+CARRIAGERET: \\ r
+SPACE: \\ s
+TAB: \\ t
+NEWLINE: \\ n
 
 # These are characters that can appear unescaped
 ASCII: [_a-zA-Z0-9\x21\x22\x25\x26\x27\x2c\x2e\x2f\x3a\x3b\x3c\x3d\x3e\x3e\x40\x5f\x60\x7b\x7d\x7e]
