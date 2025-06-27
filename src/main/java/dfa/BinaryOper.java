@@ -29,6 +29,7 @@ public class BinaryOper extends BaseObject {
     // Partition the edge labels into disjoint codesets,
     // and construct new versions of the reachable states
 
+    todo("There is some duplicated code here, where RangePartition was also used");
     {
       RangePartition par = new RangePartition();
       StateRenamer ren = new StateRenamer();
@@ -55,11 +56,7 @@ public class BinaryOper extends BaseObject {
       a2.startState = ren.get(a2.startState);
       b2.startState = ren.get(b2.startState);
     }
-//
 
-
-    alert("verifying sNextId doesn't change");
-    var currSNextId = State.sNextId;
     // construct the product NFA of these two.
 
     // We keep a map of visited states.
@@ -141,8 +138,6 @@ public class BinaryOper extends BaseObject {
       }
     }
 
-    checkState(State.sNextId == currSNextId, "next state id changed from", currSNextId, "to", State.sNextId);
-
     // for each product state that has been marked as a final state,
     // clear that flag, and add an epsilon edge to the end state
     for (var ps : stateMap.values()) {
@@ -190,7 +185,6 @@ public class BinaryOper extends BaseObject {
    * Convert NFA to a DFA, and add a sink non-final state
    */
   private AugDFA toDFA(String label, NFA nfa) {
-    todo("we have to be careful with the state debug ids... do they need to be unique across state machines?");
     // We have to make the end state a final state
     nfa.end.setFinal(true);
 

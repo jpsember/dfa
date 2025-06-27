@@ -29,7 +29,6 @@ final class StateRenamer {
    * @param oldStartState old starting state
    */
   public void constructNewVersionsWithEdges(State oldStartState) {
-    State.bumpIds();
     List<State> oldStates = reachableStates(oldStartState);
     for (State oldState : oldStates) {
       put(oldState, null);

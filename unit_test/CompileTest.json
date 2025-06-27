@@ -6,12 +6,12 @@
                 "identifier" : 4679,
                     "jsona1" : 9790,
                 "multiline1" : 8888,
-      "normalizeMergeLabels" : 7498,
-  "normalizeOmitEmptyLabels" : 3309,
-                 "partition" : 8190,
+      "normalizeMergeLabels" : 3050,
+  "normalizeOmitEmptyLabels" : 6898,
+                 "partition" : 6797,
                    "predef1" : 3996,
          "printStateMachine" : 9261,
-                "reverseDFA" : 5210,
+                "reverseDFA" : 5762,
                     "simple" : 8829,
                     "string" : 3046
 }

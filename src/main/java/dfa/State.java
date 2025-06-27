@@ -136,11 +136,11 @@ public final class State implements Comparable<State> {
     return sb.toString();
   }
 
-  public static void bumpIds() {
-    setIds(0);
-  }
+//  public static void bumpIds() {
+//    setIds(0);
+//  }
 
-  /*private*/ static int sNextId = 100;
+  private static int sNextId = 100;
 
   public static final int EPSILON = -1;
 

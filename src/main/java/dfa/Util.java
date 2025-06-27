@@ -48,8 +48,6 @@ public final class Util {
    * Construct the reverse of an NFA
    */
   public static State reverseNFA(State startState) {
-    State.bumpIds();
-
     // Create new start state first, so it has the lowest id
     State newStartState = new State();
 

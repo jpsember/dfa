@@ -39,11 +39,8 @@ final class NFAToDFA extends BaseObject {
    * Convert an NFA to a DFA; return the new start state
    */
   private State convertNFAToDFA(State start) {
-    State.bumpIds();
     start = partitionEdges(start);
     start = minimize(start);
-    if (false)
-      start = validateDFA(start);
     return start;
   }
 
@@ -87,8 +84,6 @@ final class NFAToDFA extends BaseObject {
     log("---------- cvtNFAToDFA -------------");
     mNFAStateSetToDFAStateMap.clear();
     mDFAStateToNFAStatesMap.clear();
-
-    State.bumpIds();
 
     log("creating start state");
     start = create_dfa_state_if_necessary(eps_closure(start)).first;
