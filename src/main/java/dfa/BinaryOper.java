@@ -43,8 +43,6 @@ public class BinaryOper extends BaseObject {
   }
 
 
-  // ----------------------------------------------------------------------------------------------
-
   // Maps product ids to encoded pair of factor ids
   //
   private Map<Integer, Long> mProductIdToFactorIdPairMap = hashMap();
@@ -62,8 +60,6 @@ public class BinaryOper extends BaseObject {
 
   private State mProductStartState;
   private State mProductEndState;
-
-// ----------------------------------------------------------------------------------------------
 
 
   private void extendFrontier(State state) {
@@ -98,27 +94,6 @@ public class BinaryOper extends BaseObject {
     }
   }
 
-  private void applyEdgePartition(RangePartition partitioner, Collection<State> states) {
-    for (var state : states) {
-      for (var edge : state.edges()) {
-        partitioner.addSet(edge.codeSet());
-      }
-    }
-  }
-
-  private void partitionExistingEdges(RangePartition par, Collection<State> states) {
-    for (State s : states) {
-      List<Edge> newEdges = arrayList();
-      for (Edge edge : s.edges()) {
-        List<CodeSet> newLbls = par.apply(edge.codeSet());
-        for (CodeSet x : newLbls) {
-          newEdges.add(new Edge(x, edge.destinationState()));
-        }
-      }
-      s.setEdges(newEdges);
-    }
-  }
-
   private BinaryOper(NFA a, NFA b, OperationCode oper) {
     mA = a;
     mB = b;
@@ -132,37 +107,9 @@ public class BinaryOper extends BaseObject {
 
   public NFA result() {
     if (mResult != null) return mResult;
-    setVerbose();
 
     var a = mA;
     var b = mB;
-
-    if (false) {
-
-      alert("experiment");
-
-      // Determine partition of edges in the factor states
-
-      var par = new RangePartition();
-
-      printStateMachine(a.start, "before partition, A");
-      printStateMachine(b.start, "before partition, B");
-
-      {
-        var aStates = reachableStates(a.start);
-        var bStates = reachableStates(b.start);
-        applyEdgePartition(par, aStates);
-        applyEdgePartition(par, bStates);
-
-        // Replace existing edges with partitioned versions
-        partitionExistingEdges(par, aStates);
-        partitionExistingEdges(par, bStates);
-      }
-
-      printStateMachine(a.start, "after partition, A");
-      printStateMachine(b.start, "after partition, B");
-      halt();
-    }
 
     var a2 = toDFA("A", a);
     var b2 = toDFA("B", b);
@@ -171,44 +118,22 @@ public class BinaryOper extends BaseObject {
     addStatesToMap(a2.states);
     addStatesToMap(b2.states);
 
-    if (false) {
-      log(a2);
-      log(b2);
-    }
-
     // Partition the edge labels into disjoint codesets,
     // and construct new versions of the reachable states
-
-    log(VERT_SP, "partitioning edge labels of the two DFAs");
-    // Determine partition of edges in the factor states
 
     var par = new RangePartition();
 
     {
+      var aStates = reachableStates(a2.startState);
+      var bStates = reachableStates(b2.startState);
+      par.addStateCodeSets(aStates);
+      par.addStateCodeSets(bStates);
 
-
-      if (false) {
-        printStateMachine(a2.startState, "before partition, A");
-        printStateMachine(b2.startState, "before partition, B");
-      }
-
-      {
-        var aStates = reachableStates(a2.startState);
-        var bStates = reachableStates(b2.startState);
-        applyEdgePartition(par, aStates);
-        applyEdgePartition(par, bStates);
-
-
-        // Replace existing edges with partitioned versions
-        partitionExistingEdges(par, aStates);
-        partitionExistingEdges(par, bStates);
-      }
-
-      if (false) {
-        printStateMachine(a2.startState, "after partition, A");
-        printStateMachine(b2.startState, "after partition, B");
-      }
+      // Replace existing edges with partitioned versions
+      par.partitionStateEdges(aStates);
+      par.partitionStateEdges(bStates);
     }
+
 
     log(VERT_SP, "constructing product state machine, start state etc");
 
@@ -218,7 +143,6 @@ public class BinaryOper extends BaseObject {
 
     // Initialize frontier to the start state
     extendFrontier(mProductStartState);
-
 
     Set<CodeSet> workCodeSets = hashSet();
 
@@ -261,9 +185,7 @@ public class BinaryOper extends BaseObject {
         for (var x : fb.edges()) workCodeSets.add(x.codeSet());
       }
 
-      log("...code sets:", INDENT, workCodeSets);
       for (var x : workCodeSets) {
-        log(".......code set:", x);
         // determine target states for this label
         var aTarget = a2.sinkState;
         for (var y : fa.edges()) {
@@ -281,24 +203,20 @@ public class BinaryOper extends BaseObject {
         }
 
         var destProductId = productId(aTarget, bTarget);
-        log(".......dest product id:", idPairToStr(destProductId));
 
         // Look for an existing product state with this id.  If not found,
         // create one, and add it to the frontier
-
 
         var destProductState = mFactorIdPairToProductStateMap.get(destProductId);
         if (destProductState == null) {
           destProductState = constructProductState(aTarget, bTarget);
           mSearchFrontier.add(destProductState);
-          log(".........new product state, adding to frontier");
         }
 
         // Add edge to product graph
 
         var edge = new Edge(x, destProductState);
         productState.edges().add(edge);
-        log("...added edge to product state:", INDENT, productState, ":", edge);
       }
     }
 
@@ -310,8 +228,6 @@ public class BinaryOper extends BaseObject {
         productState.edges().add(new Edge(CodeSet.epsilon(), mProductEndState));
       }
     }
-
-    printStateMachine(mProductStartState, "Product state machine");
 
     todo("we may want to convert this to a DFA before returning it");
 

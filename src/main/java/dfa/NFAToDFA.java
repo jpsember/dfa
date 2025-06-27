@@ -39,6 +39,10 @@ final class NFAToDFA extends BaseObject {
    * Convert an NFA to a DFA; return the new start state
    */
   private State convertNFAToDFA(State start) {
+
+    todo("do we need to duplicate the input NFA?");
+//    duplicateNFA(start, start);
+
     start = partitionEdges(start);
     start = minimize(start);
     return start;

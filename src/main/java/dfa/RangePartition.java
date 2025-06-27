@@ -2,6 +2,7 @@ package dfa;
 
 import static js.base.Tools.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ import static dfa.Util.*;
  */
 final class RangePartition {
 
-  private static final boolean DEBUG = true && alert("DEBUG in effect");
+  private static final boolean DEBUG = false && alert("DEBUG in effect");
 
   /**
    * A node within a RangePartition tree
@@ -52,6 +53,22 @@ final class RangePartition {
     // Add epsilon immediately, so it's always in its own subset
     addSet(CodeSet.epsilon());
   }
+
+
+
+  public void partitionStateEdges(Collection<State> states) {
+    for (State s : states) {
+      List<Edge> newEdges = arrayList();
+      for (Edge edge : s.edges()) {
+        List<CodeSet> newLbls =  apply(edge.codeSet());
+        for (CodeSet x : newLbls) {
+          newEdges.add(new Edge(x, edge.destinationState()));
+        }
+      }
+      s.setEdges(newEdges);
+    }
+  }
+
 
   public void addSet(CodeSet codeSet) {
     if (DEBUG) checkState(!mPrepared);
@@ -118,6 +135,14 @@ final class RangePartition {
       list.sort((a, b) -> Integer.compare(a.elements()[0], b.elements()[0]));
     }
     return list;
+  }
+
+  public void addStateCodeSets(Collection<State> states) {
+    for (var state : states) {
+      for (var edge : state.edges()) {
+        addSet(edge.codeSet());
+      }
+    }
   }
 
   private void applyAux(RPNode n, CodeSet s, List<CodeSet> list) {
