@@ -266,7 +266,7 @@ public class CompileTest extends MyTestCase {
       message = name();
     else
       message = BasePrinter.toString(messages);
-    sb().append(dumpStateMachine(state, message));
+    sb().append(stateMachineToString(state, message));
   }
 
   private StringBuilder sb() {

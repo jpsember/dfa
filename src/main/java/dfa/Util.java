@@ -159,7 +159,11 @@ public final class Util {
     return Integer.toString(charCode);
   }
 
-  public static String dumpStateMachine(State initialState, Object... title) {
+  public static void printStateMachine(State initialState, Object... title) {
+    pr(stateMachineToString(initialState, title));
+  }
+
+  public static String stateMachineToString(State initialState, Object... title) {
     final var dashes = "--------------------------------------------------------------------------\n";
     StringBuilder sb = new StringBuilder();
     sb.append("\nState Machine");
@@ -208,6 +212,7 @@ public final class Util {
    * Return a copy of a state machine, one whose edges are labelled with a disjoint subset of codes
    */
   public static State partitionEdges(State startState) {
+    todo("do we need to return a copy, vs modifying in place?");
     RangePartition par = new RangePartition();
 
     StateRenamer ren = new StateRenamer();
@@ -221,7 +226,7 @@ public final class Util {
     for (State s : ren.oldStates()) {
       State sNew = ren.get(s);
       for (Edge edge : s.edges()) {
-        List<CodeSet> newLbls = par.apply( edge.codeSet());
+        List<CodeSet> newLbls = par.apply(edge.codeSet());
         for (CodeSet x : newLbls) {
           addEdge(sNew, x, ren.get(edge.destinationState()));
         }
@@ -330,7 +335,7 @@ public final class Util {
           badArg("edge accepts epsilon:", INDENT, toString(s, true));
 
         // See if the code set intersects union of previous edges' code sets
-        CodeSet ours =  e.codeSet();
+        CodeSet ours = e.codeSet();
         CodeSet inter = ours.intersect(prevSet);
         if (!inter.isEmpty())
           badArg("multiple edges on inputs:", inter, INDENT, toString(s, true));

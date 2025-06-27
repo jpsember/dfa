@@ -55,7 +55,7 @@ final class NFAToDFA extends BaseObject {
     log("reversing #1");
     start = reverseNFA(start);
     if (verbose())
-      log(dumpStateMachine(start, "after reverse #1"));
+      log(stateMachineToString(start, "after reverse #1"));
 
     start = cvtNFAToDFA(start);
 
@@ -63,7 +63,7 @@ final class NFAToDFA extends BaseObject {
       log("reversing #2");
     start = reverseNFA(start);
     if (verbose())
-      log(dumpStateMachine(start, "after reverse #2"));
+      log(stateMachineToString(start, "after reverse #2"));
     start = cvtNFAToDFA(start);
 
     return normalizeStates(start);
@@ -159,7 +159,7 @@ final class NFAToDFA extends BaseObject {
       }
     }
     if (verbose())
-      log(dumpStateMachine(start, "after nfa -> dfa conversion"));
+      log(stateMachineToString(start, "after nfa -> dfa conversion"));
     return start;
   }
 

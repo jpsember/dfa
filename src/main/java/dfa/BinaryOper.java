@@ -3,6 +3,7 @@ package dfa;
 import js.base.BaseObject;
 import js.base.Pair;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,12 +13,18 @@ import static dfa.Util.*;
 
 public class BinaryOper extends BaseObject {
 
+  public enum OperationCode {
+    AND, OR, MINUS,
+  }
+
   public static NFA aMinusB(NFA a, NFA b) {
-    var oper = new BinaryOper(a, b);
+    var oper = new BinaryOper(a, b, OperationCode.MINUS);
+    oper.result();
     throw notSupported("aMinusB", oper);
   }
 
   private static long encodeFactorIds(int a, int b) {
+    checkArgument(a > 0 && b > 0);
     return a | (((long) b) << 32);
   }
 
@@ -44,16 +51,14 @@ public class BinaryOper extends BaseObject {
   //
   private List<State> mSearchFrontier = arrayList();
 
-  private Map<Long, State> generatedStates = hashMap();
+  // Map of encoded pair of factor ids to product state
+  private Map<Long, State> mFactorIdPairToProductStateMap = hashMap();
 
-  private State mStartState;
-  private State mEndState;
+  private State mProductStartState;
+  private State mProductEndState;
 
 // ----------------------------------------------------------------------------------------------
 
-  private void addProductStateToMap(State productState, State factorA, State factorB) {
-    generatedStates.put(encodeFactorIds(factorA.id(), factorB.id()), productState);
-  }
 
   private void extendFrontier(State state) {
     mSearchFrontier.add(state);
@@ -65,9 +70,9 @@ public class BinaryOper extends BaseObject {
 
   private Pair<State, State> getFactorStates(State productState) {
     var encoded = encodedFactorIdPairForProductState(productState);
+    log("encoded id pair for product state:", productState.id(), idPairToStr(encoded));
     return pair(stateWithId(factorAId(encoded)), stateWithId(factorBId(encoded)));
   }
-
 
   private long encodedFactorIdPairForProductState(State productState) {
     var encoded = mProductIdToFactorIdPairMap.get(productState.id());
@@ -81,66 +86,143 @@ public class BinaryOper extends BaseObject {
     return state;
   }
 
+  private void addStatesToMap(Collection<State> states) {
+    for (var s : states) {
+      mStateIdToStateMap.put(s.id(), s);
+    }
+  }
 
-  private BinaryOper(NFA a, NFA b) {
+  private void applyEdgePartition(RangePartition partitioner, Collection<State> states) {
+    for (var state : states) {
+      for (var edge : state.edges()) {
+        partitioner.addSet(edge.codeSet());
+      }
+    }
+  }
+
+  private void partitionExistingEdges(RangePartition par, Collection<State> states) {
+    for (State s : states) {
+      List<Edge> newEdges = arrayList();
+      for (Edge edge : s.edges()) {
+        List<CodeSet> newLbls = par.apply(edge.codeSet());
+        for (CodeSet x : newLbls) {
+          newEdges.add(new Edge(x, edge.destinationState()));
+        }
+      }
+      s.setEdges(newEdges);
+    }
+  }
+
+  private BinaryOper(NFA a, NFA b, OperationCode oper) {
+    mA = a;
+    mB = b;
+    mOper = oper;
+  }
+
+  private OperationCode mOper;
+
+  private NFA mA, mB;
+
+  public void result() {
     setVerbose();
 
+    var a = mA;
+    var b = mB;
+
+    if (false) {
+
+      alert("experiment");
+
+      // Determine partition of edges in the factor states
+
+      var par = new RangePartition();
+
+      printStateMachine(a.start, "before partition, A");
+      printStateMachine(b.start, "before partition, B");
+
+      {
+        var aStates = reachableStates(a.start);
+        var bStates = reachableStates(b.start);
+        applyEdgePartition(par, aStates);
+        applyEdgePartition(par, bStates);
+
+        // Replace existing edges with partitioned versions
+        partitionExistingEdges(par, aStates);
+        partitionExistingEdges(par, bStates);
+      }
+
+      printStateMachine(a.start, "after partition, A");
+      printStateMachine(b.start, "after partition, B");
+      halt();
+    }
 
     var a2 = toDFA("A", a);
     var b2 = toDFA("B", b);
-    log(a2);
-    log(b2);
 
+    // Add all the states of the two DFAs to the state map
+    addStatesToMap(a2.states);
+    addStatesToMap(b2.states);
+
+    if (false) {
+      log(a2);
+      log(b2);
+    }
 
     // Partition the edge labels into disjoint codesets,
     // and construct new versions of the reachable states
 
-    todo("There is some duplicated code here, where RangePartition was also used");
+    log(VERT_SP, "partitioning edge labels of the two DFAs");
+    // Determine partition of edges in the factor states
+
+    var par = new RangePartition();
+
     {
-      StateRenamer ren = new StateRenamer();
-      log("constructing new versions for (a) start state:", a2.startState.id());
-      ren.constructNewVersions(a2.startState);
-      log("constructing new versions for (b) start state:", b2.startState.id());
-      ren.constructNewVersions(b2.startState);
 
 
-      RangePartition par = new RangePartition();
-
-      for (State s : ren.oldStates()) {
-        for (Edge edge : s.edges())
-          par.addSet(edge.codeSet());
+      if (false) {
+        printStateMachine(a2.startState, "before partition, A");
+        printStateMachine(b2.startState, "before partition, B");
       }
 
-      for (State s : ren.oldStates()) {
-        State sNew = ren.get(s);
-        for (Edge edge : s.edges()) {
-          List<CodeSet> newLbls = par.apply(edge.codeSet());
-          for (CodeSet x : newLbls) {
-            addEdge(sNew, x, ren.get(edge.destinationState()));
-          }
-        }
+      {
+        var aStates = reachableStates(a2.startState);
+        var bStates = reachableStates(b2.startState);
+        applyEdgePartition(par, aStates);
+        applyEdgePartition(par, bStates);
+
+
+        // Replace existing edges with partitioned versions
+        partitionExistingEdges(par, aStates);
+        partitionExistingEdges(par, bStates);
       }
 
-      a2.startState = ren.get(a2.startState);
-      b2.startState = ren.get(b2.startState);
+      if (false) {
+        printStateMachine(a2.startState, "after partition, A");
+        printStateMachine(b2.startState, "after partition, B");
+      }
     }
 
-    // !!!! we need to reconstruct the AugDFA since we've constructed new versions by the partitioning above
-
-    // Use the AugDFA state list (including the sink state) as the number of states, for a map index
-
+    log(VERT_SP, "constructing product state machine, start state etc");
 
     // construct the product NFA of these two.
+    mProductStartState = constructProductState(a2.startState, b2.startState);
+    mProductEndState = new State();
 
-    mStartState = constructProductState(a2.startState, b2.startState);
-    addProductStateToMap(mStartState, a2.startState, b2.startState);
+    // Initialize frontier to the start state
+    extendFrontier(mProductStartState);
 
-    // Store it in the map, and add it to the frontier as the initial search state
-    // generatedStates.put(productId(a2.startState, b2.startState), mStartState);
-    extendFrontier(mStartState);
-    mEndState = new State();
 
     Set<CodeSet> workCodeSets = hashSet();
+
+    // Ensure that every state has an edge for *every* possible edge label, by
+    // adding edges to the sink state for missing ones.
+
+    // This is actually only necessary for the MINUS operation
+
+    if (mOper == OperationCode.MINUS) {
+      workCodeSets.addAll(par.getPartition());
+      log("partitioned edges:", INDENT, workCodeSets);
+    }
 
     log("processing frontier");
 
@@ -148,27 +230,23 @@ public class BinaryOper extends BaseObject {
     //
     while (!mSearchFrontier.isEmpty()) {
       var productState = popFrontier();
-      log("frontier state:", productState);
+      log(VERT_SP, "frontier state:", productState);
 
       // Determine the two factor states
       var factors = getFactorStates(productState);
       var fa = factors.first;
       var fb = factors.second;
-//
-//      var aid = productState.id() % MAX_STATE_ID;
-//      var bid = productState.id() / MAX_STATE_ID;
-//
-//      var fa = a2.states.get(aid);
-//      var fb = b2.states.get(bid);
 
       log("...factor states:", INDENT, fa, CR, fb);
 
       // Construct the set of labels that appear in either of the edges.
       // Construct an edge for each label in the set, sending to the sink state(s) where appropriate.
 
-      workCodeSets.clear();
-      for (var x : fa.edges()) workCodeSets.add(x.codeSet());
-      for (var x : fb.edges()) workCodeSets.add(x.codeSet());
+      if (mOper != OperationCode.MINUS) {
+        workCodeSets.clear();
+        for (var x : fa.edges()) workCodeSets.add(x.codeSet());
+        for (var x : fb.edges()) workCodeSets.add(x.codeSet());
+      }
 
       log("...code sets:", INDENT, workCodeSets);
       for (var x : workCodeSets) {
@@ -189,15 +267,17 @@ public class BinaryOper extends BaseObject {
           }
         }
 
-
         var destProductId = productId(aTarget, bTarget);
-        log(".......dest product id:", destProductId);
+        log(".......dest product id:", idPairToStr(destProductId));
 
-        var destProductState = generatedStates.get(destProductId);
+        // Look for an existing product state with this id.  If not found,
+        // create one, and add it to the frontier
+
+
+        var destProductState = mFactorIdPairToProductStateMap.get(destProductId);
         if (destProductState == null) {
           destProductState = constructProductState(aTarget, bTarget);
           mSearchFrontier.add(destProductState);
-          generatedStates.put(destProductId, destProductState);
           log(".........new product state, adding to frontier");
         }
 
@@ -211,31 +291,60 @@ public class BinaryOper extends BaseObject {
 
     // for each product state that has been marked as a final state,
     // clear that flag, and add an epsilon edge to the end state
-    for (var ps : generatedStates.values()) {
-      if (ps.finalState()) {
-        ps.setFinal(false);
-        ps.edges().add(new Edge(CodeSet.epsilon(), mEndState));
+    for (var productState : mFactorIdPairToProductStateMap.values()) {
+      if (productState.finalState()) {
+        productState.setFinal(false);
+        productState.edges().add(new Edge(CodeSet.epsilon(), mProductEndState));
       }
     }
 
-    pr(VERT_SP, "state machine:", INDENT,
-        dumpStateMachine(mStartState, "Product state machine"));
+    printStateMachine(mProductStartState, "Product state machine");
   }
 
+  /**
+   * Construct a product state representing two factor states, and add to the appropriate data structures
+   */
   private State constructProductState(State a, State b) {
-    // Set final state according to the binary operation
-    todo("Assuming MINUS operation");
-    boolean finalState = a.finalState() && !b.finalState();
+    todo("We need to add edges to sink state for all states that don't have such labels (at least for minus operation)");
 
-    var s = new State(finalState);
-    log("...constructed product state:", s.id(), "final:", s.finalState());
-    return s;
+    // Set final state according to the binary operation
+
+    boolean finalState;
+    switch (mOper) {
+      case MINUS:
+        finalState = a.finalState() && !b.finalState();
+        break;
+      case OR:
+        finalState = a.finalState() || b.finalState();
+        break;
+      case AND:
+        finalState = a.finalState() && b.finalState();
+        break;
+      default:
+        throw notSupported();
+    }
+
+    var abProduct = new State(finalState);
+    log(VERT_SP, "...constructed product state:", abProduct.id(), "final:",
+        abProduct.finalState(), "from a:", a.finalState(), "b:", b.finalState(), VERT_SP);
+    var existing = mStateIdToStateMap.put(abProduct.id(), abProduct);
+    checkState(existing == null, "state already in map");
+    var encodedIdPair = encodeFactorIds(a.id(), b.id());
+    log("encoded id pair:", idPairToStr(encodedIdPair));
+    mProductIdToFactorIdPairMap.put(abProduct.id(), encodedIdPair);
+    mFactorIdPairToProductStateMap.put(encodedIdPair, abProduct);
+    return abProduct;
   }
+
 
   private static long productId(State a, State b) {
     var aId = a.id();
     var bId = b.id();
     return aId + (((long) bId) << 32L);
+  }
+
+  private static String idPairToStr(long encoded) {
+    return String.format("[ %4d | %4d ]", factorAId(encoded), factorBId(encoded));
   }
 
   /**
@@ -245,10 +354,12 @@ public class BinaryOper extends BaseObject {
     // We have to make the end state a final state
     nfa.end.setFinal(true);
 
-    log("toDFA:", INDENT, dumpStateMachine(nfa.start, "NFA to convert to DFA"));
+    log("toDFA:", INDENT, stateMachineToString(nfa.start, "NFA to convert to DFA"));
 
     var xDFA = NFAToDFA.convert(nfa.start);
-    log(dumpStateMachine(xDFA, "x as DFA"));
+    log(stateMachineToString(xDFA, "x as DFA"));
+
+    checkArgument(xDFA.id() > 0);
 
     var sinkState = new State();
     var xAug = new AugDFA(label + " (aug)", xDFA, sinkState);
@@ -262,17 +373,13 @@ public class BinaryOper extends BaseObject {
       this.label = label;
       this.startState = startState;
       this.sinkState = sinkState;
+      checkArgument(startState.id() > 0);
 
-      // Construct a list of states, including the sink state, and renumber them all.
+      // Construct a list of states, including the sink state
 
       states = reachableStates(startState);
       states.add(sinkState);
 
-      var index = INIT_INDEX;
-      for (var s : states) {
-        index++;
-        s.setId(index);
-      }
     }
 
     State startState;
@@ -282,7 +389,7 @@ public class BinaryOper extends BaseObject {
 
     @Override
     public String toString() {
-      return dumpStateMachine(startState, label + " (sink: " + sinkState.id() + ")");
+      return stateMachineToString(startState, label + " (sink: " + sinkState.id() + ")");
     }
   }
 }

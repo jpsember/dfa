@@ -28,6 +28,8 @@ import static dfa.Util.*;
  */
 final class RangePartition {
 
+  private static final boolean DEBUG = true && alert("DEBUG in effect");
+
   /**
    * A node within a RangePartition tree
    */
@@ -52,12 +54,35 @@ final class RangePartition {
   }
 
   public void addSet(CodeSet codeSet) {
-    checkState(!mPrepared);
+    if (DEBUG) checkState(!mPrepared);
     mUniqueCodeSets.add(codeSet);
   }
 
+  public List<CodeSet> getPartition() {
+    if (mPartition == null) {
+      if (!mPrepared)
+        prepare();
+
+      List<CodeSet> x = arrayList();
+      List<RPNode> stack = arrayList();
+      push(stack, mRootNode);
+      while (!stack.isEmpty()) {
+        var n = pop(stack);
+        if (n.children.isEmpty()) {
+          x.add(n.codeSet);
+        } else {
+          stack.addAll(n.children);
+        }
+      }
+      mPartition = x;
+    }
+    return mPartition;
+  }
+
+  private List<CodeSet> mPartition;
+
   private void prepare() {
-    checkState(!mPrepared);
+    if (DEBUG) checkState(!mPrepared);
 
     // Construct partition from previously added sets
 
@@ -85,6 +110,8 @@ final class RangePartition {
     List<CodeSet> list = arrayList();
     applyAux(mRootNode, codeSet.dup(), list);
 
+    todo("we could optimize things by avoiding sorting, as that is not required except to enforce deterministic behaviour");
+
     // Sort the list of subsets by their first elements
     list.sort((a, b) -> Integer.compare(a.elements()[0], b.elements()[0]));
     return list;
@@ -92,8 +119,10 @@ final class RangePartition {
 
   private void applyAux(RPNode n, CodeSet s, List<CodeSet> list) {
     if (n.children.isEmpty()) {
-      // Verify that this set equals the input set
-      checkState(s.equals(n.codeSet));
+      if (DEBUG) {
+        // Verify that this set equals the input set
+        checkState(s.equals(n.codeSet));
+      }
       push(list, s);
     } else {
       for (RPNode m : n.children) {

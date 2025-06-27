@@ -34,13 +34,13 @@ public final class DFACompiler extends BaseObject {
 
     State combined = combineNFAs(mTokenRecords);
     if (verbose())
-      log(dumpStateMachine(combined, "combined regex state machines"));
+      log(stateMachineToString(combined, "combined regex state machines"));
 
     State startState;
     {
       startState = NFAToDFA.convert(combined);
       if (verbose())
-        log(dumpStateMachine(startState, "nfa to dfa"));
+        log(stateMachineToString(startState, "nfa to dfa"));
 
       List<String> redundantTokenNames = applyRedundantTokenFilter(mTokenRecords, startState);
       if (nonEmpty(redundantTokenNames))
@@ -88,7 +88,7 @@ public final class DFACompiler extends BaseObject {
 
       mTokenRecords.add(rex);
       if (verbose())
-        log(dumpStateMachine(rex.startState(), "regex for", tokenName));
+        log(stateMachineToString(rex.startState(), "regex for", tokenName));
     }
   }
 
