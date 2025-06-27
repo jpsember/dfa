@@ -30,40 +30,98 @@ public class BinaryOper extends BaseObject {
 
     // We keep a map of visited states.
 
-    List<Integer> frontier = arrayList();
+    List<State> frontier = arrayList();
     Map<Integer, State> stateMap = hashMap();
-    frontier.add(productId(a2.startState, b2.startState));
 
+    todo("assign consecutive new ids to the product states,but not their indices");
+    
+    var prodStart = constructProductState(a2.startState, b2.startState);
+    frontier.add(prodStart);
+    var productEndState = new State(false);
+    productEndState.setId(MAX_STATE_ID);
+
+
+    Set<CodeSet> workCodeSets = hashSet();
 
     while (!frontier.isEmpty()) {
-      var pid = pop(frontier);
-      if (stateMap.containsKey(pid))
+      var productState = pop(frontier);
+      if (stateMap.containsKey(productState.id()))
         continue;
+      stateMap.put(productState.id(), productState);
 
       // Determine the two factor states
 
-      var aid = pid % MAX_STATE_ID;
-      var bid = pid / MAX_STATE_ID;
+      var aid = productState.id() % MAX_STATE_ID;
+      var bid = productState.id() / MAX_STATE_ID;
 
       var fa = a2.states.get(aid);
       var fb = b2.states.get(bid);
 
-      // get the set of labels of the two states
+      // Construct the set of labels that appear in either of the edges.
+      // Construct an edge for each label in the set, sending to the sink state(s) where appropriate.
 
-      todo("it would be convenient if the edges stored their code sets as CodeSet objects instead of primitive arrays");
-      Set<CodeSet> labelSet = hashSet();
-      for (var e:fa.edges()) {
-//        e.
-//        e.
+      workCodeSets.clear();
+      for (var x : fa.edges()) workCodeSets.add(x.codeSet());
+      for (var x : fb.edges()) workCodeSets.add(x.codeSet());
+      for (var x : workCodeSets) {
+        // determine target states for this label
+        var aTarget = a2.sinkState;
+        for (var y : fa.edges()) {
+          if (x.equals(y.codeSet())) {
+            aTarget = y.destinationState();
+            break;
+          }
+        }
+        var bTarget = b2.sinkState;
+        for (var y : fb.edges()) {
+          if (x.equals(y.codeSet())) {
+            bTarget = y.destinationState();
+            break;
+          }
+        }
+
+        int destProductId = productId(aTarget, bTarget);
+        var destProductState = stateMap.get(destProductId);
+        if (destProductState == null) {
+          destProductState = constructProductState(aTarget, bTarget);
+          frontier.add(destProductState);
+        }
+
+        // Add edge to product graph
+
+        productState.edges().add(
+            new Edge(x, destProductState)
+        );
       }
-
-
-    }
-    int aSize = a2.states.size();
-    for (int i = 0; i < aSize; i++) {
-
     }
 
+    // for each product state that has been marked as a final state,
+    // clear that flag, and add an epsilon edge to the end state
+    for (var ps : stateMap.values()) {
+      if (ps.finalState()) {
+        ps.setFinal(false);
+        ps.edges().add(new Edge(CodeSet.epsilon(), productEndState));
+      }
+    }
+    mEndState = productEndState;
+    mStartState = prodStart;
+
+
+  }
+
+  private State mStartState;
+  private State mEndState;
+
+  private State constructProductState(State a, State b) {
+    todo("Have State constructor that takes an id");
+    int destProductId = productId(a, b);
+
+    // Set final state according to the binary operation
+    todo("Assuming MINUS operation");
+    boolean finalState = a.finalState() && !b.finalState();
+    var s = new State(finalState, arrayList());
+    s.setId(destProductId);
+    return s;
   }
 
   private static int productId(State a, State b) {
