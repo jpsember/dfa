@@ -130,10 +130,9 @@ public class BinaryOper extends BaseObject {
       par.addStateCodeSets(bStates);
 
       // Replace existing edges with partitioned versions
-      par.partitionStateEdges(aStates);
-      par.partitionStateEdges(bStates);
+      par.apply(aStates);
+      par.apply(bStates);
     }
-
 
     log(VERT_SP, "constructing product state machine, start state etc");
 

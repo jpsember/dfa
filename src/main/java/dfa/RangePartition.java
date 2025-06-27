@@ -26,6 +26,13 @@ import static dfa.Util.*;
  *
  * We encourage k to be small by sorting the NFA edges by their label
  * complexity.
+ *
+ * There are two stages involved in RangePartitions:
+ *
+ * 1) preparing, where we add code sets to the partition
+ *
+ * 2) applying, where we apply the range partition to code sets (typically, edges, states,
+ * entire state machines)
  */
 final class RangePartition {
 
@@ -55,26 +62,33 @@ final class RangePartition {
   }
 
 
-
-  public void partitionStateEdges(Collection<State> states) {
-    for (State s : states) {
-      List<Edge> newEdges = arrayList();
-      for (Edge edge : s.edges()) {
-        List<CodeSet> newLbls =  apply(edge.codeSet());
-        for (CodeSet x : newLbls) {
-          newEdges.add(new Edge(x, edge.destinationState()));
-        }
-      }
-      s.setEdges(newEdges);
-    }
-  }
-
-
   public void addSet(CodeSet codeSet) {
     if (DEBUG) checkState(!mPrepared);
     mUniqueCodeSets.add(codeSet);
   }
 
+
+  private void prepare() {
+    if (DEBUG) checkState(!mPrepared);
+
+    // Construct partition from previously added sets
+
+    List<CodeSet> setsList = arrayList();
+    setsList.addAll(mUniqueCodeSets);
+
+    // Sort set by cardinality: probably get a more balanced tree
+    // if larger sets are processed first
+    setsList.sort((a, b) -> Integer.compare(b.elements().length, a.elements().length));
+
+    for (CodeSet s : setsList)
+      addSetAux(s, mRootNode);
+
+    mPrepared = true;
+  }
+
+  /**
+   * Get the list of CodeSets representing the (prepared) partition
+   */
   public List<CodeSet> getPartition() {
     if (mPartition == null) {
       if (!mPrepared)
@@ -98,25 +112,24 @@ final class RangePartition {
 
   private List<CodeSet> mPartition;
 
-  private void prepare() {
-    if (DEBUG) checkState(!mPrepared);
-
-    // Construct partition from previously added sets
-
-    List<CodeSet> setsList = arrayList();
-    setsList.addAll(mUniqueCodeSets);
-
-    // Sort set by cardinality: probably get a more balanced tree
-    // if larger sets are processed first
-    setsList.sort((a, b) -> Integer.compare(b.elements().length, a.elements().length));
-
-    for (CodeSet s : setsList)
-      addSetAux(s, mRootNode);
-
-    mPrepared = true;
-  }
-
   private static final boolean SORT_CODESETS = false;
+
+
+  /**
+   * Apply the partition to a collection of states
+   */
+  public void apply(Collection<State> states) {
+    for (State s : states) {
+      List<Edge> newEdges = arrayList();
+      for (Edge edge : s.edges()) {
+        List<CodeSet> newLbls = apply(edge.codeSet());
+        for (CodeSet x : newLbls) {
+          newEdges.add(new Edge(x, edge.destinationState()));
+        }
+      }
+      s.setEdges(newEdges);
+    }
+  }
 
   /**
    * Apply the partition to a code set
