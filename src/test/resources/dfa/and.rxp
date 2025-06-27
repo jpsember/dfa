@@ -4,5 +4,4 @@ OTHER: [a-z]+
 
 # Strings of a's and b's starting with a, AND strings that every second character is b
 
-VALID: ( a (a|b)* )  && ( ( . b )+ )
-
+VALID:      ( . b )+    && ( a (a|b)* )

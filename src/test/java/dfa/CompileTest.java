@@ -51,7 +51,6 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void jsona1() {
-    rv();
     proc();
   }
 
@@ -67,7 +66,7 @@ public class CompileTest extends MyTestCase {
 
 
   @Test
-  public void and1() {rv();
+  public void and1() {
     verboseRex();
     disallowUnknown();
     skipWS();
