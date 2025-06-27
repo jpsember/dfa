@@ -11,7 +11,7 @@ _OPEN: \[\[
 _CLOSE: \]\]
 
 INT: $_SIGNEDINT
-DBL: \-? ( [0] | [1-9]\d* ) . \d*
+DBL: \-? ( [0] | [1-9]\d* ) \. \d*
 
 EXPR: $_OPEN ( $_DIG | $ID ) $_CLOSE
 

@@ -66,7 +66,15 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void multiline1() {
-    //disallowUnknown();
+    // Examples that ARE valid /*...*/ comments
+    disallowUnknown();
+    skipWS();
+    proc();
+  }
+
+  @Test
+  public void multiline2() {
+    // Examples that AREN'T valid /*...*/ comments
     skipWS();
     proc();
   }
@@ -112,8 +120,6 @@ public class CompileTest extends MyTestCase {
     skipWS();
     proc();
   }
-
-
 
   @Test
   public void minusb1() {

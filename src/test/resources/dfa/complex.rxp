@@ -30,7 +30,7 @@ INT: \-?$_DIG
 
 # 2
 #
-DBL: \-?([0] | ([1-9]\d*)) . \d+
+DBL: \-?([0] | ([1-9]\d*)) \. \d+   # periods must now be escaped, to distinguish from 'ANY' (.)
 
 # 3
 LBL: '([^'\n]|\\')*'

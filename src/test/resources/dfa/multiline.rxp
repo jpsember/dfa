@@ -2,8 +2,21 @@
 
 WS:  $_WHITESPACE
 
+#
+# Code consists of repetitions of "x", for simplicity
+#
 CODE: x+
 
-COMMENT:  ( / \* )   ( ( .* ) -- ( .* \* / .* ) )   ( \* / )
+#        Opening /*
+#
+COMMENT:  ( / \* )
+
+                     # Any text, including linefeeds, but not any text that includes *\
+                     #
+                      ( ( .* ) -- ( .* \* / .* ) )
+
+                                                          # Closing *\
+                                                          #
+                                                          ( \* / )
 
 
