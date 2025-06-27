@@ -99,10 +99,37 @@ public class CompileTest extends MyTestCase {
     DFACompiler.sVerbosity = true;
   }
 
+
   @Test
   public void minus1() {
-//    if (mark("disabled")) return;
-//    verboseRex();
+    skipWS();
+    proc();
+  }
+
+  @Test
+  public void minus2() {
+    skipWS();
+    proc();
+  }
+
+
+
+  @Test
+  public void minusb1() {
+    // This is a proper implementation of a Java comment, which uses the minus ("--") operator
+    // to disallow "*/" substrings within Java comments.
+    //
+    skipWS();
+    proc();
+  }
+
+
+  @Test
+  public void minusc1() {
+    // This is a naive implementation of a Java comment, which doesn't use the minus ("--") operator
+    // to disallow "*/" substrings within Java comments.
+    //
+    skipWS();
     proc();
   }
 
@@ -372,6 +399,8 @@ public class CompileTest extends MyTestCase {
       s.setVerbose(verbose());
       while (s.hasNext()) {
         var t = s.read();
+        if (mSuppressWhitespace && t.id(0))
+          continue;
         if (verbose())
           pr(">>", t);
         sb.append(t);
@@ -385,12 +414,16 @@ public class CompileTest extends MyTestCase {
     assertGenerated();
   }
 
+  private boolean mSuppressWhitespace;
+
   private DFA dfa() {
     return mDFAJson;
   }
-  /* * / * */
 
-  /* /* /* /*   /   *  */
   private String mScript;
   private DFA mDFAJson;
+
+  private void skipWS() {
+    mSuppressWhitespace = true;
+  }
 }

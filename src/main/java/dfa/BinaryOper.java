@@ -19,8 +19,9 @@ public class BinaryOper extends BaseObject {
 
   public static NFA aMinusB(NFA a, NFA b) {
     var oper = new BinaryOper(a, b, OperationCode.MINUS);
-    oper.result();
-    throw notSupported("aMinusB", oper);
+//    oper.result();
+//    throw notSupported("aMinusB", oper);
+    return oper.result();
   }
 
   private static long encodeFactorIds(int a, int b) {
@@ -122,8 +123,10 @@ public class BinaryOper extends BaseObject {
   private OperationCode mOper;
 
   private NFA mA, mB;
+  private NFA mResult;
 
-  public void result() {
+  public NFA result() {
+    if (mResult != null) return mResult;
     setVerbose();
 
     var a = mA;
@@ -242,6 +245,11 @@ public class BinaryOper extends BaseObject {
       // Construct the set of labels that appear in either of the edges.
       // Construct an edge for each label in the set, sending to the sink state(s) where appropriate.
 
+
+      // For MINUS, we've preconstructed the set of ALL possible edges.
+      //
+      // For the others, we only want to add those labels that appear on the two edges.
+      //
       if (mOper != OperationCode.MINUS) {
         workCodeSets.clear();
         for (var x : fa.edges()) workCodeSets.add(x.codeSet());
@@ -299,6 +307,11 @@ public class BinaryOper extends BaseObject {
     }
 
     printStateMachine(mProductStartState, "Product state machine");
+
+    todo("we may want to convert this to a DFA before returning it");
+
+    mResult = new NFA(mProductStartState, mProductEndState);
+    return mResult;
   }
 
   /**

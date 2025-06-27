@@ -1,6 +1,6 @@
 WS:  $_WHITESPACE
 
-
+# Strings consisting of a's and b's, but that don't start with "bb"
 
 VALID: ( [ab]+ ) -- ( bb[ab]* )
 
