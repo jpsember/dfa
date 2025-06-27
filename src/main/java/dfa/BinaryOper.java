@@ -16,7 +16,69 @@ public class BinaryOper extends BaseObject {
     throw notSupported("aMinusB", oper);
   }
 
-  private static final int MAX_STATE_ID = 30_000;
+  private static long encodeFactorIds(int a, int b) {
+    return a | (((long) b) << 32);
+  }
+
+  private static int factorAId(long encoded) {
+    return (int) encoded;
+  }
+
+  private static int factorBId(long encoded) {
+    return (int) (encoded >> 32);
+  }
+
+
+  // a pair of ids is stored in a long
+  private Map<Integer, Long> productToFactorIdsMap = hashMap();
+  private Map<Long, State> factorsToProductStateMap = hashMap();
+  private Map<Integer, State> idToStateMap = hashMap();
+
+  // We also have a search frontier, which is a stack of unexamined product states.
+
+  private List<State> frontier = arrayList();
+  private Map<Long, State> generatedStates = hashMap();
+
+  private void addProductStateToMap(State productState, State factorA, State factorB) {
+    generatedStates.put(encodeFactorIds(factorA.id(), factorB.id()), productState);
+  }
+
+  private void extendFrontier(State state) {
+    frontier.add(state);
+  }
+
+  private State popFrontier() {
+    return pop(frontier);
+  }
+
+  //  private void clearDataStructures() {
+//    productToFactorIdsMap.clear();
+//    factorsToProductStateMap.clear();
+//    frontier.clear();
+//    generatedStates.clear();
+//  }
+  private State getFactorAState(State productState) {
+    // TODO: we are calling this method twice, once for A and once for B.
+    var encoded = helperGetFactorState(productState);
+    return stateForId(factorAId(encoded));
+  }
+
+  private State getFactorBState(State productState) {
+    var encoded = helperGetFactorState(productState);
+    return stateForId(factorBId(encoded));
+  }
+
+  private long helperGetFactorState(State productState) {
+    var encoded = productToFactorIdsMap.get(productState.id());
+    checkNotNull(encoded, "can't find product state in factor ids map:", productState.id());
+    return encoded;
+  }
+
+  private State stateForId(int id) {
+    var state = idToStateMap.get(id);
+    checkNotNull(state, "no state found for id:", id);
+    return state;
+  }
 
   private BinaryOper(NFA a, NFA b) {
     setVerbose();
@@ -25,6 +87,7 @@ public class BinaryOper extends BaseObject {
     var b2 = toDFA("B", b);
     log(a2);
     log(b2);
+
 
     // Partition the edge labels into disjoint codesets,
     // and construct new versions of the reachable states
@@ -57,41 +120,54 @@ public class BinaryOper extends BaseObject {
       b2.startState = ren.get(b2.startState);
     }
 
+    // !!!! we need to reconstruct the AugDFA since we've constructed new versions by the partitioning above
+
+    // Use the AugDFA state list (including the sink state) as the number of states, for a map index
+
+
     // construct the product NFA of these two.
 
-    // We keep a map of visited states.
+    // fun (id of product state) -> [factor state a, factor state b]
 
-    List<State> frontier = arrayList();
-    Map<Integer, State> stateMap = hashMap();
+    // a pair of ids is stored in a long
+//    Map<Integer, Long> productToFactorIdsMap = hashMap();
+//    Map<Long, State> factorsToProductStateMap = hashMap();
 
-    //todo("assign consecutive new ids to the product states,but not their indices");
+    // We also have a search frontier, which is a stack of unexamined product states.
+
+//    List<State> frontier = arrayList();
+//    Map<Long, State> generatedStates = hashMap();
 
     mStartState = constructProductState(a2.startState, b2.startState);
-    frontier.add(mStartState);
-    mEndState = State.anonymousState();
+    addProductStateToMap(mStartState, a2.startState, b2.startState);
 
+//    private void addProductStateToMap(State productState, State factorA, State factorB) {
+//
+//    }
+    // Store it in the map, and add it to the frontier as the initial search state
+    // generatedStates.put(productId(a2.startState, b2.startState), mStartState);
+    extendFrontier(mStartState);
+    mEndState = new State();
 
     Set<CodeSet> workCodeSets = hashSet();
 
     log("processing frontier");
 
+    // Continue searching until the frontier is empty
+    //
     while (!frontier.isEmpty()) {
-      var productState = pop(frontier);
+      var productState = popFrontier();
       log("frontier state:", productState);
-      if (stateMap.containsKey(productState.id())) {
-        log("...stateMap already contains this state");
-        continue;
-      }
-      stateMap.put(productState.id(), productState);
-      log("...storing in map:", productState.id());
 
       // Determine the two factor states
-
-      var aid = productState.id() % MAX_STATE_ID;
-      var bid = productState.id() / MAX_STATE_ID;
-
-      var fa = a2.states.get(aid);
-      var fb = b2.states.get(bid);
+      var fa = getFactorAState(productState);
+      var fb = getFactorBState(productState);
+//
+//      var aid = productState.id() % MAX_STATE_ID;
+//      var bid = productState.id() / MAX_STATE_ID;
+//
+//      var fa = a2.states.get(aid);
+//      var fb = b2.states.get(bid);
 
       log("...factor states:", INDENT, fa, CR, fb);
 
@@ -121,12 +197,15 @@ public class BinaryOper extends BaseObject {
           }
         }
 
-        int destProductId = productId(aTarget, bTarget);
+
+        var destProductId = productId(aTarget, bTarget);
         log(".......dest product id:", destProductId);
-        var destProductState = stateMap.get(destProductId);
+
+        var destProductState = generatedStates.get(destProductId);
         if (destProductState == null) {
           destProductState = constructProductState(aTarget, bTarget);
           frontier.add(destProductState);
+          generatedStates.put(destProductId, destProductState);
           log(".........new product state, adding to frontier");
         }
 
@@ -140,16 +219,11 @@ public class BinaryOper extends BaseObject {
 
     // for each product state that has been marked as a final state,
     // clear that flag, and add an epsilon edge to the end state
-    for (var ps : stateMap.values()) {
+    for (var ps : generatedStates.values()) {
       if (ps.finalState()) {
         ps.setFinal(false);
         ps.edges().add(new Edge(CodeSet.epsilon(), mEndState));
       }
-    }
-
-    // change the state ids from anonymous to a next state id
-    for (var ps : stateMap.values()) {
-      ps.setId(State.claimId());
     }
 
     pr(VERT_SP, "state machine:", INDENT,
@@ -160,25 +234,19 @@ public class BinaryOper extends BaseObject {
   private State mEndState;
 
   private State constructProductState(State a, State b) {
-    int destProductId = productId(a, b);
-
     // Set final state according to the binary operation
     todo("Assuming MINUS operation");
     boolean finalState = a.finalState() && !b.finalState();
 
-    var s = State.anonymousState();
-    s.setId(destProductId);
-    s.setFinal(finalState);
+    var s = new State(finalState);
     log("...constructed product state:", s.id(), "final:", s.finalState());
     return s;
   }
 
-  private static int productId(State a, State b) {
+  private static long productId(State a, State b) {
     var aId = a.id();
     var bId = b.id();
-
-    checkArgument(Math.max(aId, bId) < MAX_STATE_ID, "state ids are too high");
-    return aId + bId * MAX_STATE_ID;
+    return aId + (((long) bId) << 32L);
   }
 
   /**

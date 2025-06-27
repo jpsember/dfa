@@ -30,20 +30,8 @@ import static js.base.Tools.*;
 
 public final class State implements Comparable<State> {
 
-  public static State anonymousState() {
-    return new State(-1);
-  }
-
-  private State(int id) {
-    mId = id;
-    mEdges = arrayList();
-  }
-
-  public static int claimId() {
-    return sNextId++;
-  }
   public State(boolean finalState, List<Edge> edges) {
-    mId = claimId();
+    mId = sNextId++;
     mFinalState = finalState;
     if (edges == null)
       edges = arrayList();
@@ -108,19 +96,11 @@ public final class State implements Comparable<State> {
     return toString(false);
   }
 
+  /**
+   * For test purposes only
+   */
   public static void resetIds() {
     sNextId = 100;
-  }
-
-  public static void setIds(int nextMinValue) {
-    if (sNextId > nextMinValue) {
-      int mod = sNextId % 100;
-      if (mod > 0)
-        nextMinValue = sNextId - mod + 100;
-      else
-        nextMinValue = sNextId;
-    }
-    sNextId = nextMinValue;
   }
 
   public static String toString(Iterable<State> states) {
@@ -135,10 +115,6 @@ public final class State implements Comparable<State> {
     sb.append(')');
     return sb.toString();
   }
-
-//  public static void bumpIds() {
-//    setIds(0);
-//  }
 
   private static int sNextId = 100;
 
@@ -159,6 +135,7 @@ public final class State implements Comparable<State> {
   }
 
   private int mId;
+  private int mUserValue;
   private List<Edge> mEdges;
   private boolean mFinalState;
 
