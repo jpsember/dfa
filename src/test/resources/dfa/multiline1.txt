@@ -1,7 +1,5 @@
+xxxx  xx  xx
 
-M I c MI c I M c I M IM
+xxx   /* xxx xxx xxx */   xxx
 
-MIIM
-MIIIM
-MIMIcMIcMIcIM
-
+xxx xxx

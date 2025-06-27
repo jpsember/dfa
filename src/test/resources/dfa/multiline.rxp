@@ -1,9 +1,9 @@
+# This tests the MINUS operator with tokens that include Java-style comments, /* ...  */
+
 WS:  $_WHITESPACE
 
-TEXT: c+
-JAVAML:  MI
+CODE: x+
 
-         ( ([MIc]*) -- (IM) )
+COMMENT:  ( / \* )   ( ( .* ) -- ( .* \* / .* ) )   ( \* / )
 
-         IM
 
