@@ -39,6 +39,7 @@ final class NFAToDFA extends BaseObject {
    * Convert an NFA to a DFA; return the new start state
    */
   private State convertNFAToDFA(State start) {
+    State.bumpIds();
     start = partitionEdges(start);
     start = minimize(start);
     if (false)

@@ -13,7 +13,7 @@ public class BinaryOper extends BaseObject {
 
   public static NFA aMinusB(NFA a, NFA b) {
     var oper = new BinaryOper(a, b);
-    throw notSupported("aMinusB");
+    throw notSupported("aMinusB", oper);
   }
 
   private static final int MAX_STATE_ID = 30_000;
@@ -21,11 +21,45 @@ public class BinaryOper extends BaseObject {
   private BinaryOper(NFA a, NFA b) {
     setVerbose();
 
-    var a2 = toDFA("A", a, 100);
-    var b2 = toDFA("B", b, 200);
-    pr(a2);
-    pr(b2);
+    var a2 = toDFA("A", a);
+    var b2 = toDFA("B", b);
+    log(a2);
+    log(b2);
 
+    // Partition the edge labels into disjoint codesets,
+    // and construct new versions of the reachable states
+
+    {
+      RangePartition par = new RangePartition();
+      StateRenamer ren = new StateRenamer();
+      log("constructing new versions for (a) start state:", a2.startState.id());
+      ren.constructNewVersions(a2.startState);
+      log("constructing new versions for (b) start state:", b2.startState.id());
+      ren.constructNewVersions(b2.startState);
+
+      for (State s : ren.oldStates()) {
+        for (Edge edge : s.edges())
+          par.addSet(edge.codeSet());
+      }
+
+      for (State s : ren.oldStates()) {
+        State sNew = ren.get(s);
+        for (Edge edge : s.edges()) {
+          List<CodeSet> newLbls = par.apply(edge.codeSet());
+          for (CodeSet x : newLbls) {
+            addEdge(sNew, x, ren.get(edge.destinationState()));
+          }
+        }
+      }
+
+      a2.startState = ren.get(a2.startState);
+      b2.startState = ren.get(b2.startState);
+    }
+//
+
+
+    alert("verifying sNextId doesn't change");
+    var currSNextId = State.sNextId;
     // construct the product NFA of these two.
 
     // We keep a map of visited states.
@@ -33,21 +67,26 @@ public class BinaryOper extends BaseObject {
     List<State> frontier = arrayList();
     Map<Integer, State> stateMap = hashMap();
 
-    todo("assign consecutive new ids to the product states,but not their indices");
-    
-    var prodStart = constructProductState(a2.startState, b2.startState);
-    frontier.add(prodStart);
-    var productEndState = new State(false);
-    productEndState.setId(MAX_STATE_ID);
+    //todo("assign consecutive new ids to the product states,but not their indices");
+
+    mStartState = constructProductState(a2.startState, b2.startState);
+    frontier.add(mStartState);
+    mEndState = State.anonymousState();
 
 
     Set<CodeSet> workCodeSets = hashSet();
 
+    log("processing frontier");
+
     while (!frontier.isEmpty()) {
       var productState = pop(frontier);
-      if (stateMap.containsKey(productState.id()))
+      log("frontier state:", productState);
+      if (stateMap.containsKey(productState.id())) {
+        log("...stateMap already contains this state");
         continue;
+      }
       stateMap.put(productState.id(), productState);
+      log("...storing in map:", productState.id());
 
       // Determine the two factor states
 
@@ -57,13 +96,18 @@ public class BinaryOper extends BaseObject {
       var fa = a2.states.get(aid);
       var fb = b2.states.get(bid);
 
+      log("...factor states:", INDENT, fa, CR, fb);
+
       // Construct the set of labels that appear in either of the edges.
       // Construct an edge for each label in the set, sending to the sink state(s) where appropriate.
 
       workCodeSets.clear();
       for (var x : fa.edges()) workCodeSets.add(x.codeSet());
       for (var x : fb.edges()) workCodeSets.add(x.codeSet());
+
+      log("...code sets:", INDENT, workCodeSets);
       for (var x : workCodeSets) {
+        log(".......code set:", x);
         // determine target states for this label
         var aTarget = a2.sinkState;
         for (var y : fa.edges()) {
@@ -81,46 +125,56 @@ public class BinaryOper extends BaseObject {
         }
 
         int destProductId = productId(aTarget, bTarget);
+        log(".......dest product id:", destProductId);
         var destProductState = stateMap.get(destProductId);
         if (destProductState == null) {
           destProductState = constructProductState(aTarget, bTarget);
           frontier.add(destProductState);
+          log(".........new product state, adding to frontier");
         }
 
         // Add edge to product graph
 
-        productState.edges().add(
-            new Edge(x, destProductState)
-        );
+        var edge = new Edge(x, destProductState);
+        productState.edges().add(edge);
+        log("...added edge to product state:", INDENT, productState, ":", edge);
       }
     }
+
+    checkState(State.sNextId == currSNextId, "next state id changed from", currSNextId, "to", State.sNextId);
 
     // for each product state that has been marked as a final state,
     // clear that flag, and add an epsilon edge to the end state
     for (var ps : stateMap.values()) {
       if (ps.finalState()) {
         ps.setFinal(false);
-        ps.edges().add(new Edge(CodeSet.epsilon(), productEndState));
+        ps.edges().add(new Edge(CodeSet.epsilon(), mEndState));
       }
     }
-    mEndState = productEndState;
-    mStartState = prodStart;
 
+    // change the state ids from anonymous to a next state id
+    for (var ps : stateMap.values()) {
+      ps.setId(State.claimId());
+    }
 
+    pr(VERT_SP, "state machine:", INDENT,
+        dumpStateMachine(mStartState, "Product state machine"));
   }
 
   private State mStartState;
   private State mEndState;
 
   private State constructProductState(State a, State b) {
-    todo("Have State constructor that takes an id");
     int destProductId = productId(a, b);
 
     // Set final state according to the binary operation
     todo("Assuming MINUS operation");
     boolean finalState = a.finalState() && !b.finalState();
-    var s = new State(finalState, arrayList());
+
+    var s = State.anonymousState();
     s.setId(destProductId);
+    s.setFinal(finalState);
+    log("...constructed product state:", s.id(), "final:", s.finalState());
     return s;
   }
 
@@ -135,7 +189,7 @@ public class BinaryOper extends BaseObject {
   /**
    * Convert NFA to a DFA, and add a sink non-final state
    */
-  private AugDFA toDFA(String label, NFA nfa, int newInitialStateId) {
+  private AugDFA toDFA(String label, NFA nfa) {
     todo("we have to be careful with the state debug ids... do they need to be unique across state machines?");
     // We have to make the end state a final state
     nfa.end.setFinal(true);
@@ -146,14 +200,14 @@ public class BinaryOper extends BaseObject {
     log(dumpStateMachine(xDFA, "x as DFA"));
 
     var sinkState = new State();
-    var xAug = new AugDFA(label + " (aug)", xDFA, sinkState, newInitialStateId);
+    var xAug = new AugDFA(label + " (aug)", xDFA, sinkState);
     return xAug;
   }
 
 
   private static class AugDFA {
 
-    AugDFA(String label, State startState, State sinkState, int initialStateId) {
+    AugDFA(String label, State startState, State sinkState) {
       this.label = label;
       this.startState = startState;
       this.sinkState = sinkState;
@@ -162,10 +216,11 @@ public class BinaryOper extends BaseObject {
 
       states = reachableStates(startState);
       states.add(sinkState);
-      int id = initialStateId;
+
+      var index = INIT_INDEX;
       for (var s : states) {
-        s.setId(id);
-        id++;
+        index++;
+        s.setId(index);
       }
     }
 

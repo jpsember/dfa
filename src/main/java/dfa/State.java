@@ -30,8 +30,20 @@ import static js.base.Tools.*;
 
 public final class State implements Comparable<State> {
 
+  public static State anonymousState() {
+    return new State(-1);
+  }
+
+  private State(int id) {
+    mId = id;
+    mEdges = arrayList();
+  }
+
+  public static int claimId() {
+    return sNextId++;
+  }
   public State(boolean finalState, List<Edge> edges) {
-    mId = sNextId++;
+    mId = claimId();
     mFinalState = finalState;
     if (edges == null)
       edges = arrayList();
@@ -128,7 +140,7 @@ public final class State implements Comparable<State> {
     setIds(0);
   }
 
-  private static int sNextId = 100;
+  /*private*/ static int sNextId = 100;
 
   public static final int EPSILON = -1;
 

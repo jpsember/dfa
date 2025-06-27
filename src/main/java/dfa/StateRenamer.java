@@ -17,7 +17,7 @@ final class StateRenamer {
    * @param oldStartState old starting state
    */
   public void constructNewVersions(State oldStartState) {
-    State.bumpIds();
+    //State.bumpIds();
     List<State> oldStates = reachableStates(oldStartState);
     for (State oldState : oldStates)
       put(oldState, null);

@@ -101,7 +101,7 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void minus1() {
-    if (mark("disabled")) return;
+//    if (mark("disabled")) return;
 //    verboseRex();
     proc();
   }
@@ -178,6 +178,7 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
+    State.bumpIds();
     State s2 = partitionEdges(s);
     dump(s2, "partitioned");
     assertSb();
