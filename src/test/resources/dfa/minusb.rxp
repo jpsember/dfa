@@ -1,6 +1,5 @@
 WS:  $_WHITESPACE
 
-_ANY: [\x01-\x7f]*
 
 TEXT: [a-z]+
-REM:  (/\*)    ( $_ANY -- (  $_ANY \*/  $_ANY ) )  (\*/)
+REM:  (/\*)    ( $_ANY* -- (  $_ANY* \*/  $_ANY* ) )  (\*/)

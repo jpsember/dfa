@@ -41,3 +41,4 @@ _FLOAT: $_SIGNEDINT (\. \d+ ) ([eE] (\- | \+)? \d+)?
 
 # This represents ASCII 127 as well as all non-ascii byte values from $80...$ff (-128..-1).
 _UNICODE: \x7f+
+

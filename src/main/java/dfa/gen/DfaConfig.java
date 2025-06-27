@@ -23,6 +23,10 @@ public class DfaConfig implements AbstractData {
     return mExampleText;
   }
 
+  public boolean exampleUpdate() {
+    return mExampleUpdate;
+  }
+
   public boolean exampleVerify() {
     return mExampleVerify;
   }
@@ -44,9 +48,10 @@ public class DfaConfig implements AbstractData {
   protected static final String _1 = "output";
   protected static final String _2 = "ids";
   protected static final String _3 = "example_text";
-  protected static final String _4 = "example_verify";
-  protected static final String _5 = "version";
-  protected static final String _6 = "ascii";
+  protected static final String _4 = "example_update";
+  protected static final String _5 = "example_verify";
+  protected static final String _6 = "version";
+  protected static final String _7 = "ascii";
 
   @Override
   public String toString() {
@@ -60,9 +65,10 @@ public class DfaConfig implements AbstractData {
     m.putUnsafe(_1, mOutput.toString());
     m.putUnsafe(_2, mIds.toString());
     m.putUnsafe(_3, mExampleText.toString());
-    m.putUnsafe(_4, mExampleVerify);
-    m.putUnsafe(_5, mVersion);
-    m.putUnsafe(_6, mAscii);
+    m.putUnsafe(_4, mExampleUpdate);
+    m.putUnsafe(_5, mExampleVerify);
+    m.putUnsafe(_6, mVersion);
+    m.putUnsafe(_7, mAscii);
     return m;
   }
 
@@ -105,9 +111,10 @@ public class DfaConfig implements AbstractData {
         mExampleText = new File(x);
       }
     }
-    mExampleVerify = m.opt(_4, false);
-    mVersion = m.opt(_5, 5.1f);
-    mAscii = m.opt(_6, false);
+    mExampleUpdate = m.opt(_4, false);
+    mExampleVerify = m.opt(_5, false);
+    mVersion = m.opt(_6, 5.1f);
+    mAscii = m.opt(_7, false);
   }
 
   public static Builder newBuilder() {
@@ -131,6 +138,8 @@ public class DfaConfig implements AbstractData {
       return false;
     if (!(mExampleText.equals(other.mExampleText)))
       return false;
+    if (!(mExampleUpdate == other.mExampleUpdate))
+      return false;
     if (!(mExampleVerify == other.mExampleVerify))
       return false;
     if (!(mVersion == other.mVersion))
@@ -149,6 +158,7 @@ public class DfaConfig implements AbstractData {
       r = r * 37 + mOutput.hashCode();
       r = r * 37 + mIds.hashCode();
       r = r * 37 + mExampleText.hashCode();
+      r = r * 37 + (mExampleUpdate ? 1 : 0);
       r = r * 37 + (mExampleVerify ? 1 : 0);
       r = r * 37 + (int)mVersion;
       r = r * 37 + (mAscii ? 1 : 0);
@@ -161,6 +171,7 @@ public class DfaConfig implements AbstractData {
   protected File mOutput;
   protected File mIds;
   protected File mExampleText;
+  protected boolean mExampleUpdate;
   protected boolean mExampleVerify;
   protected float mVersion;
   protected boolean mAscii;
@@ -173,6 +184,7 @@ public class DfaConfig implements AbstractData {
       mOutput = m.mOutput;
       mIds = m.mIds;
       mExampleText = m.mExampleText;
+      mExampleUpdate = m.mExampleUpdate;
       mExampleVerify = m.mExampleVerify;
       mVersion = m.mVersion;
       mAscii = m.mAscii;
@@ -196,6 +208,7 @@ public class DfaConfig implements AbstractData {
       r.mOutput = mOutput;
       r.mIds = mIds;
       r.mExampleText = mExampleText;
+      r.mExampleUpdate = mExampleUpdate;
       r.mExampleVerify = mExampleVerify;
       r.mVersion = mVersion;
       r.mAscii = mAscii;
@@ -219,6 +232,11 @@ public class DfaConfig implements AbstractData {
 
     public Builder exampleText(File x) {
       mExampleText = (x == null) ? Files.DEFAULT : x;
+      return this;
+    }
+
+    public Builder exampleUpdate(boolean x) {
+      mExampleUpdate = x;
       return this;
     }
 

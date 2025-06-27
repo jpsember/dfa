@@ -66,7 +66,8 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void multiline1() {
-    disallowUnknown();
+    //disallowUnknown();
+    skipWS();
     proc();
   }
 

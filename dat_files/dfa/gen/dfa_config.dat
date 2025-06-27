@@ -16,6 +16,9 @@ class {
   //
   File example_text;
 
+  // If true, and example text file exists, discards any previous results
+  bool example_update;
+
   // If true, and example text file exists, verifies its contents haven't changed
   bool example_verify;
 

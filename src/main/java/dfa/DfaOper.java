@@ -256,27 +256,35 @@ public class DfaOper extends AppOper {
       pr("Example text tokenization results:", DASHES, CR, results);
     var sampleResultsValidFile = new File(sampleTextFile + ".verify");
     var expectedResults = "";
-    if (sampleResultsValidFile.exists())
-      expectedResults = Files.readString(sampleResultsValidFile);
 
-    if (expectedResults.trim().isEmpty()) {
+    if (sampleResultsValidFile.exists())
+      expectedResults = Files.readString(sampleResultsValidFile).trim();
+
+    boolean resultsChanged = !expectedResults.isEmpty() && !results.equals(expectedResults);
+
+    if (expectedResults.isEmpty()) {
       files().writeString(sampleResultsValidFile, results);
     } else {
       if (!results.equals(expectedResults)) {
         pr("*** Results have changed");
-        if (config().exampleVerify()) {
-          var sampleResultsInvalidFile = new File(sampleTextFile + ".invalid");
-          try {
-            files().writeString(sampleResultsInvalidFile, results);
-            SystemCall sc = new SystemCall();
-            sc.withVerbose(true);
-            sc.arg("diff", sampleResultsValidFile, sampleResultsInvalidFile);
-            pr(sc.systemErr());
-          } finally {
-            files().deletePeacefully(sampleResultsInvalidFile);
+        if (config().exampleUpdate()) {
+          pr("*** Updating anyways");
+          files().writeString(sampleResultsValidFile, results);
+        } else {
+          if (config().exampleVerify()) {
+            var sampleResultsInvalidFile = new File(sampleTextFile + ".invalid");
+            try {
+              files().writeString(sampleResultsInvalidFile, results);
+              SystemCall sc = new SystemCall();
+              sc.withVerbose(true);
+              sc.arg("diff", sampleResultsValidFile, sampleResultsInvalidFile);
+              pr(sc.systemErr());
+            } finally {
+              files().deletePeacefully(sampleResultsInvalidFile);
+            }
           }
+          setError("Example file tokenization did not produce expected results");
         }
-        setError("Example file tokenization did not produce expected results");
       }
     }
   }
