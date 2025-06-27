@@ -227,9 +227,6 @@ public class BinaryOper extends BaseObject {
         productState.edges().add(new Edge(CodeSet.epsilon(), mProductEndState));
       }
     }
-
-    todo("we may want to convert this to a DFA before returning it");
-
     mResult = new NFA(mProductStartState, mProductEndState);
     return mResult;
   }
@@ -238,8 +235,6 @@ public class BinaryOper extends BaseObject {
    * Construct a product state representing two factor states, and add to the appropriate data structures
    */
   private State constructProductState(State a, State b) {
-    todo("We need to add edges to sink state for all states that don't have such labels (at least for minus operation)");
-
     // Set final state according to the binary operation
 
     boolean finalState;

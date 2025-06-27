@@ -24,9 +24,6 @@ public final class DFACompiler extends BaseObject {
     // Parse the predefined expressions, and insert those lines before the current ones
     {
       var predefExpr = Files.readString(this.getClass(), "predef_expr.txt");
-      if (false && alert("GETTING RID OF ALL PREDEFINEDS")) {
-        predefExpr = "";
-      }
       parseExpressions(predefExpr);
     }
 
@@ -167,7 +164,7 @@ public final class DFACompiler extends BaseObject {
       State dupfinal_state = new State(true);
 
       CodeSet cs = CodeSet.withValue(State.tokenIdToEdgeLabel(regParse.id()));
-      addEdge(dupEnd, cs , dupfinal_state);
+      addEdge(dupEnd, cs, dupfinal_state);
 
       // Add an e-transition from the start state to this expression's start
 

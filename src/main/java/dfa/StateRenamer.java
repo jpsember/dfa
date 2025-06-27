@@ -12,24 +12,12 @@ import static dfa.Util.*;
 final class StateRenamer {
 
   /**
-   * Construct new versions of all reachable states, omitting edges
-   *
-   * @param oldStartState old starting state
-   */
-  public void constructNewVersions(State oldStartState) {
-    //State.bumpIds();
-    List<State> oldStates = reachableStates(oldStartState);
-    for (State oldState : oldStates)
-      put(oldState, null);
-  }
-
-  /**
    * Construct new versions of all reachable states, including edges
    *
-   * @param oldStartState old starting state
+   * @param startState old starting state
    */
-  public void constructNewVersionsWithEdges(State oldStartState) {
-    List<State> oldStates = reachableStates(oldStartState);
+  public void constructNewVersionsWithEdges(State startState) {
+    List<State> oldStates = reachableStates(startState);
     for (State oldState : oldStates) {
       put(oldState, null);
     }

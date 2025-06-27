@@ -14,7 +14,7 @@
                 "multiline2" : 4892,
       "normalizeMergeLabels" : 3050,
   "normalizeOmitEmptyLabels" : 6898,
-                 "partition" : 8957,
+                 "partition" : 7404,
                    "predef1" : 4225,
          "printStateMachine" : 9261,
                 "reverseDFA" : 5762,

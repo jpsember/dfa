@@ -211,28 +211,11 @@ public final class Util {
   /**
    * Return a copy of a state machine, one whose edges are labelled with a disjoint subset of codes
    */
-  public static State partitionEdges(State startState) {
-    todo("do we need to return a copy, vs modifying in place?");
+  public static void partitionEdges(State startState) {
     RangePartition par = new RangePartition();
-
-    StateRenamer ren = new StateRenamer();
-    ren.constructNewVersions(startState);
-
-    for (State s : ren.oldStates()) {
-      for (Edge edge : s.edges())
-        par.addSet(edge.codeSet());
-    }
-
-    for (State s : ren.oldStates()) {
-      State sNew = ren.get(s);
-      for (Edge edge : s.edges()) {
-        List<CodeSet> newLbls = par.apply(edge.codeSet());
-        for (CodeSet x : newLbls) {
-          addEdge(sNew, x, ren.get(edge.destinationState()));
-        }
-      }
-    }
-    return ren.get(startState);
+    var reachable = reachableStates(startState);
+    par.addStateCodeSets(reachable);
+    par.apply(reachable);
   }
 
   public static State normalizeStates(State startState) {

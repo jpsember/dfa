@@ -223,8 +223,8 @@ public class CompileTest extends MyTestCase {
     addEdge(b, cs("wxyz"), f);
 
     dump(s, "input");
-    State s2 = partitionEdges(s);
-    dump(s2, "partitioned");
+    partitionEdges(s);
+    dump(s, "partitioned");
     assertSb();
   }
 
