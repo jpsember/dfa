@@ -1,6 +1,7 @@
 package dfa;
 
 import js.base.BaseObject;
+import js.base.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -29,59 +30,61 @@ public class BinaryOper extends BaseObject {
   }
 
 
-  // a pair of ids is stored in a long
-  private Map<Integer, Long> productToFactorIdsMap = hashMap();
-  private Map<Long, State> factorsToProductStateMap = hashMap();
-  private Map<Integer, State> idToStateMap = hashMap();
+  // ----------------------------------------------------------------------------------------------
 
-  // We also have a search frontier, which is a stack of unexamined product states.
+  // Maps product ids to encoded pair of factor ids
+  //
+  private Map<Integer, Long> mProductIdToFactorIdPairMap = hashMap();
 
-  private List<State> frontier = arrayList();
+  // Maps state ids to states
+  //
+  private Map<Integer, State> mStateIdToStateMap = hashMap();
+
+  // Stack of unexamined product states
+  //
+  private List<State> mSearchFrontier = arrayList();
+
   private Map<Long, State> generatedStates = hashMap();
+
+  private State mStartState;
+  private State mEndState;
+
+// ----------------------------------------------------------------------------------------------
 
   private void addProductStateToMap(State productState, State factorA, State factorB) {
     generatedStates.put(encodeFactorIds(factorA.id(), factorB.id()), productState);
   }
 
   private void extendFrontier(State state) {
-    frontier.add(state);
+    mSearchFrontier.add(state);
   }
 
   private State popFrontier() {
-    return pop(frontier);
+    return pop(mSearchFrontier);
   }
 
-  //  private void clearDataStructures() {
-//    productToFactorIdsMap.clear();
-//    factorsToProductStateMap.clear();
-//    frontier.clear();
-//    generatedStates.clear();
-//  }
-  private State getFactorAState(State productState) {
-    // TODO: we are calling this method twice, once for A and once for B.
-    var encoded = helperGetFactorState(productState);
-    return stateForId(factorAId(encoded));
+  private Pair<State, State> getFactorStates(State productState) {
+    var encoded = encodedFactorIdPairForProductState(productState);
+    return pair(stateWithId(factorAId(encoded)), stateWithId(factorBId(encoded)));
   }
 
-  private State getFactorBState(State productState) {
-    var encoded = helperGetFactorState(productState);
-    return stateForId(factorBId(encoded));
-  }
 
-  private long helperGetFactorState(State productState) {
-    var encoded = productToFactorIdsMap.get(productState.id());
+  private long encodedFactorIdPairForProductState(State productState) {
+    var encoded = mProductIdToFactorIdPairMap.get(productState.id());
     checkNotNull(encoded, "can't find product state in factor ids map:", productState.id());
     return encoded;
   }
 
-  private State stateForId(int id) {
-    var state = idToStateMap.get(id);
+  private State stateWithId(int id) {
+    var state = mStateIdToStateMap.get(id);
     checkNotNull(state, "no state found for id:", id);
     return state;
   }
 
+
   private BinaryOper(NFA a, NFA b) {
     setVerbose();
+
 
     var a2 = toDFA("A", a);
     var b2 = toDFA("B", b);
@@ -94,12 +97,14 @@ public class BinaryOper extends BaseObject {
 
     todo("There is some duplicated code here, where RangePartition was also used");
     {
-      RangePartition par = new RangePartition();
       StateRenamer ren = new StateRenamer();
       log("constructing new versions for (a) start state:", a2.startState.id());
       ren.constructNewVersions(a2.startState);
       log("constructing new versions for (b) start state:", b2.startState.id());
       ren.constructNewVersions(b2.startState);
+
+
+      RangePartition par = new RangePartition();
 
       for (State s : ren.oldStates()) {
         for (Edge edge : s.edges())
@@ -127,23 +132,9 @@ public class BinaryOper extends BaseObject {
 
     // construct the product NFA of these two.
 
-    // fun (id of product state) -> [factor state a, factor state b]
-
-    // a pair of ids is stored in a long
-//    Map<Integer, Long> productToFactorIdsMap = hashMap();
-//    Map<Long, State> factorsToProductStateMap = hashMap();
-
-    // We also have a search frontier, which is a stack of unexamined product states.
-
-//    List<State> frontier = arrayList();
-//    Map<Long, State> generatedStates = hashMap();
-
     mStartState = constructProductState(a2.startState, b2.startState);
     addProductStateToMap(mStartState, a2.startState, b2.startState);
 
-//    private void addProductStateToMap(State productState, State factorA, State factorB) {
-//
-//    }
     // Store it in the map, and add it to the frontier as the initial search state
     // generatedStates.put(productId(a2.startState, b2.startState), mStartState);
     extendFrontier(mStartState);
@@ -155,13 +146,14 @@ public class BinaryOper extends BaseObject {
 
     // Continue searching until the frontier is empty
     //
-    while (!frontier.isEmpty()) {
+    while (!mSearchFrontier.isEmpty()) {
       var productState = popFrontier();
       log("frontier state:", productState);
 
       // Determine the two factor states
-      var fa = getFactorAState(productState);
-      var fb = getFactorBState(productState);
+      var factors = getFactorStates(productState);
+      var fa = factors.first;
+      var fb = factors.second;
 //
 //      var aid = productState.id() % MAX_STATE_ID;
 //      var bid = productState.id() / MAX_STATE_ID;
@@ -204,7 +196,7 @@ public class BinaryOper extends BaseObject {
         var destProductState = generatedStates.get(destProductId);
         if (destProductState == null) {
           destProductState = constructProductState(aTarget, bTarget);
-          frontier.add(destProductState);
+          mSearchFrontier.add(destProductState);
           generatedStates.put(destProductId, destProductState);
           log(".........new product state, adding to frontier");
         }
@@ -229,9 +221,6 @@ public class BinaryOper extends BaseObject {
     pr(VERT_SP, "state machine:", INDENT,
         dumpStateMachine(mStartState, "Product state machine"));
   }
-
-  private State mStartState;
-  private State mEndState;
 
   private State constructProductState(State a, State b) {
     // Set final state according to the binary operation

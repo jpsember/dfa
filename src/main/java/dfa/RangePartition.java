@@ -77,9 +77,7 @@ final class RangePartition {
   /**
    * Apply the partition to a code set
    *
-   * @return array of subsets from the partition whose union equals the code set
-   * (this array will be the single element s if no partitioning was
-   * necessary)
+   * Returns array of subsets from the partition whose union equals the code set
    */
   public List<CodeSet> apply(CodeSet codeSet) {
     if (!mPrepared)
