@@ -13,14 +13,19 @@ import static dfa.Util.*;
 
 public class BinaryOper extends BaseObject {
 
+  // 'OR' is not useful, as the alternation operator '|' serves this purpose already.
+  //
   public enum OperationCode {
-    AND, OR, MINUS,
+    AND, MINUS,
   }
 
   public static NFA aMinusB(NFA a, NFA b) {
     var oper = new BinaryOper(a, b, OperationCode.MINUS);
-//    oper.result();
-//    throw notSupported("aMinusB", oper);
+    return oper.result();
+  }
+
+  public static NFA aAndB(NFA a, NFA b) {
+    var oper = new BinaryOper(a, b, OperationCode.AND);
     return oper.result();
   }
 
@@ -326,9 +331,6 @@ public class BinaryOper extends BaseObject {
     switch (mOper) {
       case MINUS:
         finalState = a.finalState() && !b.finalState();
-        break;
-      case OR:
-        finalState = a.finalState() || b.finalState();
         break;
       case AND:
         finalState = a.finalState() && b.finalState();

@@ -50,7 +50,8 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
-  public void jsona1() {rv();
+  public void jsona1() {
+    rv();
     proc();
   }
 
@@ -63,6 +64,16 @@ public class CompileTest extends MyTestCase {
   public void escape1() {
     proc();
   }
+
+
+  @Test
+  public void and1() {rv();
+    verboseRex();
+    disallowUnknown();
+    skipWS();
+    proc();
+  }
+
 
   @Test
   public void multiline1() {
@@ -201,6 +212,7 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void partition() {
+    // This test might fail due to nondeterminism in the edge or codeset ordering...
     State s = new State(false);
     State a = new State();
     State b = new State();
