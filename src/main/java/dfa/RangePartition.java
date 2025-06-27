@@ -99,6 +99,8 @@ final class RangePartition {
     mPrepared = true;
   }
 
+  private static final boolean SORT_CODESETS = false;
+
   /**
    * Apply the partition to a code set
    *
@@ -110,10 +112,11 @@ final class RangePartition {
     List<CodeSet> list = arrayList();
     applyAux(mRootNode, codeSet.dup(), list);
 
-    todo("we could optimize things by avoiding sorting, as that is not required except to enforce deterministic behaviour");
-
-    // Sort the list of subsets by their first elements
-    list.sort((a, b) -> Integer.compare(a.elements()[0], b.elements()[0]));
+    if (SORT_CODESETS) {
+      todo("we could optimize things by avoiding sorting, as that is not required except to enforce deterministic behaviour");
+      // Sort the list of subsets by their first elements
+      list.sort((a, b) -> Integer.compare(a.elements()[0], b.elements()[0]));
+    }
     return list;
   }
 

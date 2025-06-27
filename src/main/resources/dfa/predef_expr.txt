@@ -6,22 +6,15 @@ _ESCAPE: (\\)
 _TILDE: (\^)
 _HASH: (\#)
 
-
 # Java escape sequences reference:
 #    https://docs.oracle.com/javase/tutorial/java/data/characters.html
 
 _WHITESPACE: ([\f\r\s\t\n]+)
 
-# Java multline comments (/* ....  */) are very tricky.
-# I will be able to simplify this greatly once I support
-# the 'minus' regex expression.
+# Java multline comments (/* ....  */) use the MINUS operator (--).
+# We could speed up the compilation a bit by avoid using this, I suspect.
 
-_ML_FWDSLASH:  /          # '/'
-_ML_STAR:      \*         # '*'
-
-_JAVAML:  $_ML_FWDSLASH $_ML_STAR+
-         ( [^ \* ] | ( \* *  [^ / \* ]) )*
-         $_ML_STAR+ $_ML_FWDSLASH
+_JAVAML:  / \*      ( .*  -- ( .* \* / .* ) )      \* /
 
 _JAVACOMMENT:  ( // [^\n\r]* ) | $_JAVAML
 

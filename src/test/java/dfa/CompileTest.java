@@ -50,7 +50,7 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
-  public void jsona1() {
+  public void jsona1() {rv();
     proc();
   }
 
