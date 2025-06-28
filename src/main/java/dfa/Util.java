@@ -54,23 +54,24 @@ public final class Util {
     List<State> newStartStateList = arrayList();
     List<State> newFinalStateList = arrayList();
 
-    StateRenamer newStateMap = new StateRenamer();
+    var newStateMap = new StateRenamer();
 
     List<State> stateSet = reachableStates(startState);
 
-    for (State s : stateSet) {
-      State newState = newStateMap.put(s, new State(s == startState));
+    for (State oldState : stateSet) {
+      State newState = new State(oldState == startState);
+      newStateMap.add(oldState, newState);
       if (newState.finalState())
         newFinalStateList.add(newState);
-      if (s.finalState())
+      if (oldState.finalState())
         newStartStateList.add(newState);
     }
 
     for (State oldState : stateSet) {
-      State newState = newStateMap.get(oldState);
+      State newState = newStateMap.newStateForOld(oldState);
       for (Edge oldEdge : oldState.edges()) {
         State oldDest = oldEdge.destinationState();
-        State newDest = newStateMap.get(oldDest);
+        State newDest = newStateMap.newStateForOld(oldDest);
         // We want a reversed edge
         addEdge(newDest, oldEdge.codeSet(), newState);
       }
@@ -219,13 +220,25 @@ public final class Util {
   }
 
   public static State normalizeStates(State startState) {
-    StateRenamer renamer = new StateRenamer();
-    renamer.constructNewVersionsWithEdges(startState);
-    for (State oldState : renamer.oldStates()) {
-      State newState = renamer.get(oldState);
-      normalizeState(newState);
+    var oldStartState = startState;
+    var renamer = new StateRenamer();
+    var oldStates = reachableStates(oldStartState);
+
+    for (var oldState : oldStates) {
+      var newState = new State(oldState.finalState());
+      renamer.add(oldState, newState);
     }
-    return renamer.get(startState);
+    for (var oldState : oldStates) {
+      var newState = renamer.newStateForOld(oldState);
+      for (Edge e : oldState.edges()) {
+        newState.edges().add(new Edge(e.codeSet(), renamer.newStateForOld(e.destinationState())));
+      }
+    }
+    for (var oldState : oldStates) {
+      normalizeState(renamer.newStateForOld(oldState));
+    }
+
+    return renamer.newStateForOld(oldStartState);
   }
 
   /**
@@ -467,6 +480,35 @@ public final class Util {
         }
         return String.format("%02x", n);
     }
+  }
+
+  private static class StateRenamer {
+
+    public int getNewId(int oldId) {
+      return mOldToNewIdsMap.get(oldId);
+    }
+
+    public State stateWithId(int id) {
+      return mIdToStateMap.get(id);
+    }
+
+    public State newStateForOldId(int oldId) {
+      return stateWithId(getNewId(oldId));
+    }
+
+    public State newStateForOld(State oldState) {
+      return newStateForOldId(oldState.id());
+    }
+
+    public void add(State oldState, State newState) {
+      mOldToNewIdsMap.put(oldState.id(), newState.id());
+      mIdToStateMap.put(oldState.id(), oldState);
+      mIdToStateMap.put(newState.id(), newState);
+    }
+
+    Map<Integer, Integer> mOldToNewIdsMap = hashMap();
+    Map<Integer, State> mIdToStateMap = hashMap();
+
   }
 
 }
