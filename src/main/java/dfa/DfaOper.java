@@ -82,6 +82,10 @@ public class DfaOper extends AppOper {
 
     procIdsFile(dfa);
     processExampleText(dfa);
+
+    if (config().describe()) {
+      pr(describe(dfa));
+    }
   }
 
   @Override

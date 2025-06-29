@@ -26,4 +26,7 @@ class {
 
   // If true, generates ASCII table and quits
   bool ascii;
+
+  // Describe the generated DFA
+  bool describe;
 }
