@@ -6,6 +6,7 @@ import js.json.JSList;
 import js.json.JSMap;
 import js.parsing.DFA;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,8 @@ public final class Util {
   }
 
   /**
-   * Build set of states reachable from this state
+   * Build list of states reachable from a particular source state.
+   * The first state in the list will be the source state
    */
   public static List<State> reachableStates(State sourceState) {
     Set<State> knownStatesSet = hashSet();
@@ -59,8 +61,9 @@ public final class Util {
     List<State> stateSet = reachableStates(startState);
 
     for (State oldState : stateSet) {
-      State newState = new State(oldState == startState);
-      newStateMap.add(oldState, newState);
+      var newState = newStateMap.addOldToNew(oldState, null);
+      // The new state's final flag is only true iff the old state was the *start* state
+      newState.setFinal(oldState == startState);
       if (newState.finalState())
         newFinalStateList.add(newState);
       if (oldState.finalState())
@@ -78,7 +81,6 @@ public final class Util {
     }
 
     //  Make start node point to each of the reversed start nodes
-
     for (State s : newStartStateList)
       addEps(newStartState, s);
     return newStartState;
@@ -88,28 +90,15 @@ public final class Util {
    * Duplicate the NFA reachable from a state
    */
   public static NFA duplicateNFA(State startState, State endState) {
-
-    Map<State, State> origToDupStateMap = hashMap();
-
-    List<State> oldStates = reachableStates(startState);
-    checkState(oldStates.contains(endState), "end state not reachable");
-
-    for (State s : oldStates) {
-      State s2 = new State(s.finalState(), null);
-      origToDupStateMap.put(s, s2);
-    }
-
-    for (State s : oldStates) {
-      State s2 = origToDupStateMap.get(s);
-      for (Edge edge : s.edges()) {
-        State newTargetState = origToDupStateMap.get(edge.destinationState());
-        addEdge(s2, edge.codeSet(), newTargetState);
-      }
-    }
-    return nfa(origToDupStateMap.get(startState), origToDupStateMap.get(endState));
+    var renamer = new StateRenamer();
+    renamer.createRenamedVersions(startState, true);
+    var newEndState = renamer.newStateForOld(endState);
+    if (newEndState == null)
+      throw badArg("endState is not reachable from startState");
+    return nfa(renamer.newStateForOld(startState), newEndState);
   }
 
-  private static CodeSet EPSILON_RANGE = CodeSet.withRange(State.EPSILON, 1 + State.EPSILON);
+  private static final CodeSet EPSILON_RANGE = CodeSet.withRange(State.EPSILON, 1 + State.EPSILON);
 
   /**
    * Add an epsilon transition to a state
@@ -148,13 +137,13 @@ public final class Util {
    * Get a debug description of a value within a CodeSet
    */
   private static String elementToString(int charCode) {
-    final String forbidden = "\'\"\\[]{}()";
+    final String forbidden = "'\"\\[]{}()";
     // Unless it corresponds to a non-confusing printable ASCII value,
     // just print its decimal equivalent
     if (charCode == State.EPSILON)
       return "(e)";
     if (charCode > ' ' && charCode < 0x7f && forbidden.indexOf(charCode) < 0)
-      return "'" + Character.toString((char) charCode) + "'";
+      return "'" + (char) charCode + "'";
     if (charCode == State.CODEMAX - 1)
       return "MAX";
     return Integer.toString(charCode);
@@ -222,22 +211,10 @@ public final class Util {
   public static State normalizeStates(State startState) {
     var oldStartState = startState;
     var renamer = new StateRenamer();
-    var oldStates = reachableStates(oldStartState);
-
-    for (var oldState : oldStates) {
-      var newState = new State(oldState.finalState());
-      renamer.add(oldState, newState);
-    }
-    for (var oldState : oldStates) {
-      var newState = renamer.newStateForOld(oldState);
-      for (Edge e : oldState.edges()) {
-        newState.edges().add(new Edge(e.codeSet(), renamer.newStateForOld(e.destinationState())));
-      }
-    }
+    var oldStates = renamer.createRenamedVersions(oldStartState, true);
     for (var oldState : oldStates) {
       normalizeState(renamer.newStateForOld(oldState));
     }
-
     return renamer.newStateForOld(oldStartState);
   }
 
@@ -253,7 +230,7 @@ public final class Util {
   private static void normalizeState(State state) {
     // Sort edges by destination state ids
     state.edges()
-        .sort((e1, e2) -> Integer.compare(e1.destinationState().id(), e2.destinationState().id()));
+        .sort(Comparator.comparingInt(e -> e.destinationState().id()));
 
     List<Edge> new_edges = arrayList();
     CodeSet prev_label = null;
@@ -425,7 +402,7 @@ public final class Util {
           return edgeProblem(edge, "unexpected token id expr");
         }
         var tokenId = -b - 1;
-        if (tokenId < 0 || tokenId >= tokenNames.size()) {
+        if (tokenId >= tokenNames.size()) {
           return "*** no such token id: " + tokenId;
         }
         return "<" + tokenNames.get(tokenId) + ">";
@@ -500,10 +477,39 @@ public final class Util {
       return newStateForOldId(oldState.id());
     }
 
-    public void add(State oldState, State newState) {
+    public State addOldToNew(State oldState, State newStateOrNull) {
+      var newState = newStateOrNull;
+      if (newState == null)
+        newState = new State(oldState.finalState());
       mOldToNewIdsMap.put(oldState.id(), newState.id());
       mIdToStateMap.put(oldState.id(), oldState);
       mIdToStateMap.put(newState.id(), newState);
+      return newState;
+    }
+
+    /**
+     * Create new states for all (old) states reachable from an (old) state.
+     * The new states will have the same final flags, and (if includeEdges is true)
+     * appropriate edges as well.
+     *
+     * Returns the list of old states reachable from the old start state (and the
+     * old start state will be first in that list)
+     */
+    public List<State> createRenamedVersions(State oldStartState, boolean includeEdges) {
+      var oldStates = reachableStates(oldStartState);
+      for (State oldState : oldStates) {
+        addOldToNew(oldState, null);
+      }
+      if (includeEdges) {
+        for (State oldState : oldStates) {
+          var newState = newStateForOld(oldState);
+          for (Edge edge : oldState.edges()) {
+            State newDestinationState = newStateForOld(edge.destinationState());
+            addEdge(newState, edge.codeSet(), newDestinationState);
+          }
+        }
+      }
+      return oldStates;
     }
 
     Map<Integer, Integer> mOldToNewIdsMap = hashMap();
