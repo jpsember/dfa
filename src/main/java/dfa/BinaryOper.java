@@ -111,8 +111,8 @@ public class BinaryOper extends BaseObject {
     var a = mA;
     var b = mB;
 
-    var a2 = toDFA("A", a);
-    var b2 = toDFA("B", b);
+    var a2 = toDFA(a);
+    var b2 = toDFA(b);
 
     // Add all the states of the two DFAs to the state map
     addStatesToMap(a2.states);
@@ -272,7 +272,7 @@ public class BinaryOper extends BaseObject {
   /**
    * Convert NFA to a DFA, and add a sink non-final state
    */
-  private AugDFA toDFA(String label, NFA nfa) {
+  private AugDFA toDFA(NFA nfa) {
     // We have to make the end state a final state
     nfa.end.setFinal(true);
 
