@@ -1,6 +1,7 @@
 package dfa;
 
 import js.base.BasePrinter;
+import js.data.ByteArray;
 import js.data.IntArray;
 import js.file.Files;
 import js.json.JSList;
@@ -211,7 +212,8 @@ public final class Util {
     var renamer = new StateRenamer();
     var oldStates = renamer.createRenamedVersions(oldStartState, true);
     for (var oldState : oldStates) {
-      normalizeState(renamer.newStateForOld(oldState));
+      var newState = renamer.newStateForOld(oldState);
+      normalizeState(newState);
     }
     return renamer.newStateForOld(oldStartState);
   }
@@ -229,7 +231,6 @@ public final class Util {
     // Sort edges by destination state ids
     state.edges()
         .sort(Comparator.comparingInt(e -> e.destinationState().id()));
-
     List<Edge> new_edges = arrayList();
     CodeSet prev_label = null;
     State prev_dest = null;
@@ -259,6 +260,18 @@ public final class Util {
         new_edges.add(new Edge(prev_label, prev_dest));
     }
 
+    if (alert("verifying")) {
+      int x = new_edges.size();
+      for (int a = 0; a < x - 1; a++) {
+        var ea = new_edges.get(a);
+        for (int b = a + 1; b < x; b++) {
+          var eb = new_edges.get(b);
+          if (ea.destinationState() == eb.destinationState()) {
+            die("failed to merge states:", INDENT, ea, CR, eb);
+          }
+        }
+      }
+    }
     state.setEdges(new_edges);
   }
 
@@ -296,24 +309,6 @@ public final class Util {
 
   static {
     BasePrinter.registerClassHandler(Edge.class, (x, p) -> p.append(toString((Edge) x)));
-  }
-
-  public static State validateDFA(State startState) {
-    for (State s : reachableStates(startState)) {
-      CodeSet prevSet = new CodeSet();
-      for (Edge e : s.edges()) {
-        if (e.contains(State.EPSILON))
-          badArg("edge accepts epsilon:", INDENT, toString(s, true));
-
-        // See if the code set intersects union of previous edges' code sets
-        CodeSet ours = e.codeSet();
-        CodeSet inter = ours.intersect(prevSet);
-        if (!inter.isEmpty())
-          badArg("multiple edges on inputs:", inter, INDENT, toString(s, true));
-        prevSet.addSet(ours);
-      }
-    }
-    return startState;
   }
 
   public static final String EXT_RXP = "rxp" //
@@ -365,13 +360,16 @@ public final class Util {
       }
       var edgeMap = map();
       m.put(stateKey, edgeMap);
+      int probCounter = 0;
       for (var edge : s.edges()) {
         var ds = edge.destinationState();
+        if (ds.finalState()) continue;
         String edgeKey =
             ds.finalState() ? "*  " : String.format("%3d", idAdjust + edge.destinationState().id());
-        if (edgeMap.containsKey(edgeKey))
+        if (edgeMap.containsKey(edgeKey)) {
+          edgeMap.putUnsafe(edgeKey + "!" + (++probCounter), edgeDescription(edge, tokenNames));
           edgeMap.put("**ERR** " + (idAdjust + edge.destinationState().id()), "duplicate destination state");
-        else {
+        } else {
           edgeMap.putUnsafe(edgeKey, edgeDescription(edge, tokenNames));
         }
       }
@@ -560,13 +558,14 @@ public final class Util {
       }
       // Construct a single final state; it doesn't actually appear in the compiled DFA though
       finalState = auxNewState(offset, stateList, offsetToStateMap);
-      finalState.setFinal(true); //new State(true);
+      finalState.setFinal(true);
     }
 
     // fill in states
     for (var entry : offsetToStateMap.entrySet()) {
       var offset = entry.getKey();
-      var s = stateList.get(entry.getValue());
+      var stateIndex = entry.getValue();
+      var s = stateList.get(stateIndex);
       // If this is the final state, do nothing; there is no compiled data here
       if (offset == g.length)
         continue;
@@ -585,7 +584,6 @@ public final class Util {
           ib.add(rangeStart);
           ib.add(rangeEnd);
         }
-
         var destStateOffset = (((int) (g[offset + 0] & 0xff)) | (((int) (g[offset + 1]) & 0xff) << 8));
         offset += 2;
         var targetState = stateList.get(offsetToStateMap.get(destStateOffset));

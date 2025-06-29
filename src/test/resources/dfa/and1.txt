@@ -1,4 +1,3 @@
-# Strings of a's and b's starting with a, AND strings that every second character is b
 ab
 aba
 abab

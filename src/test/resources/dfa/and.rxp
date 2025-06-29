@@ -1,4 +1,4 @@
-WS:  $_WHITESPACE | $_HASHCOMMENT
+WS:  $_WHITESPACE
 
 OTHER: [a-z]+
 

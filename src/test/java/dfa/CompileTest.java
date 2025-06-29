@@ -315,10 +315,20 @@ public class CompileTest extends MyTestCase {
     decomp();
   }
 
-
   @Test
   public void decAlpha() {
-     decomp();
+    decomp();
+  }
+
+  @Test
+  public void decAnd() {
+    decomp();
+  }
+
+  @Test
+  public void decMinus() {
+    // Somehow, duplicate edges are getting added... suspect it is related to the minus operation
+    decomp();
   }
 
   /**

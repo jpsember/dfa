@@ -257,6 +257,7 @@ public class BinaryOper extends BaseObject {
    * Convert NFA to a DFA, and add a sink non-final state
    */
   private AugDFA toDFA(NFA nfa) {
+    mark("is it because I'm constructing DFAs from NFAs for pieces of the large NFA, where I wasn't before?");
     // We have to make the end state a final state
     nfa.end.setFinal(true);
     var xDFA = NFAToDFA.convert(nfa.start);

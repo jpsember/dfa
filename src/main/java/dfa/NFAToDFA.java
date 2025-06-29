@@ -40,14 +40,6 @@ final class NFAToDFA extends BaseObject {
    */
   private State convertNFAToDFA(State start) {
     partitionEdges(start);
-    start = minimize(start);
-    return start;
-  }
-
-  /**
-   * Construct minimized dfa from nfa
-   */
-  private State minimize(State start) {
 
     // Reverse this NFA, convert to DFA, then reverse it, and convert it again.  
     // Apparently this  produces a minimal DFA.
@@ -65,7 +57,6 @@ final class NFAToDFA extends BaseObject {
     if (verbose())
       log(stateMachineToString(start, "after reverse #2"));
     start = cvtNFAToDFA(start);
-
     return normalizeStates(start);
   }
 

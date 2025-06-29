@@ -33,6 +33,8 @@ public final class DFACompiler extends BaseObject {
     if (verbose())
       log(stateMachineToString(combined, "combined regex state machines"));
 
+    mark("somehow duplicate edges are getting generated when a BinaryOper is included");
+
     State startState;
     {
       startState = NFAToDFA.convert(combined);
