@@ -337,16 +337,22 @@ public class CompileTest extends MyTestCase {
    * Compile that file into a DFA, and test the describe() method on that DFA.
    */
   private void decomp() {
+    // Read rxp file from resource file
     var resourceName = chompPrefix(testName(), "dec").toLowerCase() + ".rxp";
     var script = Files.readString(this.getClass(), resourceName);
+
     DFACompiler c = new DFACompiler();
     var dfaJson = c.parse(script);
+
     var dfa = DFA.parse(dfaJson.toString());
     var description = describe(dfa);
+
     log("script:", INDENT, script);
     generateMessage("source.dfa", script);
+
     log("description:", INDENT, description);
     generateMessage("describe.json", description);
+
     assertGenerated();
   }
 

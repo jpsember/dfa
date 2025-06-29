@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 /**
  * Converts a state machine to a DFA object, suitable for use by client programs
@@ -27,22 +28,23 @@ class DFABuilder {
   }
 
   private static final
-  boolean DEBUG = false && alert("debug is on");
+  boolean DEBUG = true && alert("debug is on");
 
 
   public DFA build() {
     if (mBuilt != null) return mBuilt;
     mFirstDebugStateId = states().get(0).id();
 
+    pr(VERT_SP, "building;", INDENT, stateMachineToString(states().get(0)));
     for (var state : states())
       addState(state);
 
     convertStateIdsToAddresses();
     var graph = encodeGraph();
 
-    // // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
+    // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
 
-    if (DEBUG && false) {
+    if (DEBUG && true) {
       // Generate a JSON representation of this as the new DFA would (if it were implemented)
       var m = map();
       m.put("version", "$2");
@@ -51,24 +53,19 @@ class DFABuilder {
       pr("xxx.dfa:", INDENT, m.toString());
     }
 
-    if (false) {
-      // Our new version uses an array of (unsigned) bytes, instead of shorts;
-      // convert them to a short array for now...
-
-      var sh = ShortArray.newBuilder();
-      for (var b : graph) {
-        sh.add((short) (b & 0xff));
-      }
-    }
     mBuilt = new DFA(DFA.VERSION, mTokenNames.toArray(new String[0]), graph);
     return mBuilt;
   }
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
-  private void addState(State s) {
+  private static void pd(Object... messages) {
     if (DEBUG)
-      pr(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
+      pr(messages);
+  }
+
+  private void addState(State s) {
+    pd(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
 
     // <state> ::= <1 + token_id> <edge_count> <edge>*
     var g = mGraph;
@@ -76,8 +73,7 @@ class DFABuilder {
 
     // If the state has no edges, it will never be reached; so store nothing
     if (s.edges().isEmpty()) {
-      if (DEBUG)
-        pr("...no edges, skipping");
+      pd("...no edges, skipping");
       return;
     }
 
@@ -90,11 +86,14 @@ class DFABuilder {
       int compiledTokenId = 0;
       for (var edge : s.edges()) {
         var codeSets = edge.labels();
+        boolean omit = false;
         for (int i = 0; i < codeSets.length; i += 2) {
           var a = codeSets[i];
           var b = codeSets[i + 1];
           checkArgument(a < b && (a > 0) == (b > 0), "illegal char range:", a, b);
           if (a < 0) {
+            checkState(!omit);
+            omit = true;
             // Convert the codeset token id to an index
             int tokenIndex = -b - 1;
             checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
@@ -106,15 +105,18 @@ class DFABuilder {
               compiledTokenId = tokenIndex + 1;
               checkArgument(compiledTokenId > 0 && compiledTokenId < 256, "token index", tokenIndex, "yields out-of-range token id", compiledTokenId);
             }
-          } else {
-            filteredEdges.add(edge);
           }
+          // !!!!!!!! I was adding the edge to the filtered list here, inside the code set loop!!!
         }
+        if (!omit)
+          filteredEdges.add(edge);
       }
+      pd("storing token id:", compiledTokenId);
       g.add(compiledTokenId);
     }
 
     // store edge count
+    pd("storing edge count:", filteredEdges.size());
     g.add(filteredEdges.size());
 
     // Add edges (omitting any associated with token ids)

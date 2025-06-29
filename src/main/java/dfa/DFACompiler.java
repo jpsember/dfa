@@ -18,6 +18,7 @@ import static dfa.Util.*;
 public final class DFACompiler extends BaseObject {
 
   public DFA parse(String script) {
+    alertVerbose();
     mTokenRecords = arrayList();
     mTokenNameMap = hashMap();
 
@@ -86,8 +87,9 @@ public final class DFACompiler extends BaseObject {
         throw exprId.failWith("Accepts zero-length tokens");
 
       mTokenRecords.add(rex);
-      if (verbose())
-        log(stateMachineToString(rex.startState(), "regex for", tokenName));
+      if (verbose()) {
+        log(stateMachineToString(rex.startState(), "regex for", tokenName, "(end state:", rex.endState().id(), ")"));
+      }
     }
   }
 
@@ -126,8 +128,10 @@ public final class DFACompiler extends BaseObject {
         newStates.add(new State());
       }
 
+      State x = null;
       for (State origState : orderedStates) {
         var newState = newStates.get(stateIndexMap.get(origState));
+        if (x == null) x = newState;
         List<Edge> newEdges = arrayList();
         for (Edge edge : origState.edges()) {
           // Construct a new edge from this edge
@@ -138,8 +142,9 @@ public final class DFACompiler extends BaseObject {
         newState.setEdges(newEdges);
       }
       dfaBuilder.setStates(newStates);
+      pr(stateMachineToString(x, "after renaming"));
     }
-    return dfaBuilder;
+     return dfaBuilder;
   }
 
   /**
