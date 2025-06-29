@@ -76,7 +76,6 @@ final class NFAToDFA extends BaseObject {
     return keySet;
   }
 
-
   /**
    * Convert NFA to DFA
    */
@@ -98,7 +97,8 @@ final class NFAToDFA extends BaseObject {
       if (nfaStateSubset == null)
         badState("dfaState had no entry in sorted_nfa_state_id_lists:", dfaState);
 
-      log("popped DFA state:", dfaState, "with NFA states:", State.toString(nfaStateSubset));
+      if (verbose())
+        log("popped DFA state:", dfaState, "with NFA states:", State.toString(nfaStateSubset));
 
       // Map of CodeSet => set of NFA states
       // 
@@ -154,7 +154,8 @@ final class NFAToDFA extends BaseObject {
           log("...this was a new DFA state; marking it for exploration");
           unmarked.add(dfaDestState);
         }
-        log(VERT_SP, "...adding DFA edge", dfaState, codeSet, "==>", dfaDestState, VERT_SP);
+        if (verbose())
+          log(VERT_SP, "...adding DFA edge", dfaState, codeSet, "==>", dfaDestState, VERT_SP);
         addEdge(dfaState, codeSet, dfaDestState);
       }
     }
@@ -191,7 +192,8 @@ final class NFAToDFA extends BaseObject {
         }
       mNFAStateSetToDFAStateMap.put(keySet, newState);
       mDFAStateToNFAStatesMap.put(newState, stateSet);
-      log("...stored new DFA state:", newState.toString(true));
+      if (verbose())
+        log("...stored new DFA state:", newState.toString(true));
     }
     return pair(newState, createdFlag);
   }
