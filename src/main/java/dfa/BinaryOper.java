@@ -58,10 +58,6 @@ public class BinaryOper extends BaseObject {
   // Map of encoded pair of factor ids to product state
   private Map<Long, State> mFactorIdPairToProductStateMap = hashMap();
 
-  private State mProductStartState;
-  private State mProductEndState;
-
-
   private void extendFrontier(State state) {
     mSearchFrontier.add(state);
   }
@@ -72,7 +68,8 @@ public class BinaryOper extends BaseObject {
 
   private Pair<State, State> getFactorStates(State productState) {
     var encoded = encodedFactorIdPairForProductState(productState);
-    log("encoded id pair for product state:", productState.id(), idPairToStr(encoded));
+    if (false)
+      log("encoded id pair for product state:", productState.id(), idPairToStr(encoded));
     return pair(stateWithId(factorAId(encoded)), stateWithId(factorBId(encoded)));
   }
 
@@ -131,14 +128,12 @@ public class BinaryOper extends BaseObject {
       par.apply(b2.states);
     }
 
-    log(VERT_SP, "constructing product state machine, start state etc");
-
     // construct the product NFA of these two.
-    mProductStartState = constructProductState(a2.startState, b2.startState);
-    mProductEndState = new State();
+    var productStart = constructProductState(a2.startState, b2.startState);
+    var productEnd = new State();
 
     // Initialize frontier to the start state
-    extendFrontier(mProductStartState);
+    extendFrontier(productStart);
 
     Set<CodeSet> workCodeSets = hashSet();
 
@@ -149,27 +144,20 @@ public class BinaryOper extends BaseObject {
 
     if (mOper == OperationCode.MINUS) {
       workCodeSets.addAll(par.getPartition());
-      log("partitioned edges:", INDENT, workCodeSets);
     }
-
-    log("processing frontier");
 
     // Continue searching until the frontier is empty
     //
     while (!mSearchFrontier.isEmpty()) {
       var productState = popFrontier();
-      log(VERT_SP, "frontier state:", productState);
 
       // Determine the two factor states
       var factors = getFactorStates(productState);
       var fa = factors.first;
       var fb = factors.second;
 
-      log("...factor states:", INDENT, fa, CR, fb);
-
       // Construct the set of labels that appear in either of the edges.
       // Construct an edge for each label in the set, sending to the sink state(s) where appropriate.
-
 
       // For MINUS, we've preconstructed the set of ALL possible edges.
       //
@@ -221,10 +209,10 @@ public class BinaryOper extends BaseObject {
     for (var productState : mFactorIdPairToProductStateMap.values()) {
       if (productState.finalState()) {
         productState.setFinal(false);
-        productState.edges().add(new Edge(CodeSet.epsilon(), mProductEndState));
+        productState.edges().add(new Edge(CodeSet.epsilon(), productEnd));
       }
     }
-    mResult = new NFA(mProductStartState, mProductEndState);
+    mResult = new NFA(productStart, productEnd);
     return mResult;
   }
 
@@ -247,17 +235,13 @@ public class BinaryOper extends BaseObject {
     }
 
     var abProduct = new State(finalState);
-    log(VERT_SP, "...constructed product state:", abProduct.id(), "final:",
-        abProduct.finalState(), "from a:", a.finalState(), "b:", b.finalState(), VERT_SP);
     var existing = mStateIdToStateMap.put(abProduct.id(), abProduct);
     checkState(existing == null, "state already in map");
     var encodedIdPair = encodeFactorIds(a.id(), b.id());
-    log("encoded id pair:", idPairToStr(encodedIdPair));
     mProductIdToFactorIdPairMap.put(abProduct.id(), encodedIdPair);
     mFactorIdPairToProductStateMap.put(encodedIdPair, abProduct);
     return abProduct;
   }
-
 
   private static long productId(State a, State b) {
     var aId = a.id();
@@ -275,25 +259,20 @@ public class BinaryOper extends BaseObject {
   private AugDFA toDFA(NFA nfa) {
     // We have to make the end state a final state
     nfa.end.setFinal(true);
-
-    log("toDFA:", INDENT, stateMachineToString(nfa.start, "NFA to convert to DFA"));
-
     var xDFA = NFAToDFA.convert(nfa.start);
-    log(stateMachineToString(xDFA, "x as DFA"));
-
-    checkArgument(xDFA.id() > 0);
-
-    var sinkState = new State();
-    var xAug = new AugDFA(xDFA, sinkState);
+    var xAug = new AugDFA(xDFA);
     return xAug;
   }
 
-
+  /**
+   * A bookkeeping class for a DFA that includes a sink state (a non-final state with
+   * no outgoing edges)
+   */
   private static class AugDFA {
 
-    AugDFA(State startState, State sinkState) {
+    AugDFA(State startState) {
       this.startState = startState;
-      this.sinkState = sinkState;
+      sinkState = new State();
       // Construct a list of states, including the sink state
       states = reachableStates(startState);
       states.add(sinkState);
