@@ -1,6 +1,7 @@
 package dfa;
 
 import js.base.BasePrinter;
+import js.data.IntArray;
 import js.file.Files;
 import js.json.JSList;
 import js.json.JSMap;
@@ -517,4 +518,87 @@ public final class Util {
 
   }
 
+
+  public static State decompileDFA(DFA dfa) {
+
+// <graph> ::= <state>*
+//
+// <state> ::= <1 + token id, or 0> <edge count> <edge>*
+//
+// <edge>  ::= <char_range count> <char_range>* <dest_state_offset, low byte first>
+//
+// <char_range> ::= <start of range (1..127)> <size of range>
+//
+    var g = dfa.graph();
+
+    Map<Integer, State> offsetToStateMap = hashMap();
+    List<Integer> offsets = arrayList();
+
+    // scan the graph, determining state offsets, constructing (empty) states
+
+    {
+      int offset = 0;
+      while (offset < g.length) {
+        offsets.add(offset);
+        var state = new State();
+        pr("...created state at offset:",offset);
+        offsetToStateMap.put(offset, state);
+        var edgeCount = g[offset + 1];
+        offset += 2;
+        for (int j = 0; j < edgeCount; j++) {
+          var charRanges = (int) g[offset];
+          offset += 1 + (2 * charRanges) + 2;
+        }
+      }
+    }
+
+    // Construct a single final state
+    var finalState = new State(true);
+
+    // fill in states
+    for (var offset : offsets) {
+
+      var s = offsetToStateMap.get(offset);
+pr(VERT_SP,"offset:",offset,"state:",s);
+
+      var tokenId = ((int) g[offset]) - 1;
+      int edgeCount = g[offset + 1];
+      offset += 2;
+pr("tokenId:",tokenId,"#edges:",edgeCount);
+
+      // <state> ::= <1 + token id, or 0> <edge count> <edge>*
+//
+// <edge>  ::= <char_range count> <char_range>* <dest_state_offset, low byte first>
+//
+// <char_range> ::= <start of range (1..127)> <size of range>
+//
+      for (var n = 0; n < edgeCount; n++) {
+        var charRanges = (int) g[offset];
+        offset++;
+pr("edge:",n,"# charrng:",charRanges);
+
+        var ib = IntArray.newBuilder();
+        for (var ri = 0; ri < charRanges; ri++) {
+          int rangeStart = g[offset + 0];
+          int rangeEnd = rangeStart + g[offset + 1];
+          offset += 2;
+          ib.add(rangeStart);
+          ib.add(rangeEnd);
+          pr("...adding range:",rangeStart,"..",rangeEnd);
+        }
+
+        var destStateOffset = (((int) (g[offset + 0] & 0xff)) | (((int) (g[offset + 1]) & 0xff) << 8));
+        offset += 2;
+        var targetState = offsetToStateMap.get(destStateOffset);
+        pr("...dest state offset:",destStateOffset,"target:",targetState);
+        var edge = new Edge(CodeSet.with(ib.array()), targetState);
+        s.edges().add(edge);
+      }
+      if (tokenId >= 0) {
+        var edgeToFinal = new Edge(CodeSet.withValue(-tokenId - 1), finalState);
+        s.edges().add(edgeToFinal);
+      }
+    }
+    return offsetToStateMap.get(0);
+  }
 }

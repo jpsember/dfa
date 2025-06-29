@@ -305,6 +305,39 @@ public class CompileTest extends MyTestCase {
     assertFalse(acceptsEmptyString(s, f));
   }
 
+  @Test
+  public void decompile() {
+    String resourceName = testName() + ".dfa";
+    pr("resource name:",resourceName);
+    var script = Files.readString(this.getClass(), resourceName);
+    var dfa = DFA.parse(script);
+    var decomp = decompileDFA(dfa);
+
+    pr(decomp);
+  }
+
+  @Test
+  public void decSimple() {
+    decomp("{\"graph\":[0,2,1,98,1,14,0,1,97,1,12,0,1,0,2,0],\"token_names\":\"A B\",\"version\":\"$2\"}");
+  }
+
+  private void decomp(String script) {
+    var dfa = DFA.parse(script);
+    var decomp = decompileDFA(dfa);
+
+    var reach = reachableStates(decomp);
+    var sb = new StringBuilder();
+    for (var s : reach) {
+      sb.append(s.toString(true));
+      sb.append('\n');
+    }
+    var txt = sb.toString();
+    generateMessage("source.dfa",script);
+    generateMessage("decompiled.txt",txt);
+    pr(txt);
+    assertGenerated();
+  }
+
   private void dump(State state, Object... messages) {
     String message;
     if (messages.length == 0)
