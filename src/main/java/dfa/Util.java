@@ -431,21 +431,20 @@ public final class Util {
    * Construct a string representation of a character code
    */
   private static String charExpr(int n) {
-    todo("refactor to use \\ expressions where appropriate");
     switch (n) {
       case 0x0a:
-        return "_LF";
+        return "lf";
       case 0x09:
-        return "_HT";
+        return "ht";
       case 0x0d:
-        return "_CR";
+        return "cr";
       case 0x20:
-        return "_SP";
+        return "sp";
       default:
         if (n > 32 && n < 128) {
           return Character.toString((char) n);
         }
-        return String.format("%02x", n);
+        return String.format("$%02x", n);
     }
   }
 

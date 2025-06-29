@@ -335,7 +335,7 @@ public class CompileTest extends MyTestCase {
    *
    * Compile that file into a DFA, and test the describe() method on that DFA.
    */
-  private void decomp() { 
+  private void decomp() {
     // Read rxp file from resource file
     var resourceName = chompPrefix(testName(), "dec").toLowerCase() + ".rxp";
     var script = Files.readString(this.getClass(), resourceName);
