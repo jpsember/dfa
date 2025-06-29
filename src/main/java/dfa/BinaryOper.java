@@ -124,14 +124,11 @@ public class BinaryOper extends BaseObject {
     var par = new RangePartition();
 
     {
-      var aStates = reachableStates(a2.startState);
-      var bStates = reachableStates(b2.startState);
-      par.addStateCodeSets(aStates);
-      par.addStateCodeSets(bStates);
-
+      par.addStateCodeSets(a2.states);
+      par.addStateCodeSets(b2.states);
       // Replace existing edges with partitioned versions
-      par.apply(aStates);
-      par.apply(bStates);
+      par.apply(a2.states);
+      par.apply(b2.states);
     }
 
     log(VERT_SP, "constructing product state machine, start state etc");
@@ -305,6 +302,5 @@ public class BinaryOper extends BaseObject {
     State startState;
     State sinkState;
     List<State> states;
-
   }
 }
