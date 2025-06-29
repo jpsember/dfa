@@ -260,18 +260,6 @@ public final class Util {
         new_edges.add(new Edge(prev_label, prev_dest));
     }
 
-    if (alert("verifying")) {
-      int x = new_edges.size();
-      for (int a = 0; a < x - 1; a++) {
-        var ea = new_edges.get(a);
-        for (int b = a + 1; b < x; b++) {
-          var eb = new_edges.get(b);
-          if (ea.destinationState() == eb.destinationState()) {
-            die("failed to merge states:", INDENT, ea, CR, eb);
-          }
-        }
-      }
-    }
     state.setEdges(new_edges);
   }
 
@@ -363,7 +351,6 @@ public final class Util {
       int probCounter = 0;
       for (var edge : s.edges()) {
         var ds = edge.destinationState();
-        if (ds.finalState()) continue;
         String edgeKey =
             ds.finalState() ? "*  " : String.format("%3d", idAdjust + edge.destinationState().id());
         if (edgeMap.containsKey(edgeKey)) {

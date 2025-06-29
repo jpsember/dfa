@@ -18,7 +18,6 @@ import static dfa.Util.*;
 public final class DFACompiler extends BaseObject {
 
   public DFA parse(String script) {
-    alertVerbose();
     mTokenRecords = arrayList();
     mTokenNameMap = hashMap();
 
@@ -33,8 +32,6 @@ public final class DFACompiler extends BaseObject {
     State combined = combineNFAs(mTokenRecords);
     if (verbose())
       log(stateMachineToString(combined, "combined regex state machines"));
-
-    mark("somehow duplicate edges are getting generated when a BinaryOper is included");
 
     State startState;
     {
@@ -142,7 +139,6 @@ public final class DFACompiler extends BaseObject {
         newState.setEdges(newEdges);
       }
       dfaBuilder.setStates(newStates);
-      pr(stateMachineToString(x, "after renaming"));
     }
      return dfaBuilder;
   }

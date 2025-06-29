@@ -67,7 +67,6 @@ public class CompileTest extends MyTestCase {
 
   @Test
   public void and1() {
-    verboseRex();
     disallowUnknown();
     skipWS();
     proc();
@@ -336,7 +335,7 @@ public class CompileTest extends MyTestCase {
    *
    * Compile that file into a DFA, and test the describe() method on that DFA.
    */
-  private void decomp() {
+  private void decomp() { 
     // Read rxp file from resource file
     var resourceName = chompPrefix(testName(), "dec").toLowerCase() + ".rxp";
     var script = Files.readString(this.getClass(), resourceName);
@@ -351,7 +350,7 @@ public class CompileTest extends MyTestCase {
     generateMessage("source.dfa", script);
 
     log("description:", INDENT, description);
-    generateMessage("describe.json", description);
+    generateMessage("describe.json", description.prettyPrint());
 
     assertGenerated();
   }

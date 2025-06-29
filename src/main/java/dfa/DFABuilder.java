@@ -27,15 +27,9 @@ class DFABuilder {
     return this;
   }
 
-  private static final
-  boolean DEBUG = true && alert("debug is on");
-
-
   public DFA build() {
     if (mBuilt != null) return mBuilt;
     mFirstDebugStateId = states().get(0).id();
-
-    pr(VERT_SP, "building;", INDENT, stateMachineToString(states().get(0)));
     for (var state : states())
       addState(state);
 
@@ -44,7 +38,7 @@ class DFABuilder {
 
     // <edge>  ::= <number of char_range items> <char_range>* <dest_state_id, low byte first>
 
-    if (DEBUG && true) {
+    if (false) {
       // Generate a JSON representation of this as the new DFA would (if it were implemented)
       var m = map();
       m.put("version", "$2");
@@ -59,21 +53,13 @@ class DFABuilder {
 
   private static final int ENCODED_STATE_ID_OFFSET = 1_000_000;
 
-  private static void pd(Object... messages) {
-    if (DEBUG)
-      pr(messages);
-  }
-
   private void addState(State s) {
-    pd(VERT_SP, "adding state, offset:", mGraph.size(), INDENT, s);
-
     // <state> ::= <1 + token_id> <edge_count> <edge>*
     var g = mGraph;
     mStateAddresses.add(g.size());
 
     // If the state has no edges, it will never be reached; so store nothing
     if (s.edges().isEmpty()) {
-      pd("...no edges, skipping");
       return;
     }
 
@@ -92,7 +78,6 @@ class DFABuilder {
           var b = codeSets[i + 1];
           checkArgument(a < b && (a > 0) == (b > 0), "illegal char range:", a, b);
           if (a < 0) {
-            checkState(!omit);
             omit = true;
             // Convert the codeset token id to an index
             int tokenIndex = -b - 1;
@@ -111,12 +96,10 @@ class DFABuilder {
         if (!omit)
           filteredEdges.add(edge);
       }
-      pd("storing token id:", compiledTokenId);
       g.add(compiledTokenId);
     }
 
     // store edge count
-    pd("storing edge count:", filteredEdges.size());
     g.add(filteredEdges.size());
 
     // Add edges (omitting any associated with token ids)
