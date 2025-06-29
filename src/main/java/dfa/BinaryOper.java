@@ -287,34 +287,24 @@ public class BinaryOper extends BaseObject {
     checkArgument(xDFA.id() > 0);
 
     var sinkState = new State();
-    var xAug = new AugDFA(label + " (aug)", xDFA, sinkState);
+    var xAug = new AugDFA(xDFA, sinkState);
     return xAug;
   }
 
 
   private static class AugDFA {
 
-    AugDFA(String label, State startState, State sinkState) {
-      this.label = label;
+    AugDFA(State startState, State sinkState) {
       this.startState = startState;
       this.sinkState = sinkState;
-      checkArgument(startState.id() > 0);
-
       // Construct a list of states, including the sink state
-
       states = reachableStates(startState);
       states.add(sinkState);
-
     }
 
     State startState;
     State sinkState;
-    String label;
     List<State> states;
 
-    @Override
-    public String toString() {
-      return stateMachineToString(startState, label + " (sink: " + sinkState.id() + ")");
-    }
   }
 }
