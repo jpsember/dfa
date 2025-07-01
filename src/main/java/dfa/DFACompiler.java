@@ -140,7 +140,7 @@ public final class DFACompiler extends BaseObject {
       }
       dfaBuilder.setStates(newStates);
     }
-     return dfaBuilder;
+    return dfaBuilder;
   }
 
   /**
@@ -185,7 +185,8 @@ public final class DFACompiler extends BaseObject {
       for (Edge edge : state.edges()) {
         if (!edge.destinationState().finalState())
           continue;
-        int token_id = State.edgeLabelToTokenId(edge.labels()[0]);
+        // we want the HIGHEST label in the edge
+        int token_id = State.edgeLabelToTokenId(edge.codeSet().lastValue());
         recognizedTokenIdsSet.add(token_id);
       }
     }
@@ -196,7 +197,6 @@ public final class DFACompiler extends BaseObject {
         continue;
       unrecognized.add(rec.name());
     }
-
     return unrecognized;
   }
 

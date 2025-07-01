@@ -1,0 +1,6 @@
+WS: \s
+
+SPECIFIC: b
+
+GENERAL: [ab]+
+

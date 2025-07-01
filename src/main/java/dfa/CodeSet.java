@@ -32,11 +32,17 @@ public final class CodeSet implements Comparable<CodeSet> {
     return c;
   }
 
+  public int lastValue() {
+    var x = mElements;
+    if (x.length == 0) badState("CodeSet is empty");
+    return x[x.length - 1] - 1;
+  }
+
   /**
    * Construct a CodeSet with the single value EPSILON
    */
   public static CodeSet epsilon() {
-    return withValue(State.EPSILON);
+    return withValue(EPSILON);
   }
 
   /**

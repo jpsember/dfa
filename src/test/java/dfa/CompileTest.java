@@ -149,6 +149,17 @@ public class CompileTest extends MyTestCase {
     proc();
   }
 
+
+  @Test
+  public void subsumeb() {
+    try {
+      proc("ab");
+      die("expected redundant tokens");
+    } catch (IllegalArgumentException e) {
+      checkState(e.getMessage().contains("Subsumed"));
+    }
+  }
+
   @Test
   public void subsumed() {
     try {
@@ -275,7 +286,7 @@ public class CompileTest extends MyTestCase {
     addEdge(s, cs("cde"), b);
 
     CodeSet ck = cs("uvwx");
-    ck.add(State.EPSILON);
+    ck.add(Util.EPSILON);
 
     addEdge(a, ck, f);
     addEdge(b, cs("wxyz"), f);

@@ -276,7 +276,11 @@ public class TokenDefinitionParser {
       var tx = mReadToken.text();
       var h1 = read_hex(tx.charAt(2));
       var h2 = read_hex(tx.charAt(3));
-      return CodeSet.withValue((h1 << 4) + h2);
+      var value = (h1 << 4) + h2;
+      if (value < 1 || value >= MAX_CHAR_CODE) {
+        abortAtToken(mReadToken,"Out of range hex value");
+      }
+      return CodeSet.withValue(value);
     }
     throw abortAtToken(peekToken(), "unexpected token within [...] expression");
   }

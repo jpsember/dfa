@@ -112,7 +112,7 @@ final class NFAToDFA extends BaseObject {
           // (because of the edge partitioning we did earlier);
           // and we can ignore it (as any state reachable from here lies within the
           // NFA subset we are processing)
-          if (codeSet.contains(State.EPSILON))
+          if (codeSet.contains(EPSILON))
             continue;
 
           TreeSet<State> nfaStates = moveMap.get(codeSet);
@@ -199,7 +199,7 @@ final class NFAToDFA extends BaseObject {
     while (nonEmpty(stk)) {
       State s = pop(stk);
       for (Edge edge : s.edges()) {
-        if (edge.contains(State.EPSILON)) {
+        if (edge.contains(EPSILON)) {
           if (stateSet.add(edge.destinationState()))
             push(stk, edge.destinationState());
         }

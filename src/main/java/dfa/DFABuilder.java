@@ -76,14 +76,14 @@ class DFABuilder {
         for (int i = 0; i < codeSets.length; i += 2) {
           var a = codeSets[i];
           var b = codeSets[i + 1];
-          checkArgument(a < b && (a > 0) == (b > 0), "illegal char range:", a, b);
-          if (a < 0) {
+          checkArgument(0 < a && a < b && b < TOKEN_ID_START + MAX_TOKEN_DEF, "illegal char range:", a, b);
+          if (a >= TOKEN_ID_START) {
             omit = true;
             // Convert the codeset token id to an index
-            int tokenIndex = -b - 1;
+            int tokenIndex = b - 1 - TOKEN_ID_START;
             checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
 
-            // Apparently, there can be more than one token edges for a state... choose the one the produces the highest token id
+            // Apparently, there can be more than one token edges for a state... choose the one that produces the highest token id
             if (tokenIndex > prevTokenId) {
               prevTokenId = tokenIndex;
               checkArgument(tokenIndex >= 0 && tokenIndex < numTokens(), "bad token index:", tokenIndex, "decoded from range:", a, b);
@@ -91,7 +91,6 @@ class DFABuilder {
               checkArgument(compiledTokenId > 0 && compiledTokenId < 256, "token index", tokenIndex, "yields out-of-range token id", compiledTokenId);
             }
           }
-          // !!!!!!!! I was adding the edge to the filtered list here, inside the code set loop!!!
         }
         if (!omit)
           filteredEdges.add(edge);
@@ -112,7 +111,7 @@ class DFABuilder {
       for (int i = 0; i < codeSets.length; i += 2) {
         var a = codeSets[i];
         var b = codeSets[i + 1];
-        checkArgument(a < b && a > 0 && a <= 127 && b <= 128, "illegal char range:", a, b);
+        checkArgument(a < b && a > 0 && b <= TOKEN_ID_START + MAX_TOKEN_DEF , "illegal char range:", a, b);
         g.add(a);
         g.add(b - a);
       }

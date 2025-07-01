@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static js.base.Tools.*;
+import static dfa.Util.*;
 
 public final class State implements Comparable<State> {
 
@@ -118,24 +119,17 @@ public final class State implements Comparable<State> {
 
   private static int sNextId = 100;
 
-  public static final int EPSILON = -1;
 
-  /**
-   * One plus the maximum code represented
-   */
-  public static final int CODEMAX = 256;
 
   public static int edgeLabelToTokenId(int edgeLabel) {
-    return EPSILON - 1 - edgeLabel;
+    return edgeLabel - TOKEN_ID_START;
   }
 
   public static int tokenIdToEdgeLabel(int tokenId) {
-    // Note: this does the same calculation as edgeLabelToTokenId
-    return EPSILON - 1 - tokenId;
+    return tokenId + TOKEN_ID_START;
   }
 
   private int mId;
-  private int mUserValue;
   private List<Edge> mEdges;
   private boolean mFinalState;
 

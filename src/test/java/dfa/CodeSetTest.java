@@ -1,18 +1,18 @@
 /**
  * MIT License
- * 
+ *
  * Copyright (c) 2022 Jeff Sember
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,7 +20,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
  **/
 package dfa;
 
@@ -55,7 +54,7 @@ public class CodeSetTest extends MyTestCase {
       prep();
 
       final int max = 100;
-      final int offset = -max / 2;
+      final int offset = 1;
       final int maxChunkLen = (i % 10) + 1;
       for (int j = 0; j < 50; j++) {
         int u = random().nextInt(max - maxChunkLen);
@@ -231,11 +230,6 @@ public class CodeSetTest extends MyTestCase {
     equ("10 15 20 22 27 30 31 37 40 45");
     neg(15, 20);
     equ("10 22 27 30 31 37 40 45");
-
-    prep();
-    add(10, 22);
-    neg(0, State.CODEMAX);
-    equ("0 10 22 256");
 
     prep();
     add(10, 20);

@@ -14,6 +14,11 @@ import static js.base.Tools.*;
 
 public final class Util {
 
+  public static final int MAX_TOKEN_DEF = 1_000;
+  public static final int EPSILON = 0x100;
+  public static final int TOKEN_ID_START = EPSILON + 1;
+  public static final int MAX_CHAR_CODE = 0x80;
+
   private static Edge newEdge(CodeSet codeSet, State destinationState) {
     return new Edge(codeSet, destinationState);
   }
@@ -97,7 +102,7 @@ public final class Util {
     return nfa(renamer.newStateForOld(startState), newEndState);
   }
 
-  private static final CodeSet EPSILON_RANGE = CodeSet.withRange(State.EPSILON, 1 + State.EPSILON);
+  private static final CodeSet EPSILON_RANGE = CodeSet.withRange(EPSILON, 1 + EPSILON);
 
   /**
    * Add an epsilon transition to a state
@@ -139,13 +144,12 @@ public final class Util {
     final String forbidden = "'\"\\[]{}()";
     // Unless it corresponds to a non-confusing printable ASCII value,
     // just print its decimal equivalent
-    if (charCode == State.EPSILON)
+    if (charCode == EPSILON)
       return "(e)";
-    if (charCode > ' ' && charCode < 0x7f && forbidden.indexOf(charCode) < 0)
-      return "'" + (char) charCode + "'";
-    if (charCode == State.CODEMAX - 1)
-      return "MAX";
-    return Integer.toString(charCode);
+    if (charCode >= TOKEN_ID_START) {
+      return "T" + (charCode - TOKEN_ID_START);
+    }
+    return charExpr(charCode);
   }
 
   public static void printStateMachine(State initialState, Object... title) {
@@ -280,7 +284,7 @@ public final class Util {
         return true;
 
       for (Edge edge : state.edges()) {
-        if (edge.contains(State.EPSILON))
+        if (edge.contains(EPSILON))
           push(stateStack, edge.destinationState());
       }
     }
@@ -309,8 +313,6 @@ public final class Util {
 
   public static final double DFA_VERSION_5 = 5.1;
 
-  public static final int MAX_TOKEN_DEF = 1_000;
-
   public static String versionString(float v) {
     return String.format("%.1f", v);
   }
@@ -332,9 +334,6 @@ public final class Util {
 
   /**
    * Get a description of a DFA; for development purposes only
-   *
-   * What we really could use though is a decompiler that takes a DFA (in json form)
-   * and generates the States and whatnot, for this describe method to work with
    */
   public static JSMap describe(List<State> states, List<String> tokenNames) {
     int idAdjust = -states.get(0).id() + 100;
@@ -381,16 +380,15 @@ public final class Util {
       var a = cs[i];
       var b = cs[i + 1];
 
-      if ((a < 0 && b > 0)
+      if (a <= 0
           || a >= b
-          || a == 0
       )
         return edgeProblem(edge, "illegal code set");
-      if (a < 0) {
+      if (a >= TOKEN_ID_START) {
         if (cs.length != 2) {
           return edgeProblem(edge, "unexpected token id expr");
         }
-        var tokenId = -a - 1;
+        var tokenId = b - 1 - TOKEN_ID_START;
         if (tokenId >= tokenNames.size()) {
           return "*** no such token id: " + tokenId;
         }
@@ -577,7 +575,7 @@ public final class Util {
         s.edges().add(edge);
       }
       if (tokenId >= 0) {
-        var edgeToFinal = new Edge(CodeSet.withValue(-tokenId - 1), finalState);
+        var edgeToFinal = new Edge(CodeSet.withValue(State.tokenIdToEdgeLabel(tokenId)), finalState);
         s.edges().add(edgeToFinal);
       }
     }

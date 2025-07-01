@@ -22,8 +22,8 @@ _HASHCOMMENT:  ( $_HASH [^\n\r]* )
 
 # Disallow nonprintables (incl. tab) and unescaped quotes (")
 
-_STRING:       ("      ( [^\x00-\x1f " ] | ($_ESCAPE ") )* ")
-_SINGLESTRING: ('      ( [^\x00-\x1f ' ] | ($_ESCAPE ') )* ')
+_STRING:       ("      ( [^\x01-\x1f " ] | ($_ESCAPE ") )* ")
+_SINGLESTRING: ('      ( [^\x01-\x1f ' ] | ($_ESCAPE ') )* ')
 
 _ID: ( [_a-zA-Z][_a-zA-Z0-9]* )
 
