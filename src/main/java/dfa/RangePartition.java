@@ -56,7 +56,7 @@ final class RangePartition {
     // We want to be able to include all the token ids as well.
     mRootNode = buildNode(CodeSet.withRange(1, MAX_TOKEN_DEF + TOKEN_ID_START));
     // Add epsilon immediately, so it's always in its own subset
-    addSet(CodeSet.epsilon());
+    addSet(CodeSet.EPSILON);
   }
 
 

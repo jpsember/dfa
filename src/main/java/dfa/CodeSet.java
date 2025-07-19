@@ -14,6 +14,9 @@ import java.util.Arrays;
  */
 public final class CodeSet implements Comparable<CodeSet> {
 
+  public static final CodeSet ALL = CodeSet.withRange(1, MAX_CHAR_CODE);
+  public static final CodeSet EPSILON = CodeSet.withValue(Util.EPSILON);
+
   public static CodeSet withValue(int value) {
     CodeSet c = new CodeSet();
     c.add(value);
@@ -36,13 +39,6 @@ public final class CodeSet implements Comparable<CodeSet> {
     var x = mElements;
     if (x.length == 0) badState("CodeSet is empty");
     return x[x.length - 1] - 1;
-  }
-
-  /**
-   * Construct a CodeSet with the single value EPSILON
-   */
-  public static CodeSet epsilon() {
-    return withValue(EPSILON);
   }
 
   /**

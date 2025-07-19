@@ -278,7 +278,7 @@ public class TokenDefinitionParser {
       var h2 = read_hex(tx.charAt(3));
       var value = (h1 << 4) + h2;
       if (value < 1 || value >= MAX_CHAR_CODE) {
-        abortAtToken(mReadToken,"Out of range hex value");
+        abortAtToken(mReadToken, "Out of range hex value");
       }
       return CodeSet.withValue(value);
     }
@@ -299,9 +299,9 @@ public class TokenDefinitionParser {
     CodeSet result = null;
     while (true) {
       if (peekIs(T_BRCL) || peekIs(T_BREXCEPT)) {
+        // If the set is nothing at this point, set it to include any character
         if (result == null) {
-          // If the set is nothing at this point, set it to include all printable characters (space...7f)
-          result = CodeSet.withRange(32, 128);
+          result = CodeSet.ALL;
         }
         break;
       }

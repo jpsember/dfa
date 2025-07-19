@@ -102,13 +102,11 @@ public final class Util {
     return nfa(renamer.newStateForOld(startState), newEndState);
   }
 
-  private static final CodeSet EPSILON_RANGE = CodeSet.withRange(EPSILON, 1 + EPSILON);
-
   /**
    * Add an epsilon transition to a state
    */
   public static void addEps(State source, State target) {
-    addEdge(source, EPSILON_RANGE, target);
+    addEdge(source, CodeSet.EPSILON, target);
   }
 
   public static NFA nfa(State start, State end) {

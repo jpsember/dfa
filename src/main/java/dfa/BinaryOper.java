@@ -209,7 +209,7 @@ public class BinaryOper extends BaseObject {
     for (var productState : mFactorIdPairToProductStateMap.values()) {
       if (productState.finalState()) {
         productState.setFinal(false);
-        productState.edges().add(new Edge(CodeSet.epsilon(), productEnd));
+        productState.edges().add(new Edge(CodeSet.EPSILON, productEnd));
       }
     }
     mResult = new NFA(productStart, productEnd);

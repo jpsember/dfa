@@ -282,7 +282,7 @@ public class CompileTest extends MyTestCase {
     State b = new State();
     State f = new State(true);
 
-    addEdge(s, CodeSet.epsilon(), a);
+    addEdge(s, CodeSet.EPSILON, a);
     addEdge(s, cs("cde"), b);
 
     CodeSet ck = cs("uvwx");
@@ -303,7 +303,7 @@ public class CompileTest extends MyTestCase {
     State b = new State();
     State f = new State(true);
 
-    addEdge(s, CodeSet.epsilon(), a);
+    addEdge(s, CodeSet.EPSILON, a);
     addEdge(s, cs("cde"), b);
 
     CodeSet ck = cs("uvwx");
