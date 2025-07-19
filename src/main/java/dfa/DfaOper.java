@@ -307,7 +307,7 @@ public class DfaOper extends AppOper {
     m.put(',', "|_COMMA");
     m.put('=', "|_EQUALS");
     m.put('\\', "|_ESCAPE");
-    m.put('^', "|_TILDE");
+    m.put('~', "|_TILDE");
     m.put('#', "|_HASH");
 
     {

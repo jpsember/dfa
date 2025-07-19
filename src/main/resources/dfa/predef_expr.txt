@@ -3,7 +3,7 @@ _COLON: (\:)
 _COMMA: (\,)
 _EQUALS: (\=)
 _ESCAPE: (\\)
-_TILDE: (\^)
+_TILDE: (\~)
 _HASH: (\#)
 
 # Java escape sequences reference:
