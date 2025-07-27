@@ -1,5 +1,7 @@
 package dfa;
 
+import js.data.ByteArray;
+import js.data.DataUtil;
 import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
@@ -8,8 +10,58 @@ import static js.base.Tools.*;
 import org.junit.Test;
 
 import js.parsing.DFA;
+import parsing.Lexer;
 
-public class ScanTest extends MyTestCase {
+import java.nio.charset.Charset;
+
+public class LexerTest extends MyTestCase {
+
+  @Test
+  public void newlinesNone() {
+    newlineTest("123");
+  }
+
+  @Test
+  public void newlinesLF() {
+    newlineTest("123L4LL56L");
+  }
+
+  @Test
+  public void newlinesCRLF() {
+    newlineTest("123CL4CLCL56CL");
+  }
+
+  @Test
+  public void newlinesCRLFwithMissing() {
+    newlineTest("123CL4CLCL56CL78");
+  }
+
+  @Test
+  public void tailCRLF() {
+    newlineTest("CL");
+  }
+
+
+  @Test
+  public void newlinesCRLFWithOrphanCR() {
+    newlineTest("123CL4L56CCL");
+  }
+
+  private void newlineTest(String s) {
+    var b =  ByteArray.newBuilder();
+    for (var i : s.getBytes(Charset.forName("UTF-8"))) {
+      var x = i;
+      if (i == 'L')
+        x = 0x0a;
+      else if (i == 'C')
+        x = 0x0d;
+      b.add(x);
+    }
+    var srcBytes = b.array();
+    var cvtBytes = Lexer.normalizeNewlines(srcBytes);
+    var result = DataUtil.hexDump(cvtBytes, 0, cvtBytes.length, true);
+    assertMessage(result);
+  }
 
   @Test
   public void simple() {
