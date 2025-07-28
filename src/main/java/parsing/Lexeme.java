@@ -12,7 +12,8 @@ public final class Lexeme {
   public static final int ID_UNKNOWN = -1;
   public static final int ID_END_OF_INPUT = -2;
 
-  public static final Lexeme END_OF_INPUT = new Lexeme(ID_END_OF_INPUT);
+  public static final Lexeme END_OF_INPUT;
+
   private Lexeme(int id) {
     mId = id;
   }
@@ -28,11 +29,11 @@ public final class Lexeme {
 
 
   static Lexeme construct(Lexer lexer, int infoPointer) {
-      var info = lexer.tokenInfo();
-      var x = new Lexeme( info[infoPointer + Lexer.F_TOKEN_ID]);
-      x.mInfoPtr = infoPointer;
-      x.mLexer = lexer;
-      return x;
+    var info = lexer.tokenInfo();
+    var x = new Lexeme(info[infoPointer + Lexer.F_TOKEN_ID]);
+    x.mInfoPtr = infoPointer;
+    x.mLexer = lexer;
+    return x;
   }
 
   public boolean isUnknown() {
@@ -94,11 +95,6 @@ public final class Lexeme {
     return mId == value;
   }
 
-  public String text() {
-    todo("Lexme text");
-    return "???text???";
-  }
-
   public String locInfo() {
     todo("Lexeme locInfo");
     return "???locinfo???";
@@ -144,16 +140,29 @@ public final class Lexeme {
 //  }
 
 //  private final String mSource;
-  private final int mId;
-  Lexer mLexer;
-  int mInfoPtr;
 
   public boolean isEndOfInput() {
     return mId == ID_END_OF_INPUT;
   }
-//  private final String mText;
-//  private final String mLexemeName;
-//  private final int mRow;
-//  private final int mColumn;
+
+
+  public String text() {
+    if (mText != null)
+      return mText;
+    mText  =
+        mLexer.getText(mInfoPtr);
+    return mText;
+  }
+
+  private final int mId;
+  Lexer mLexer;
+  int mInfoPtr;
+  private String mText;
+
+  static {
+    var x = new Lexeme(ID_END_OF_INPUT);
+    x.mText = "<END>";
+    END_OF_INPUT = x;
+  }
 
 }

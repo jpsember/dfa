@@ -7,7 +7,7 @@ import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -86,7 +86,6 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void smallInput() {
-    rv();
     script("aabba");
   }
 
@@ -98,8 +97,80 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
+  public void hasNext() {
+    var s = lexer();
+    s.withText("");
+    s.start();
+    assertFalse(s.hasNext());
+  }
+
+  @Test
+  public void hasNext2() {
+    var s = lexer();
+    s.withText("a");
+    s.start();
+    assertTrue(s.hasNext());
+  }
+
+  @Test
+  public void hasNext3() {
+    var s = lexer();
+    s.withText("a");
+    s.start();
+    assertTrue(s.hasNext());
+    s.read();
+    assertFalse(s.hasNext());
+  }
+
+  @Test
+  public void peekIf() {
+    var s = lexer();
+    s.withText("abab");
+    s.start();
+    assertTrue(s.peekIf(0, 1));
+    assertFalse(s.peekIf(0, 1, 1));
+    assertTrue(s.peekIf());
+    assertTrue(s.peekIf(0, 1, 0, 1));
+  }
+
+  @Test
+  public void readIf2() {
+    var s = lexer();
+    s.withText("abba");
+    s.start();
+
+    assertTrue(s.readIf(0, 1));
+    assertEquals(0, s.token().id());
+    assertEquals(1, s.token().id());
+
+    assertFalse(s.readIf(0, 1));
+
+    assertTrue(s.readIf(1, 0));
+    assertEquals(1, s.token().id());
+    assertEquals(0, s.token().id());
+  }
+
+  @Test
+  public void readIf3() {
+    var s = lexer();
+    s.withText("abba");
+    s.start();
+
+    assertTrue(s.readIf(0, 1));
+    assertFalse(s.readIf(0, 1));
+    assertTrue(s.readIf(1, 0));
+    assertFalse(s.hasNext());
+  }
+
+  @Test
   public void simple() {
     script("aabba");
+  }
+
+  @Test
+  public void unknownSimple() {
+    mAllowUnknown = true;
+    script("c");
   }
 
   @Test
@@ -152,7 +223,7 @@ public class LexerTest extends MyTestCase {
     var sb = new StringBuilder();
     while (s.hasNext()) {
       var t = s.read();
-      sb.append(String.format("%9s ", mDfa.tokenName(t.id())) + " loc:" + t.locInfo() + "  '" + t.text() + "'");
+      sb.append(String.format("%9s ", mDfa.tokenName(t.id())) + " '" + t.text() + "'");
       addLF(sb);
     }
 
@@ -163,6 +234,7 @@ public class LexerTest extends MyTestCase {
   private void skip(int skipIndex) {
     mSkip = skipIndex;
   }
+
   private Integer mSkip;
   private boolean mAllowUnknown;
 }
