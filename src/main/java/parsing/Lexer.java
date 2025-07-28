@@ -4,15 +4,12 @@ import static js.base.Tools.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import js.base.BaseObject;
 import js.data.ByteArray;
 import js.data.IntArray;
 import js.json.JSList;
 import js.parsing.DFA;
-import js.parsing.ScanException;
-import js.parsing.Token;
 
 public class Lexer extends BaseObject {
 
@@ -131,7 +128,7 @@ public class Lexer extends BaseObject {
   public Lexeme peek(int distance) {
     assertStarted();
     resetAction();
-    int i = distance + mHistoryCursor;
+    int i = distance + mReadIndex;
     Lexeme result;
     if (i < 0 || i >= mTokenCount) {
       return Lexeme.END_OF_INPUT;
@@ -180,14 +177,14 @@ public class Lexer extends BaseObject {
       if (expectedId != x.id())
         throw new LexerException(x, "expected id:", expectedId);
     }
-    mHistoryCursor++;
+    mReadIndex++;
     return x;
   }
 
   private void resetAction() {
     mActionLength = 0;
     mActionCursor = 0;
-    mActionCursorStart = mHistoryCursor;
+    mActionCursorStart = mReadIndex;
     mActionResult = false;
   }
 
@@ -221,7 +218,7 @@ public class Lexer extends BaseObject {
     var distance = INIT_INDEX;
     for (var seekId : tokenIds) {
       distance++;
-      var i = mHistoryCursor + distance;
+      var i = mReadIndex + distance;
       if (i >= mTokenCount) {
         success = false;
         break;
@@ -247,8 +244,8 @@ public class Lexer extends BaseObject {
   public boolean readIf(int... tokenIds) {
     var result = peekIf(tokenIds);
     if (result) {
-      mHistoryCursor += mActionLength;
-      p2("...readIf, advance cursor by prev token count", mActionLength, "to", mHistoryCursor);
+      mReadIndex += mActionLength;
+      p2("...readIf, advance cursor by prev token count", mActionLength, "to", mReadIndex);
     }
     return result;
   }
@@ -269,7 +266,7 @@ public class Lexer extends BaseObject {
 
   public boolean hasNext() {
     assertStarted();
-    return mHistoryCursor < mTokenCount;
+    return mReadIndex < mTokenCount;
   }
 
   private void extractTokens() {
@@ -403,48 +400,11 @@ checkState(infCount-- != 0);
   }
 
 
-//  /**
-//   * Return the tokens last read (or matched) via a call to peek(), read(), read(n), readIf(), peekIs().
-//   * Throws exception if the last such method call returned false.
-//   *
-//   * The returned list is a view into the history, and should not be modified.
-//   */
-//  public List<Token> tokens() {
-//    if (mActionLength == 0)
-//      throw badState("no previous peekIs() or readIf() call");
-//    return mHistory.subList(mPrevHistoryCursor, mPrevHistoryCursor + mActionLength);
-//  }
-
   // Action info
   private boolean mActionResult;
   private int mActionLength;
   private int mActionCursor;
   private int mActionCursorStart;
-
-  //  private boolean mPrevWasRead;
-  private int mPrevHistoryCursor;
-  private List<Token> mPeekBuffer;
-
-//
-//  @Deprecated
-//  public void unread() {
-//    unread(1);
-//  }
-//
-//  @Deprecated
-//  public void unread(int count) {
-//    if (mHistoryCursor < count)
-//      throw new ScanException(null, "Token unavailable");
-//    mHistoryCursor -= count;
-//  }
-//
-//  private byte peekByte(int index) {
-//    var absIndex = index + mNextTokenStart;
-//    if (absIndex < mBytes.length) {
-//      return mBytes[absIndex];
-//    }
-//    return 0;
-//  }
 
 
   String getText(int infoPtr) {
@@ -459,17 +419,10 @@ checkState(infCount-- != 0);
   private int mSkipId;
   private boolean mAcceptUnknownTokens;
 
-  private int mNextTokenStart;
-  private int mLastTokenOffset;
-  private int mLastTokenByteCount;
-  private int mLineNumber;
-  private int mColumn;
-  //  private List<Token> mHistory = arrayList();
-  private int mHistoryCursor;
 
+  private int mReadIndex;
 
   public static final int ID_END = -2;
   public static final int ID_ANY = -1;
-
 
 }

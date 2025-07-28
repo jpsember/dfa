@@ -133,6 +133,24 @@ public class LexerTest extends MyTestCase {
     assertTrue(s.peekIf(0, 1, 0, 1));
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void attemptLexIfPeekIfFailed() {
+    var s = lexer();
+    s.withText("abab");
+    s.start();
+    s.peekIf(1, 0);
+    s.token();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void attemptLexIfReadIfFailed() {
+    var s = lexer();
+    s.withText("abab");
+    s.start();
+    s.readIf(1, 0);
+    s.token();
+  }
+
   @Test
   public void readIf2() {
     var s = lexer();
