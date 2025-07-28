@@ -109,6 +109,18 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void bravo () {
+//    A:   a
+//    B:   b
+//    PAIR: ab
+//    PREF: bab*
+
+
+        proc("a b ab bab baa bab baba babb");
+
+  }
+
+  @Test
   public void complex1() {
     proc();
   }

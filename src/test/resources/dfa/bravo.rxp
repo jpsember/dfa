@@ -1,0 +1,6 @@
+SP:  \s
+A:   a
+B:   b
+PAIR: ab
+PREF: bab*
+
