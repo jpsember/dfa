@@ -100,23 +100,8 @@ public class Lexer extends BaseObject {
       F_TOTAL = 3;
 
 
-  private int[] mTokenInfo;
-  private int mTokenCount;
-//  private byte[] mNormalizedInput;
-
-//  public Lexer withSourceDescription(String description) {
-//    mSourceDescription = description;
-//  }
-//
-//  @Override
-//  protected String supplyName() {
-//    return mSourceDescription;
-//  }
-//
-//  private String mSourceDescription;
-
-  private static int indexToInfoPtr(int index) {
-    return index * F_TOTAL;
+  private int filteredIndexToInfoPtr(int index) {
+    return mFilteredOffsets[index];
   }
 
   /**
@@ -133,7 +118,7 @@ public class Lexer extends BaseObject {
     if (i < 0 || i >= mTokenCount) {
       return Lexeme.END_OF_INPUT;
     } else {
-      var j = indexToInfoPtr(i);
+      var j = filteredIndexToInfoPtr(i);
       return constructLexeme(j);
     }
   }
@@ -166,14 +151,14 @@ public class Lexer extends BaseObject {
    * expected type.  This is the same as read(int ... expectedIds), except that it returns
    * the Token as a scalar value, instead of being within a List
    *
-   * @param expectedId id of expected token; or -1 to match any
+   * @param expectedId id of expected token; or ID_END, ID_ANY
    * @return the read token (as a scalar value, instead of being within a List)
    */
   public Lexeme read(int expectedId) {
     var x = peek();
     if (x.isEndOfInput())
       throw new LexerException(x, "end of input");
-    if (expectedId != ID_ANY) {
+    if (expectedId != Lexeme.ID_UNKNOWN) {
       if (expectedId != x.id())
         throw new LexerException(x, "expected id:", expectedId);
     }
@@ -185,7 +170,6 @@ public class Lexer extends BaseObject {
     mActionLength = 0;
     mActionCursor = 0;
     mActionCursorStart = mReadIndex;
-    mActionResult = false;
   }
 
   public Lexer start() {
@@ -223,8 +207,8 @@ public class Lexer extends BaseObject {
         success = false;
         break;
       }
-      var ii = indexToInfoPtr(i);
-      if (mTokenInfo[ii + F_TOKEN_ID] != seekId) {
+      var ii = filteredIndexToInfoPtr(i);
+      if (!idMatch(mTokenInfo[ii + F_TOKEN_ID], seekId)) {
         success = false;
         break;
       }
@@ -232,7 +216,6 @@ public class Lexer extends BaseObject {
 
     if (success) {
       mActionLength = tokenIds.length;
-      mActionResult = success;
       p2("...setting prev token count:", mActionLength);
     }
     return success;
@@ -259,7 +242,7 @@ public class Lexer extends BaseObject {
       throw badState("no previous action");
     if (mActionCursor == mActionLength)
       throw badState("no tokens remain in action");
-    var x = constructLexeme(indexToInfoPtr(mActionCursor + mActionCursorStart));
+    var x = constructLexeme(filteredIndexToInfoPtr(mActionCursor + mActionCursorStart));
     mActionCursor++;
     return x;
   }
@@ -275,19 +258,21 @@ public class Lexer extends BaseObject {
 
     var ti = IntArray.newBuilder();
 
+    var filteredPtrs = IntArray.newBuilder();
+
     var lineNumber = 0;
     var tokenStartOffset = 0;
 
     var infCount = 5000;
 
     while (inputBytes[tokenStartOffset] != 0) {
-checkState(infCount-- != 0);
+      checkState(infCount-- != 0);
 
       int bestId = Lexeme.ID_UNKNOWN;
 
       var graph = mDfa.graph();
       var byteOffset = tokenStartOffset;
-      int bestOffset = tokenStartOffset+1;
+      int bestOffset = tokenStartOffset + 1;
 
       // <graph> ::= <state>*
       //
@@ -373,16 +358,15 @@ checkState(infCount-- != 0);
         byteOffset++;
       }
 
-//          F_TOKEN_OFFSET = 0,
-//          F_TOKEN_ID = 1,
-//          F_LINE_NUMBER = 2,
+      p("bestId:", bestId, "skip:", mSkipId, "filteredPtrs size:", filteredPtrs.size());
+      if (bestId != mSkipId) {
+        p("........adding offset to token info array:",ti.size());
+        filteredPtrs.add(ti.size());
+      }
       ti.add(tokenStartOffset);
       ti.add(bestId);
       ti.add(lineNumber);
 
-//      var nextCursor = bestOffset;
-
-      pr("src cursor:", tokenStartOffset, "best len:", bestOffset - tokenStartOffset, "inputBytes:", JSList.with(inputBytes));
       // increment line number for each linefeed encountered
       for (var j = tokenStartOffset; j < bestOffset; j++)
         if (inputBytes[j] == LF)
@@ -391,17 +375,22 @@ checkState(infCount-- != 0);
       tokenStartOffset = bestOffset;
     }
 
+    // Add a final entry so we can calculate the length of the last token
+    {
     ti.add(tokenStartOffset);
-    ti.add(ID_END);
+    ti.add(Lexeme.ID_END_OF_INPUT);
     ti.add(lineNumber);
-
+    }
     mTokenInfo = ti.array();
-    mTokenCount = (mTokenInfo.length / F_TOTAL) - 1;
+    mFilteredOffsets = filteredPtrs.array();
+    mTokenCount =  mFilteredOffsets.length ;
   }
 
+  private static boolean idMatch(int tokenId, int matchExpr) {
+    return matchExpr == Lexeme.ID_UNKNOWN || matchExpr == tokenId;
+  }
 
   // Action info
-  private boolean mActionResult;
   private int mActionLength;
   private int mActionCursor;
   private int mActionCursorStart;
@@ -416,13 +405,12 @@ checkState(infCount-- != 0);
 
   private DFA mDfa;
   private byte[] mBytes;
-  private int mSkipId;
+  private int mSkipId = Lexeme.ID_SKIP_NONE;
   private boolean mAcceptUnknownTokens;
-
-
   private int mReadIndex;
+  private int[] mTokenInfo;
+  private int[] mFilteredOffsets;
+  private int mTokenCount;
 
-  public static final int ID_END = -2;
-  public static final int ID_ANY = -1;
 
 }

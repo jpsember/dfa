@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import js.parsing.DFA;
+import parsing.Lexeme;
 import parsing.Lexer;
 
 import java.nio.charset.Charset;
@@ -104,6 +105,7 @@ public class LexerTest extends MyTestCase {
     assertFalse(s.hasNext());
   }
 
+
   @Test
   public void hasNext2() {
     var s = lexer();
@@ -169,6 +171,22 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
+  public void readIfAny() {
+    var s = lexer();
+    s.withText("abba");
+    s.start();
+    assertTrue(s.readIf(0, Lexeme.ID_UNKNOWN));
+  }
+
+  @Test
+  public void readIfAnyAtEnd() {
+    var s = lexer();
+    s.withText("");
+    s.start();
+    assertFalse(s.readIf(Lexeme.ID_UNKNOWN));
+  }
+
+  @Test
   public void readIf3() {
     var s = lexer();
     s.withText("abba");
@@ -186,7 +204,13 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
-  public void unknownSimple() {
+  public void simpleSkipB() {
+    lexer().withSkipId(1);
+    script("aabba");
+  }
+
+  @Test
+  public void unknownSimple() {rv();
     mAllowUnknown = true;
     script("c");
   }

@@ -1,4 +1,4 @@
-{                   "medium" : 5581,
+{                   "medium" : 9958,
               "newlinesCRLF" : 1315,
   "newlinesCRLFWithOrphanCR" : 3958,
    "newlinesCRLFwithMissing" : 1589,
@@ -6,6 +6,7 @@
               "newlinesNone" : 5972,
                    "noInput" : 2547,
                     "simple" : 2733,
+               "simpleSkipB" : 4397,
                 "smallInput" : 2733,
                   "tailCRLF" : 7512,
                    "unknown" : 6538,
