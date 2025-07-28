@@ -142,7 +142,7 @@ public class Lexer extends BaseObject {
    * Read the next token
    */
   public Lexeme read() {
-    return read(-1);
+    return read(Lexeme.ID_SKIP_NONE);
   }
 
 
@@ -151,14 +151,14 @@ public class Lexer extends BaseObject {
    * expected type.  This is the same as read(int ... expectedIds), except that it returns
    * the Token as a scalar value, instead of being within a List
    *
-   * @param expectedId id of expected token; or ID_END, ID_ANY
+   * @param expectedId id of expected token, or Lexeme.ID_SKIP_NONE
    * @return the read token (as a scalar value, instead of being within a List)
    */
   public Lexeme read(int expectedId) {
     var x = peek();
     if (x.isEndOfInput())
       throw new LexerException(x, "end of input");
-    if (expectedId != Lexeme.ID_UNKNOWN) {
+    if (expectedId != Lexeme.ID_SKIP_NONE) {
       if (expectedId != x.id())
         throw new LexerException(x, "expected id:", expectedId);
     }
@@ -360,7 +360,7 @@ public class Lexer extends BaseObject {
 
       p("bestId:", bestId, "skip:", mSkipId, "filteredPtrs size:", filteredPtrs.size());
       if (bestId != mSkipId) {
-        p("........adding offset to token info array:",ti.size());
+        p("........adding offset to token info array:", ti.size());
         filteredPtrs.add(ti.size());
       }
       ti.add(tokenStartOffset);
@@ -377,13 +377,13 @@ public class Lexer extends BaseObject {
 
     // Add a final entry so we can calculate the length of the last token
     {
-    ti.add(tokenStartOffset);
-    ti.add(Lexeme.ID_END_OF_INPUT);
-    ti.add(lineNumber);
+      ti.add(tokenStartOffset);
+      ti.add(Lexeme.ID_END_OF_INPUT);
+      ti.add(lineNumber);
     }
     mTokenInfo = ti.array();
     mFilteredOffsets = filteredPtrs.array();
-    mTokenCount =  mFilteredOffsets.length ;
+    mTokenCount = mFilteredOffsets.length;
   }
 
   private static boolean idMatch(int tokenId, int matchExpr) {

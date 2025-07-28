@@ -3,10 +3,6 @@ package parsing;
 
 import static js.base.Tools.*;
 
-import js.base.BasePrinter;
-import js.data.DataUtil;
-import js.parsing.ScanException;
-
 public final class Lexeme {
 
   public static final int ID_UNKNOWN = -1;
@@ -18,16 +14,6 @@ public final class Lexeme {
   private Lexeme(int id) {
     mId = id;
   }
-
-//   Lexeme(String source, int id, String tokenName, String text, int lineNumber, int column) {
-//    mSource = source;
-//    mId = id;
-//    mText = text;
-//    mRow = lineNumber;
-//    mColumn = column;
-//    mLexemeName = tokenName;
-//  }
-
 
   static Lexeme construct(Lexer lexer, int infoPointer) {
     var info = lexer.tokenInfo();
