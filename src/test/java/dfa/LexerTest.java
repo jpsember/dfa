@@ -226,13 +226,11 @@ public class LexerTest extends MyTestCase {
     script("aabbac");
   }
 
-
   @Test
   public void code1() {
     rv();
     proc();
   }
-
 
   @Test
   public void context() {
