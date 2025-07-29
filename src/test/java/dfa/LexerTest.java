@@ -239,31 +239,32 @@ public class LexerTest extends MyTestCase {
     // Read to one of the x's in between the two comments
 
     Lexeme tk = null;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i <= 4; i++) {
       tk = s.read();
       pr("read token:", tk, tk.text());
     }
 
-    var ct = tokenContext(tk, 3);
+    var context = tokenContext(tk, 3);
 
     String result;
     {
       var sb = new StringBuilder();
-      var center = ct.first;
-      var rows = ct.second;
-
-      pr("center:", center, "# rows:", rows);
 
       sb.append("---- context ----\n");
+      sb.append("|               |\n");
       int index = INIT_INDEX;
-      for (var r : rows) {
+      for (var r : context.rows) {
         index++;
-        if (index == center + 1) {
-          sb.append("........................\n");
+        if (index == 1 + context.tokenRow ) {
+          for (int j = 0; j < context.tokenColumn; j++)
+            sb.append('-');
+          sb.append('^');
+          sb.append('\n');
         }
         sb.append(r);
         sb.append('\n');
       }
+      sb.append("|               |\n");
       sb.append("-----------------\n");
 
       result = sb.toString();
@@ -344,7 +345,12 @@ public class LexerTest extends MyTestCase {
     int tokenColumn;
   }
 
-  public static Pair<Integer, List<String>> tokenContext(Lexeme x, int width) {
+  public static TokenContext tokenContext(Lexeme x, int width) {
+
+    var ret = new TokenContext();
+    ret.token = x;
+    ret.rows = arrayList();
+    ret.tokenRow = -1;
 
     if (false) {
       pr("determine length of each token");
@@ -359,7 +365,7 @@ public class LexerTest extends MyTestCase {
       pr("...done");
     }
 
-    List<String> outStrings = arrayList();
+//    List<String> outStrings = arrayList();
 
     var lexer = x.lexer();
     var targetInfoPtr = x.infoPtr();
@@ -393,7 +399,7 @@ public class LexerTest extends MyTestCase {
     var currentTokenInfo = bestSeek;
     StringBuilder destSb = null;
 
-    int centerRowNumber = -1;
+//    int centerRowNumber = -1;
 
     final int TAB_WIDTH = 4;
 
@@ -407,6 +413,10 @@ public class LexerTest extends MyTestCase {
       // If no more tokens, stop
       if (lexer.tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
         break;
+
+      if (currentTokenInfo == x.infoPtr()) {
+        ret.tokenColumn = currentCursorPos;
+      }
 
       var currentLineNum = lexer.tokenStartLineNumber(currentTokenInfo);
       pr("...token starts at line:", currentLineNum);
@@ -423,8 +433,8 @@ public class LexerTest extends MyTestCase {
         if (currentLineNum >= targetLineNumber - width)
           destSb = new StringBuilder();
         if (currentLineNum == targetLineNumber)
-          centerRowNumber = outStrings.size();
-        pr("built receiver:", destSb, "centerRowNumber:", centerRowNumber);
+          ret.tokenRow = ret.rows.size();
+        pr("built receiver:", destSb, "centerRowNumber:", ret.tokenRow);
       }
       var charIndex = lexer.tokenTextStart(currentTokenInfo);
       var tokLength = lexer.tokenLength(currentTokenInfo);
@@ -434,7 +444,7 @@ public class LexerTest extends MyTestCase {
         var ch = textBytes[charIndex + j];
         if (ch == '\n') {
           if (destSb != null) {
-            outStrings.add(destSb.toString());
+            ret.rows.add(destSb.toString());
           }
           currentCursorPos = 0;
           currentLineNum++;
@@ -442,7 +452,7 @@ public class LexerTest extends MyTestCase {
           if (currentLineNum >= targetLineNumber - width && currentLineNum <= targetLineNumber + width) {
             destSb = new StringBuilder();
             if (currentLineNum == targetLineNumber)
-              centerRowNumber = outStrings.size();
+              ret.tokenRow = ret.rows.size();
           }
         } else if (ch == '\t') {
           int tabMod = currentCursorPos % TAB_WIDTH;
@@ -468,12 +478,13 @@ public class LexerTest extends MyTestCase {
     }
     // Flush remaining strinbuilder?
     if (destSb != null)
-      outStrings.add(destSb.toString());
+      ret.rows.add(destSb.toString());
 
 //    List<String> rows = arrayList();
 //    rows.add("aaaa");
 //    rows.add("bbb");
 //    rows.add("ccc");
-    return pair(centerRowNumber, outStrings); //, rows);
+    return ret;
+//    return pair(centerRowNumber, outStrings); //, rows);
   }
 }
