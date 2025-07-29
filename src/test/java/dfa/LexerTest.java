@@ -236,26 +236,64 @@ public class LexerTest extends MyTestCase {
     s.withText(text);
     s.start();
 
-    // Read to one of the x's in between the two comments
 
-    Lexeme tk = null;
-    for (int i = 0; i <= 4; i++) {
-      tk = s.read();
-      pr("read token:", tk, tk.text());
+    List<Lexeme> y = arrayList();
+    while (s.hasNext()) {
+      y.add(s.read());
+    }
+//    // Read to one of the x's in between the two comments
+//
+//    Lexeme tk = null;
+//    for (int i = 0; i <= 4; i++) {
+//      tk = s.read();
+//      pr("read token:", tk, tk.text());
+//    }
+
+
+    var sb = new StringBuilder();
+    for (var z : y) {
+      var context = tokenContext(z, 3);
+      var st = plotContext(context);
+      sb.append(st);
     }
 
-    var context = tokenContext(tk, 3);
+    String result = sb.toString();
+//    {
+//      var sb = new StringBuilder();
+//      sb.append("---- context ----\n");
+//      sb.append("|               |\n");
+//      int index = INIT_INDEX;
+//      for (var r : context.rows) {
+//        index++;
+//        if (index == 1 + context.tokenRow) {
+//          for (int j = 0; j < context.tokenColumn; j++)
+//            sb.append('-');
+//          sb.append('^');
+//          sb.append('\n');
+//        }
+//        sb.append(r);
+//        sb.append('\n');
+//      }
+//      sb.append("|               |\n");
+//      sb.append("-----------------\n");
+//      result = sb.toString();
+//    }
 
+    pr(result);
+    assertMessage(result);
+  }
+
+
+  private static String plotContext(TokenContext context) {
     String result;
     {
       var sb = new StringBuilder();
-
       sb.append("---- context ----\n");
       sb.append("|               |\n");
       int index = INIT_INDEX;
       for (var r : context.rows) {
         index++;
-        if (index == 1 + context.tokenRow ) {
+        if (index == 1 + context.tokenRow) {
           for (int j = 0; j < context.tokenColumn; j++)
             sb.append('-');
           sb.append('^');
@@ -266,16 +304,10 @@ public class LexerTest extends MyTestCase {
       }
       sb.append("|               |\n");
       sb.append("-----------------\n");
-
       result = sb.toString();
     }
-
-
-    //var result = tk.toString(3);
-    pr(result);
-    assertMessage(result);
+    return result;
   }
-
 
   private String tokenDefs() {
     if (mTokenDefs == null)
@@ -337,7 +369,6 @@ public class LexerTest extends MyTestCase {
   private boolean mAllowUnknown;
 
 
-
   public static class TokenContext {
     Lexeme token;
     List<String> rows;
@@ -346,6 +377,7 @@ public class LexerTest extends MyTestCase {
   }
 
   public static TokenContext tokenContext(Lexeme x, int width) {
+final boolean DZ = false && alert("logging in effect");
 
     var ret = new TokenContext();
     ret.token = x;
@@ -371,8 +403,8 @@ public class LexerTest extends MyTestCase {
     var targetInfoPtr = x.infoPtr();
 
 
-    pr("tokenContext, lexeme:", targetInfoPtr);
-    pr("max info ptr:", lexer.tokenInfo().length);
+    if (DZ)  pr("tokenContext, lexeme:", targetInfoPtr);
+    if (DZ)  pr("max info ptr:", lexer.tokenInfo().length);
 
     // Determine line number for the target lexeme
     var targetLineNumber = lexer.tokenStartLineNumber(x.infoPtr());
@@ -403,12 +435,12 @@ public class LexerTest extends MyTestCase {
 
     final int TAB_WIDTH = 4;
 
-    final boolean SHOW_TABS = true;
+    final boolean SHOW_TABS = false;
 
     while (true) {
 
 
-      pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", lexer.tokenInfo().length);
+      if (DZ)  pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", lexer.tokenInfo().length);
 
       // If no more tokens, stop
       if (lexer.tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
@@ -419,11 +451,11 @@ public class LexerTest extends MyTestCase {
       }
 
       var currentLineNum = lexer.tokenStartLineNumber(currentTokenInfo);
-      pr("...token starts at line:", currentLineNum);
+      if (DZ) pr("...token starts at line:", currentLineNum);
 
       // If beyond context window, stop
       if (currentLineNum > targetLineNumber + width) {
-        pr("...beyond window, stopping");
+        if (DZ)   pr("...beyond window, stopping");
         break;
       }
 
@@ -434,13 +466,13 @@ public class LexerTest extends MyTestCase {
           destSb = new StringBuilder();
         if (currentLineNum == targetLineNumber)
           ret.tokenRow = ret.rows.size();
-        pr("built receiver:", destSb, "centerRowNumber:", ret.tokenRow);
+        if (DZ)  pr("built receiver:", destSb, "centerRowNumber:", ret.tokenRow);
       }
       var charIndex = lexer.tokenTextStart(currentTokenInfo);
       var tokLength = lexer.tokenLength(currentTokenInfo);
 
       for (int j = 0; j < tokLength; j++) {
-        pr("...plot token char loop, index:", j, "destSb:", destSb);
+       if (DZ) pr("...plot token char loop, index:", j, "destSb:", destSb);
         var ch = textBytes[charIndex + j];
         if (ch == '\n') {
           if (destSb != null) {
@@ -459,7 +491,7 @@ public class LexerTest extends MyTestCase {
           if (tabMod == 0) tabMod = TAB_WIDTH;
           if (destSb != null) {
             for (int k = 0; k < tabMod; k++) {
-             final char TAB_CHAR = SHOW_TABS ? '#' : ' ';
+              final char TAB_CHAR = SHOW_TABS ? '#' : ' ';
               destSb.append(TAB_CHAR);
             }
           }
