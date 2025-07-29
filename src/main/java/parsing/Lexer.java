@@ -209,7 +209,7 @@ public class Lexer extends BaseObject {
         break;
       }
       var ii = filteredIndexToInfoPtr(i);
-      if (!idMatch(mTokenInfo[ii + F_TOKEN_ID], seekId)) {
+      if (!idMatch(tokenId( ii ), seekId)) {
         success = false;
         break;
       }
@@ -422,16 +422,16 @@ public class Lexer extends BaseObject {
 
     var x = plotLexeme(infoPtr);
 
-//
-//    // Look for lexeme that
-//    var c0 = context(infoPtr, -contextCount);
-//    var c1 = context(infoPtr, contextCount);
-//
-//    for (var c = c0; c <= c1; c += F_TOTAL) {
-//
-//    }
     sb.append(x);
     return sb.toString();
+  }
+
+  public int tokenStartLineNumber(int infoPtr) {
+    return mTokenInfo[infoPtr + F_LINE_NUMBER];
+  }
+
+  public int tokenId(int infoPtr) {
+    return mTokenInfo[infoPtr + F_TOKEN_ID];
   }
 
   public int tokenLength(int infoPtr) {
@@ -447,9 +447,8 @@ public class Lexer extends BaseObject {
     var r0 = infoPtr;
     var r1 = infoPtr + F_TOKEN_OFFSET;
     checkArgument(r1 < mTokenInfo.length);
-    return mTokenInfo[r1 + F_LINE_NUMBER] - mTokenInfo[r0 + F_LINE_NUMBER];
+    return tokenStartLineNumber(r1) - tokenStartLineNumber(r0);
   }
-
 
   public int[] findNthNewlineBeforeEndOf(int tokenInfoPtr, int positionWithinText, int lfCount) {
     checkArgument(lfCount >= 0);
@@ -526,9 +525,7 @@ public class Lexer extends BaseObject {
 //  }
   private LexPlot plotLexeme(int infoIndex) {
     var lp = new LexPlot();
-    
-    lp.startLineNumber = 45;
-    todo("figure out line number from lexeme info index");
+    lp.startLineNumber = tokenStartLineNumber(infoIndex);
     lp.lines.add("to do... plot lines");
     return lp;
   }
