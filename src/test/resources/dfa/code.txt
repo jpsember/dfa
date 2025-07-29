@@ -1,0 +1,23 @@
+// Some tokens
+
+/* this is a c-style comment */
+
+  /* Comment
+       spanning
+          multiple
+            lines  */
+
+  /* this is /* a failed nested */ ? */
+
+-1234  //  number
+1234   //  number
+-123.34 // float
+/* string * / "hello" //
+/* another string*/ "abc_123_DEF" //
+
+   {  /*brop*/   }   /* brcl */
+
+    /* boolean constants */  true false
+                                                                                           123     /* very far to right */  456
+  789
+      123
