@@ -82,13 +82,16 @@ public final class Lexeme {
     return mId == value;
   }
 
+  // Not sure this needs to be public; for testing?
+  public int infoPtr() {
+    return mInfoPtr;
+  }
+
   public String locInfo() {
     todo("Lexeme locInfo");
     return "???locinfo???";
   }
-//  public String source() {
-//    return mSource;
-//  }
+
 
   public int row() {
     todo("Lexme text");
@@ -136,8 +139,7 @@ public final class Lexeme {
   public String text() {
     if (mText != null)
       return mText;
-    mText  =
-        mLexer.getText(mInfoPtr);
+    mText = mLexer.getText(mInfoPtr);
     return mText;
   }
 
@@ -151,5 +153,29 @@ public final class Lexeme {
     x.mText = "<END>";
     END_OF_INPUT = x;
   }
+
+  /**
+   * Construct a string displaying the start of a token, with some context source above and below it.
+   * Something like this:
+   * <pre>
+   *
+   * 201: zzzz   yyyy zzzz zzzz
+   * 202: aaaa bbb ccccc
+   * 203: dddd eeee fffff ggggggggg hhhhh iiii
+   * ---------------------^
+   * 204: jjjjj kkkkk
+   * 205: mmmmmmmm nnnnn
+   *
+   * </pre>
+   *
+   * @param contextCount number of lines to show to either side of the line containing the lexeme (2 in the above example)
+   * @return String
+   */
+  public String toString(int contextCount) {
+
+
+    return mLexer.lexemeToString(mInfoPtr, contextCount);
+  }
+
 
 }

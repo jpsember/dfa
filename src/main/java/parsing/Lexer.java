@@ -4,6 +4,7 @@ import static js.base.Tools.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 import js.base.BaseObject;
 import js.data.ByteArray;
@@ -13,14 +14,14 @@ import js.parsing.DFA;
 
 public class Lexer extends BaseObject {
 
-  private static final boolean DEBUG = true && alert("DEBUG in effect");
+  private static final boolean DEBUG = false && alert("DEBUG in effect");
 
   private static void p(Object... messages) {
     if (DEBUG)
       pr(insertStringToFront("Scanner>>>", messages));
   }
 
-  private static final boolean DEBUG2 = true && alert("DEBUG in effect");
+  private static final boolean DEBUG2 = false && alert("DEBUG in effect");
 
   private static void p2(Object... messages) {
     if (DEBUG2)
@@ -396,11 +397,14 @@ public class Lexer extends BaseObject {
   private int mActionCursorStart;
 
 
+  public int tokenTextStart(int infoPtr) {
+    return mTokenInfo[infoPtr + F_TOKEN_OFFSET];
+  }
+
   String getText(int infoPtr) {
-    var follow = infoPtr + F_TOTAL;
-    var startOffset = mTokenInfo[infoPtr + F_TOKEN_OFFSET];
-    var endOffset = mTokenInfo[follow + F_TOKEN_OFFSET];
-    return new String(mBytes, startOffset, endOffset - startOffset, StandardCharsets.UTF_8);
+    var startOffset = tokenTextStart(infoPtr);
+    var len = tokenLength(infoPtr);
+    return new String(mBytes, startOffset, len, StandardCharsets.UTF_8);
   }
 
   private DFA mDfa;
@@ -413,4 +417,136 @@ public class Lexer extends BaseObject {
   private int mTokenCount;
 
 
+  public String lexemeToString(int infoPtr, int contextCount) {
+    var sb = new StringBuilder();
+
+    var x = plotLexeme(infoPtr);
+
+//
+//    // Look for lexeme that
+//    var c0 = context(infoPtr, -contextCount);
+//    var c1 = context(infoPtr, contextCount);
+//
+//    for (var c = c0; c <= c1; c += F_TOTAL) {
+//
+//    }
+    sb.append(x);
+    return sb.toString();
+  }
+
+  public int tokenLength(int infoPtr) {
+    var r0 = infoPtr;
+    var r1 = infoPtr + F_TOTAL;
+    checkArgument(r1 < mTokenInfo.length);
+    var result = tokenTextStart(r1) - tokenTextStart(r0);
+    checkArgument(result > 0, "token length <= 0!");
+    return result;
+  }
+
+  private int crCount(int infoPtr) {
+    var r0 = infoPtr;
+    var r1 = infoPtr + F_TOKEN_OFFSET;
+    checkArgument(r1 < mTokenInfo.length);
+    return mTokenInfo[r1 + F_LINE_NUMBER] - mTokenInfo[r0 + F_LINE_NUMBER];
+  }
+
+
+  public int[] findNthNewlineBeforeEndOf(int tokenInfoPtr, int positionWithinText, int lfCount) {
+    checkArgument(lfCount >= 0);
+    int[] result = new int[2];
+    if (lfCount <= 0) {
+      result[0] = positionWithinText;
+      result[1] = lfCount;
+    } else {
+      var textStart = tokenTextStart(tokenInfoPtr);
+      checkArgument(positionWithinText <= tokenLength(tokenInfoPtr));
+      while (positionWithinText > 0) {
+        positionWithinText--;
+        if (mBytes[textStart + positionWithinText] == LF) {
+          lfCount--;
+          if (lfCount == 0) {
+            result[0] = 1 + positionWithinText;
+            break;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Find the nth linefeed from the end of a lexeme
+   *
+   * @return [1+position of linefeed, # linefeeds remaining to find]
+   */
+  private int[] findLinefeedBefore(int infoPtr, int lfCount) {
+    var bptr = mBytes;
+//    var inf = mTokenInfo;
+
+    var result = new int[2];
+
+    var thisLfCount = crCount(infoPtr);
+    if (thisLfCount < lfCount) {
+//      result[0] = 0;
+      result[1] = lfCount - thisLfCount;
+    } else {
+
+      var len = tokenLength(infoPtr);
+      var i = len;
+      while (i > 0) {
+        var ch = bptr[i - 1];
+        if (ch == '\n') {
+          lfCount--;
+          if (lfCount == 0) {
+            break;
+          }
+        }
+        i--;
+      }
+      result[0] = i;
+      result[1] = lfCount;
+    }
+    return result;
+  }
+
+//  private int context(int infoPtr, int lineOffset) {
+//
+
+  /// /    if (mTokenInfo.length == 0)
+  /// /      return infoPtr;
+  /// /
+//
+//
+//
+//    var i0 = mTokenInfo[mTokenInfo.length - F_TOTAL];
+//    var i1 = mTokenInfo[mTokenInfo.length];
+//    var
+//    var off = MyMath.clamp(infoPtr + lineOffset * F_TOTAL, 0, lastInfo);
+//    return off;
+//  }
+  private LexPlot plotLexeme(int infoIndex) {
+    var lp = new LexPlot();
+    
+    lp.startLineNumber = 45;
+    todo("figure out line number from lexeme info index");
+    lp.lines.add("to do... plot lines");
+    return lp;
+  }
 }
+
+
+class LexPlot {
+  int startLineNumber;
+  List<String> lines = arrayList();
+
+  @Override
+  public String toString() {
+    var sb = new StringBuilder();
+    for (var x : lines) {
+      sb.append(x);
+      sb.append('\n');
+    }
+    return sb.toString();
+  }
+}
+

@@ -3,7 +3,6 @@ package dfa;
 import js.data.ByteArray;
 import js.data.DataUtil;
 import js.json.JSList;
-import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
@@ -210,7 +209,8 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
-  public void unknownSimple() {rv();
+  public void unknownSimple() {
+    rv();
     mAllowUnknown = true;
     script("c");
   }
@@ -220,6 +220,30 @@ public class LexerTest extends MyTestCase {
     mAllowUnknown = true;
     script("aabbac");
   }
+
+
+  @Test
+  public void context() {
+    rv();
+    tokens("{\"graph\":[0,5,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,1,120,1,108,0,1,47,1,39,0,0,1,1,42,1,46,0,0,3,2,1,41,43,85,46,0,2,1,41,43,85,46,0,1,42,1,67,0,0,5,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,1,42,1,67,0,1,47,1,106,0,3,0,2,1,1,120,1,108,0,1,3,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0],\"token_names\":\"WS CODE COMMENT\",\"version\":\"$2\"}");
+    var text = "x /* alpha\nbravo\ncharlie\ndelta */  x x x /* echo\n   fox\n   golf\n    hotel   */";
+
+    var s = lexer();
+    s.withText(text);
+    s.start();
+
+    // Read to one of the x's in between the two comments
+
+    Lexeme tk = null;
+    for (int i = 0; i < 5; i++) {
+      tk = s.read();
+    }
+
+    var result = tk.toString(3);
+    pr(result);
+    assertMessage(result);
+  }
+
 
   private String tokenDefs() {
     if (mTokenDefs == null)
