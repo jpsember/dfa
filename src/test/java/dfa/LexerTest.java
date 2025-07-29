@@ -227,7 +227,13 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
-  public void code1() {
+  public void code() {
+    rv();
+    proc();
+  }
+
+  @Test
+  public void codeb() {
     rv();
     proc();
   }
@@ -339,7 +345,9 @@ public class LexerTest extends MyTestCase {
 
     if (sampleText == null) {
       String resourceName = testName() + ".txt";
+      pr("resource:",resourceName);
       sampleText = Files.readString(this.getClass(), resourceName);
+      pr("sampleText:",INDENT,sampleText);
     }
     var source = sampleText;
 
@@ -375,6 +383,8 @@ public class LexerTest extends MyTestCase {
         var t = s.read();
         tok.add(t);
       }
+
+      pr("# tokens:",tok.size());
 
       for (var tk : tok) {
         var cts = tk.plotWithinContext();
