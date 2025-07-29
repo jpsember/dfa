@@ -94,12 +94,13 @@ public class Lexer extends BaseObject {
   }
 
 
-  static final int //
+   static final int //
       F_TOKEN_OFFSET = 0,
       F_TOKEN_ID = 1,
       F_LINE_NUMBER = 2,
       F_TOTAL = 3;
 
+  public static int TOKEN_INFO_REC_LEN = F_TOTAL;
 
   private int filteredIndexToInfoPtr(int index) {
     return mFilteredOffsets[index];
@@ -128,7 +129,7 @@ public class Lexer extends BaseObject {
     return Lexeme.construct(this, infoIndex);
   }
 
-  int[] tokenInfo() {
+  public int[] tokenInfo() {
     return mTokenInfo;
   }
 
@@ -471,6 +472,11 @@ public class Lexer extends BaseObject {
       }
     }
     return result;
+  }
+
+
+  public byte[] tempBytes() {
+    return mBytes;
   }
 
   /**

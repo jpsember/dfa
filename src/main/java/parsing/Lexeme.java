@@ -23,6 +23,10 @@ public final class Lexeme {
     return x;
   }
 
+  public Lexer lexer() {
+    return mLexer;
+  }
+
   public boolean isUnknown() {
     return mId == ID_UNKNOWN;
   }
@@ -172,8 +176,6 @@ public final class Lexeme {
    * @return String
    */
   public String toString(int contextCount) {
-
-
     return mLexer.lexemeToString(mInfoPtr, contextCount);
   }
 

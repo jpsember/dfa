@@ -1,5 +1,6 @@
 package dfa;
 
+import js.base.Pair;
 import js.data.ByteArray;
 import js.data.DataUtil;
 import js.json.JSList;
@@ -15,6 +16,7 @@ import parsing.Lexeme;
 import parsing.Lexer;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
 public class LexerTest extends MyTestCase {
 
@@ -226,7 +228,9 @@ public class LexerTest extends MyTestCase {
   public void context() {
     rv();
     tokens("{\"graph\":[0,5,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,1,120,1,108,0,1,47,1,39,0,0,1,1,42,1,46,0,0,3,2,1,41,43,85,46,0,2,1,41,43,85,46,0,1,42,1,67,0,0,5,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,1,42,1,67,0,1,47,1,106,0,3,0,2,1,1,120,1,108,0,1,3,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0],\"token_names\":\"WS CODE COMMENT\",\"version\":\"$2\"}");
-    var text = "x /* alpha\nbravo\ncharlie\ndelta */  x x x /* echo\n   fox\n   golf\n    hotel   */";
+    var text =
+        //"x /* alpha\nbravo\ncharlie\ndelta */  x x x /* echo\n   fox\n   golf\n    hotel   */";
+        "x\n\t x\n\t\t  x\n\t\t\t  x\n\t\t\t\t   x";
 
     var s = lexer();
     s.withText(text);
@@ -235,11 +239,38 @@ public class LexerTest extends MyTestCase {
     // Read to one of the x's in between the two comments
 
     Lexeme tk = null;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
       tk = s.read();
+      pr("read token:", tk, tk.text());
     }
 
-    var result = tk.toString(3);
+    var ct = tokenContext(tk, 3);
+
+    String result;
+    {
+      var sb = new StringBuilder();
+      var center = ct.first;
+      var rows = ct.second;
+
+      pr("center:", center, "# rows:", rows);
+
+      sb.append("---- context ----\n");
+      int index = INIT_INDEX;
+      for (var r : rows) {
+        index++;
+        if (index == center + 1) {
+          sb.append("........................\n");
+        }
+        sb.append(r);
+        sb.append('\n');
+      }
+      sb.append("-----------------\n");
+
+      result = sb.toString();
+    }
+
+
+    //var result = tk.toString(3);
     pr(result);
     assertMessage(result);
   }
@@ -303,4 +334,146 @@ public class LexerTest extends MyTestCase {
 
   private Integer mSkip;
   private boolean mAllowUnknown;
+
+
+
+  public static class TokenContext {
+    Lexeme token;
+    List<String> rows;
+    int tokenRow;
+    int tokenColumn;
+  }
+
+  public static Pair<Integer, List<String>> tokenContext(Lexeme x, int width) {
+
+    if (false) {
+      pr("determine length of each token");
+      var lexer = x.lexer();
+      var maxPtr = lexer.tokenInfo().length;
+      for (int i = 0; i < maxPtr; i += Lexer.TOKEN_INFO_REC_LEN) {
+        pr("i:", i);
+        pr("id:", lexer.tokenId(i));
+        if (lexer.tokenId(i) == Lexeme.ID_END_OF_INPUT) break;
+        pr("ln:", lexer.tokenLength(i));
+      }
+      pr("...done");
+    }
+
+    List<String> outStrings = arrayList();
+
+    var lexer = x.lexer();
+    var targetInfoPtr = x.infoPtr();
+
+
+    pr("tokenContext, lexeme:", targetInfoPtr);
+    pr("max info ptr:", lexer.tokenInfo().length);
+
+    // Determine line number for the target lexeme
+    var targetLineNumber = lexer.tokenStartLineNumber(x.infoPtr());
+
+    // Look for last token that appears on line n-c-1, then
+    // march forward, plotting tokens intersecting lines n-c through n+c
+
+    var seek = 0;
+    var bestSeek = -1;
+    while (true) {
+      if (lexer.tokenId(seek) == Lexeme.ID_END_OF_INPUT) {
+        break;
+      }
+      var ln = lexer.tokenStartLineNumber(seek);
+      if (bestSeek < 0 || ln <= targetLineNumber - width - 1) {
+        bestSeek = seek;
+      } else break;
+      seek += Lexer.TOKEN_INFO_REC_LEN;
+    }
+    checkState(bestSeek >= 0);
+
+    var textBytes = lexer.tempBytes();
+    int currentCursorPos = 0;
+    var currentTokenInfo = bestSeek;
+    StringBuilder destSb = null;
+
+    int centerRowNumber = -1;
+
+    final int TAB_WIDTH = 4;
+
+    final boolean SHOW_TABS = true;
+
+    while (true) {
+
+
+      pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", lexer.tokenInfo().length);
+
+      // If no more tokens, stop
+      if (lexer.tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
+        break;
+
+      var currentLineNum = lexer.tokenStartLineNumber(currentTokenInfo);
+      pr("...token starts at line:", currentLineNum);
+
+      // If beyond context window, stop
+      if (currentLineNum > targetLineNumber + width) {
+        pr("...beyond window, stopping");
+        break;
+      }
+
+      // If there's no receiver for the text we're going to plot, determine if
+      // we should create one
+      if (destSb == null) {
+        if (currentLineNum >= targetLineNumber - width)
+          destSb = new StringBuilder();
+        if (currentLineNum == targetLineNumber)
+          centerRowNumber = outStrings.size();
+        pr("built receiver:", destSb, "centerRowNumber:", centerRowNumber);
+      }
+      var charIndex = lexer.tokenTextStart(currentTokenInfo);
+      var tokLength = lexer.tokenLength(currentTokenInfo);
+
+      for (int j = 0; j < tokLength; j++) {
+        pr("...plot token char loop, index:", j, "destSb:", destSb);
+        var ch = textBytes[charIndex + j];
+        if (ch == '\n') {
+          if (destSb != null) {
+            outStrings.add(destSb.toString());
+          }
+          currentCursorPos = 0;
+          currentLineNum++;
+          destSb = null;
+          if (currentLineNum >= targetLineNumber - width && currentLineNum <= targetLineNumber + width) {
+            destSb = new StringBuilder();
+            if (currentLineNum == targetLineNumber)
+              centerRowNumber = outStrings.size();
+          }
+        } else if (ch == '\t') {
+          int tabMod = currentCursorPos % TAB_WIDTH;
+          if (tabMod == 0) tabMod = TAB_WIDTH;
+          if (destSb != null) {
+            for (int k = 0; k < tabMod; k++) {
+             final char TAB_CHAR = SHOW_TABS ? '#' : ' ';
+              destSb.append(TAB_CHAR);
+            }
+          }
+          currentCursorPos += tabMod;
+        } else {
+          if (destSb != null) {
+            destSb.append((char) ch);
+          }
+          currentCursorPos++;
+        }
+      }
+
+      // We've plotted a single token
+
+      currentTokenInfo += Lexer.TOKEN_INFO_REC_LEN;
+    }
+    // Flush remaining strinbuilder?
+    if (destSb != null)
+      outStrings.add(destSb.toString());
+
+//    List<String> rows = arrayList();
+//    rows.add("aaaa");
+//    rows.add("bbb");
+//    rows.add("ccc");
+    return pair(centerRowNumber, outStrings); //, rows);
+  }
 }
