@@ -160,26 +160,6 @@ public final class Lexeme {
     END_OF_INPUT = x;
   }
 
-  /**
-   * Construct a string displaying the start of a token, with some context source above and below it.
-   * Something like this:
-   * <pre>
-   *
-   * 201: zzzz   yyyy zzzz zzzz
-   * 202: aaaa bbb ccccc
-   * 203: dddd eeee fffff ggggggggg hhhhh iiii
-   * ---------------------^
-   * 204: jjjjj kkkkk
-   * 205: mmmmmmmm nnnnn
-   *
-   * </pre>
-   *
-   * @param contextCount number of lines to show to either side of the line containing the lexeme (2 in the above example)
-   * @return String
-   */
-  public String toString(int contextCount) {
-    return mLexer.lexemeToString(mInfoPtr, contextCount);
-  }
 
   private LexemePlotContext buildPlotContext(int width) {
 
@@ -189,13 +169,12 @@ public final class Lexeme {
 
     var ret = new LexemePlotContext();
 
-    var lexer = this.lexer();
     int maxLineNumber;
     {
-      var info = lexer.tokenInfo();
+      var info = lexer().tokenInfo();
       todo("Check that empty text still produces end of input");
       var lastLinePtr = info.length - Lexer.TOKEN_INFO_REC_LEN;
-      maxLineNumber = lexer.tokenStartLineNumber(lastLinePtr);
+      maxLineNumber = lexer().tokenStartLineNumber(lastLinePtr);
     }
     int reqDigits = (int) Math.floor(1 + Math.log10(1 + maxLineNumber)); // Add 1 since internal line numbers start at 0
     reqDigits = Math.max(reqDigits, 4);
@@ -208,10 +187,10 @@ public final class Lexeme {
     var targetInfoPtr = infoPtr();
 
     if (DZ) pr("tokenContext, lexeme:", targetInfoPtr);
-    if (DZ) pr("max info ptr:", lexer.tokenInfo().length);
+    if (DZ) pr("max info ptr:", lexer().tokenInfo().length);
 
     // Determine line number for the target lexeme
-    var targetLineNumber = lexer.tokenStartLineNumber(infoPtr());
+    var targetLineNumber = lexer().tokenStartLineNumber(infoPtr());
 
     // Look for last token that appears on line n-c-1, then
     // march forward, plotting tokens intersecting lines n-c through n+c
@@ -219,10 +198,10 @@ public final class Lexeme {
     var seek = 0;
     var bestSeek = -1;
     while (true) {
-      if (lexer.tokenId(seek) == Lexeme.ID_END_OF_INPUT) {
+      if (lexer().tokenId(seek) == Lexeme.ID_END_OF_INPUT) {
         break;
       }
-      var ln = lexer.tokenStartLineNumber(seek);
+      var ln = lexer().tokenStartLineNumber(seek);
       if (bestSeek < 0 || ln <= targetLineNumber - width - 1) {
         bestSeek = seek;
       } else break;
@@ -230,7 +209,7 @@ public final class Lexeme {
     }
     checkState(bestSeek >= 0);
 
-    var textBytes = lexer.tempBytes();
+    var textBytes = lexer().tempBytes();
     int currentCursorPos = 0;
     var currentTokenInfo = bestSeek;
     StringBuilder destSb = null;
@@ -244,17 +223,17 @@ public final class Lexeme {
     while (true) {
 
 
-      if (DZ) pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", lexer.tokenInfo().length);
+      if (DZ) pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", lexer().tokenInfo().length);
 
       // If no more tokens, stop
-      if (lexer.tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
+      if (lexer().tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
         break;
 
       if (currentTokenInfo == this.infoPtr()) {
         ret.tokenColumn = currentCursorPos;
       }
 
-      var currentLineNum = lexer.tokenStartLineNumber(currentTokenInfo);
+      var currentLineNum = lexer().tokenStartLineNumber(currentTokenInfo);
       if (DZ) pr("...token starts at line:", currentLineNum);
 
       // If beyond context window, stop
@@ -274,8 +253,8 @@ public final class Lexeme {
           ret.tokenRow = ret.rows.size();
         if (DZ) pr("built receiver:", destSb, "centerRowNumber:", ret.tokenRow);
       }
-      var charIndex = lexer.tokenTextStart(currentTokenInfo);
-      var tokLength = lexer.tokenLength(currentTokenInfo);
+      var charIndex = lexer().tokenTextStart(currentTokenInfo);
+      var tokLength = lexer().tokenLength(currentTokenInfo);
 
       for (int j = 0; j < tokLength; j++) {
         if (DZ) pr("...plot token char loop, index:", j, "destSb:", destSb);

@@ -94,7 +94,7 @@ public class Lexer extends BaseObject {
   }
 
 
-   static final int //
+  static final int //
       F_TOKEN_OFFSET = 0,
       F_TOKEN_ID = 1,
       F_LINE_NUMBER = 2,
@@ -210,7 +210,7 @@ public class Lexer extends BaseObject {
         break;
       }
       var ii = filteredIndexToInfoPtr(i);
-      if (!idMatch(tokenId( ii ), seekId)) {
+      if (!idMatch(tokenId(ii), seekId)) {
         success = false;
         break;
       }
@@ -418,15 +418,6 @@ public class Lexer extends BaseObject {
   private int mTokenCount;
 
 
-  public String lexemeToString(int infoPtr, int contextCount) {
-    var sb = new StringBuilder();
-
-    var x = plotLexeme(infoPtr);
-
-    sb.append(x);
-    return sb.toString();
-  }
-
   public int tokenStartLineNumber(int infoPtr) {
     return mTokenInfo[infoPtr + F_LINE_NUMBER];
   }
@@ -444,99 +435,11 @@ public class Lexer extends BaseObject {
     return result;
   }
 
-  private int crCount(int infoPtr) {
-    var r0 = infoPtr;
-    var r1 = infoPtr + F_TOKEN_OFFSET;
-    checkArgument(r1 < mTokenInfo.length);
-    return tokenStartLineNumber(r1) - tokenStartLineNumber(r0);
-  }
-
-  public int[] findNthNewlineBeforeEndOf(int tokenInfoPtr, int positionWithinText, int lfCount) {
-    checkArgument(lfCount >= 0);
-    int[] result = new int[2];
-    if (lfCount <= 0) {
-      result[0] = positionWithinText;
-      result[1] = lfCount;
-    } else {
-      var textStart = tokenTextStart(tokenInfoPtr);
-      checkArgument(positionWithinText <= tokenLength(tokenInfoPtr));
-      while (positionWithinText > 0) {
-        positionWithinText--;
-        if (mBytes[textStart + positionWithinText] == LF) {
-          lfCount--;
-          if (lfCount == 0) {
-            result[0] = 1 + positionWithinText;
-            break;
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-
   public byte[] tempBytes() {
     return mBytes;
   }
 
-  /**
-   * Find the nth linefeed from the end of a lexeme
-   *
-   * @return [1+position of linefeed, # linefeeds remaining to find]
-   */
-  private int[] findLinefeedBefore(int infoPtr, int lfCount) {
-    var bptr = mBytes;
-//    var inf = mTokenInfo;
-
-    var result = new int[2];
-
-    var thisLfCount = crCount(infoPtr);
-    if (thisLfCount < lfCount) {
-//      result[0] = 0;
-      result[1] = lfCount - thisLfCount;
-    } else {
-
-      var len = tokenLength(infoPtr);
-      var i = len;
-      while (i > 0) {
-        var ch = bptr[i - 1];
-        if (ch == '\n') {
-          lfCount--;
-          if (lfCount == 0) {
-            break;
-          }
-        }
-        i--;
-      }
-      result[0] = i;
-      result[1] = lfCount;
-    }
-    return result;
-  }
-
-//  private int context(int infoPtr, int lineOffset) {
-//
-
-  /// /    if (mTokenInfo.length == 0)
-  /// /      return infoPtr;
-  /// /
-//
-//
-//
-//    var i0 = mTokenInfo[mTokenInfo.length - F_TOTAL];
-//    var i1 = mTokenInfo[mTokenInfo.length];
-//    var
-//    var off = MyMath.clamp(infoPtr + lineOffset * F_TOTAL, 0, lastInfo);
-//    return off;
-//  }
-  private LexPlot plotLexeme(int infoIndex) {
-    var lp = new LexPlot();
-    lp.startLineNumber = tokenStartLineNumber(infoIndex);
-    lp.lines.add("to do... plot lines");
-    return lp;
-  }
 }
-
 
 class LexPlot {
   int startLineNumber;
