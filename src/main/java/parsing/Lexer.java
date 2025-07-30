@@ -33,6 +33,7 @@ public class Lexer extends BaseObject {
   }
 
   public Lexer withText(CharSequence text) {
+    todo("do we want to trigger a reset if already started?");
     var s = text.toString();
     withBytes(s.getBytes(StandardCharsets.UTF_8));
     return this;
@@ -40,13 +41,8 @@ public class Lexer extends BaseObject {
 
   public Lexer withBytes(byte[] sourceBytes) {
     mBytes = normalizeNewlines(sourceBytes);
-//    mBytes = sourceBytes;
     return this;
   }
-//  public Lexer(DFA dfa, byte[] sourceBytes) {
-//    mDfa = dfa;
-//    mBytes = sourceBytes;
-//  }
 
   public Lexer withSkipId(int skipId) {
     mSkipId = skipId;
@@ -60,15 +56,11 @@ public class Lexer extends BaseObject {
 
   private static final byte LF = 0x0a;
 
-
   public static byte[] normalizeNewlines(byte[] sourceBytes) {
-
     var output = ByteArray.newBuilder();
-
+    todo("use constants for CR, TAB, etc");
     final byte CR = 0x0d;
-
     var srcLen = sourceBytes.length;
-//    var destCursor = 0;
     var srcCursor = 0;
     while (srcCursor < srcLen) {
       var srcByte = sourceBytes[srcCursor];
@@ -78,19 +70,12 @@ public class Lexer extends BaseObject {
       } else {
         // Copy the source byte to the destination, and increment both cursors
         output.add(srcByte);
-//        sourceBytes[destCursor] = srcByte;
-//        destCursor++;
       }
       srcCursor++;
     }
-    // pr("srcLen:", srcLen, "srcCursor:", srcCursor, "destCursor:", destCursor);
-
-
-    // Return the modified bytes only if they were in fact modified
-    // if (srcCursor == destCursor) return sourceBytes;
+    // Add zero marking the end of input
     output.add((byte) 0);
     return output.array();
-//    return Arrays.copyOf(sourceBytes, destCursor);
   }
 
 
@@ -183,7 +168,6 @@ public class Lexer extends BaseObject {
 
   private void assertNotStarted() {
     checkState(mTokenInfo == null, "already started");
-
   }
 
   private void assertStarted() {
@@ -410,7 +394,7 @@ public class Lexer extends BaseObject {
 
   private DFA mDfa;
   private byte[] mBytes;
-  private int mSkipId = Lexeme.ID_SKIP_NONE;
+  /*private*/ public int mSkipId = Lexeme.ID_SKIP_NONE;
   private boolean mAcceptUnknownTokens;
   private int mReadIndex;
   private int[] mTokenInfo;
@@ -438,13 +422,20 @@ public class Lexer extends BaseObject {
 
   String plotContext(LexemePlotContext context) {
 
-    // Try to keep the entire token within view...
-    var textStart = Math.max(0, context.tokenColumn - 50);
+    // Try to keep the start of the token within view.
+    // Later we might get fancy and try to center the entire token
+    // (if it doesn't contain linfeeds)...
+
+    final int TEXT_COLUMNS = 40; //110;
+
+    var textLeft = Math.max(0, context.tokenColumn - (int) (TEXT_COLUMNS * .4f));
 
     var lineNumberFormatString = "%" + context.maxLineNumberDigits + "d";
+
+    var maxTextColumns = TEXT_COLUMNS - context.maxLineNumberDigits;
+
     int paddingSp = 2;
 
-    pr("plotting:", INDENT, context);
     var sb = new StringBuilder();
     int maxIndex = Math.max(context.rows.size(), context.tokenRow + 2);
     for (var index = 0; index < maxIndex; index++) {
@@ -454,7 +445,7 @@ public class Lexer extends BaseObject {
 
       if (index == 1 + context.tokenRow) {
         sb.append(spaces(context.maxLineNumberDigits + paddingSp));
-        var arrLength = context.tokenColumn - textStart;
+        var arrLength = context.tokenColumn - textLeft;
         for (int j = 0; j < arrLength; j++)
           sb.append('-');
         sb.append('^');
@@ -464,47 +455,42 @@ public class Lexer extends BaseObject {
       sb.append(String.format(lineNumberFormatString, index + context.firstRowLineNumber));
       sb.append(": ");
 
-      var textRight = Math.min(r.length(), 110 + textStart);
-      if (textRight > textStart) {
-        sb.append(r.substring(textStart, textRight));
+      var textRight = Math.min(r.length(), maxTextColumns + textLeft);
+      if (textRight > textLeft) {
+        sb.append(r.substring(textLeft, textRight));
       }
       sb.append('\n');
     }
     return sb.toString();
   }
 
-
-  LexemePlotContext buildPlotContext(Lexeme lexeme, int width) {
-    final boolean DZ = true && alert("logging in effect");
-
-    todo("last token doesn't print properly");
-    var ret = new LexemePlotContext();
-
+  private int determineMaxDigits() {
     int maxLineNumber;
     {
       var info = tokenInfo();
-      todo("Check that empty text still produces end of input");
       var lastLinePtr = info.length - Lexer.TOKEN_INFO_REC_LEN;
       maxLineNumber = tokenStartLineNumber(lastLinePtr);
     }
     int reqDigits = (int) Math.floor(1 + Math.log10(1 + maxLineNumber)); // Add 1 since internal line numbers start at 0
     reqDigits = Math.max(reqDigits, 4);
-    ret.maxLineNumberDigits = reqDigits;
+    return reqDigits;
+  }
 
+  LexemePlotContext buildPlotContext(Lexeme lexeme, int width) {
+
+    var ret = new LexemePlotContext();
+    ret.maxLineNumberDigits = determineMaxDigits();
     ret.token = lexeme;
     ret.rows = arrayList();
     ret.tokenRow = -1;
-
-    var targetInfoPtr = mTokenInfo;
-
-    if (DZ) pr("tokenContext, lexeme:", targetInfoPtr);
-    if (DZ) pr("max info ptr:", mTokenInfo.length);
 
     // Determine line number for the target lexeme
     var targetLineNumber = tokenStartLineNumber(lexeme.mInfoPtr);
 
     // Look for last token that appears on line n-c-1, then
     // march forward, plotting tokens intersecting lines n-c through n+c
+
+    todo("use binary search here");
 
     pr("seeking for targetLine", targetLineNumber, "-width", width, "-1", targetLineNumber - width - 1);
     var seek = 0;
@@ -532,8 +518,6 @@ public class Lexer extends BaseObject {
     final boolean SHOW_TABS = false;
 
     while (true) {
-      if (DZ) pr(VERT_SP, "plot, next token; info:", currentTokenInfo, "max:", tokenInfo().length);
-
       // If no more tokens, stop
       if (tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
         break;
@@ -543,30 +527,26 @@ public class Lexer extends BaseObject {
       }
 
       var currentLineNum = tokenStartLineNumber(currentTokenInfo);
-      if (DZ) pr("...token starts at line:", currentLineNum);
 
       // If beyond context window, stop
       if (currentLineNum > targetLineNumber + width) {
-        if (DZ) pr("...beyond window, stopping");
         break;
       }
 
       // If there's no receiver for the text we're going to plot, determine if
       // we should create one
       if (destSb == null) {
-       // if (currentLineNum >= targetLineNumber - width) {
-          destSb = new StringBuilder();
-          ret.firstRowLineNumber = currentLineNum + 1;
+        // if (currentLineNum >= targetLineNumber - width) {
+        destSb = new StringBuilder();
+        ret.firstRowLineNumber = currentLineNum + 1;
         //}
         if (currentLineNum == targetLineNumber)
           ret.tokenRow = ret.rows.size();
-        if (DZ) pr("built receiver:", destSb, "centerRowNumber:", ret.tokenRow);
       }
       var charIndex = tokenTextStart(currentTokenInfo);
       var tokLength = tokenLength(currentTokenInfo);
 
       for (int j = 0; j < tokLength; j++) {
-        if (DZ) pr("...plot token char loop, index:", j, "destSb:", destSb);
         var ch = textBytes[charIndex + j];
         if (ch == '\n') {
           if (destSb != null) {
@@ -604,9 +584,6 @@ public class Lexer extends BaseObject {
     }
     if (destSb != null)
       ret.rows.add(destSb.toString());
-
-
-    pr("context:", ret.tokenRow, ret.rows.size());
     return ret;
   }
 

@@ -235,6 +235,7 @@ public class LexerTest extends MyTestCase {
   @Test
   public void codeb() {
     rv();
+    noSkip();
     proc();
   }
 
@@ -245,7 +246,7 @@ public class LexerTest extends MyTestCase {
     var text =
         //"x /* alpha\nbravo\ncharlie\ndelta */  x x x /* echo\n   fox\n   golf\n    hotel   */";
         "x\n\t x\n\t\t  x\n\t\t\t  x\n\t\t\t\t   x";
-
+    noSkip();
     var s = lexer();
     s.withText(text);
     s.start();
@@ -345,9 +346,7 @@ public class LexerTest extends MyTestCase {
 
     if (sampleText == null) {
       String resourceName = testName() + ".txt";
-      pr("resource:",resourceName);
       sampleText = Files.readString(this.getClass(), resourceName);
-      pr("sampleText:",INDENT,sampleText);
     }
     var source = sampleText;
 
@@ -370,11 +369,10 @@ public class LexerTest extends MyTestCase {
     {
       StringBuilder sb = new StringBuilder();
       var s = new Lexer(jsonDFA);
-      pr("text:",source);
       s.withText(source);
       if (!mDisallowUnknown)
         s.withAcceptUnknownTokens();
-      s.withSkipId(0);
+      s.withSkipId(mSkipId);
       s.setVerbose(verbose());
       s.start();
 
@@ -432,6 +430,11 @@ public class LexerTest extends MyTestCase {
     }
   }
 
+  private void noSkip() {
+    mSkipId = Lexeme.ID_SKIP_NONE;
+  }
+
   private String mTestName;
   private int mVersion = -1;
+  private int mSkipId ;
 }
