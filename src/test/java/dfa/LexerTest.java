@@ -72,7 +72,6 @@ public class LexerTest extends MyTestCase {
   public void peekEndOfInput() {
     var x = lexer();
     x.withText("");
-    x.start();
     assertTrue(
         x.peek().isEndOfInput());
   }
@@ -99,7 +98,6 @@ public class LexerTest extends MyTestCase {
   public void hasNext() {
     var s = lexer();
     s.withText("");
-    s.start();
     assertFalse(s.hasNext());
   }
 
@@ -108,7 +106,6 @@ public class LexerTest extends MyTestCase {
   public void hasNext2() {
     var s = lexer();
     s.withText("a");
-    s.start();
     assertTrue(s.hasNext());
   }
 
@@ -116,7 +113,6 @@ public class LexerTest extends MyTestCase {
   public void hasNext3() {
     var s = lexer();
     s.withText("a");
-    s.start();
     assertTrue(s.hasNext());
     s.read();
     assertFalse(s.hasNext());
@@ -126,7 +122,6 @@ public class LexerTest extends MyTestCase {
   public void peekIf() {
     var s = lexer();
     s.withText("abab");
-    s.start();
     assertTrue(s.peekIf(0, 1));
     assertFalse(s.peekIf(0, 1, 1));
     assertTrue(s.peekIf());
@@ -137,7 +132,6 @@ public class LexerTest extends MyTestCase {
   public void attemptLexIfPeekIfFailed() {
     var s = lexer();
     s.withText("abab");
-    s.start();
     s.peekIf(1, 0);
     s.token();
   }
@@ -146,7 +140,6 @@ public class LexerTest extends MyTestCase {
   public void attemptLexIfReadIfFailed() {
     var s = lexer();
     s.withText("abab");
-    s.start();
     s.readIf(1, 0);
     s.token();
   }
@@ -155,7 +148,6 @@ public class LexerTest extends MyTestCase {
   public void readIf2() {
     var s = lexer();
     s.withText("abba");
-    s.start();
 
     assertTrue(s.readIf(0, 1));
     assertEquals(0, s.token().id());
@@ -172,7 +164,6 @@ public class LexerTest extends MyTestCase {
   public void readIfAny() {
     var s = lexer();
     s.withText("abba");
-    s.start();
     assertTrue(s.readIf(0, Lexeme.ID_UNKNOWN));
   }
 
@@ -180,7 +171,6 @@ public class LexerTest extends MyTestCase {
   public void readIfAnyAtEnd() {
     var s = lexer();
     s.withText("");
-    s.start();
     assertFalse(s.readIf(Lexeme.ID_UNKNOWN));
   }
 
@@ -188,7 +178,6 @@ public class LexerTest extends MyTestCase {
   public void readIf3() {
     var s = lexer();
     s.withText("abba");
-    s.start();
 
     assertTrue(s.readIf(0, 1));
     assertFalse(s.readIf(0, 1));
@@ -196,6 +185,38 @@ public class LexerTest extends MyTestCase {
     assertFalse(s.hasNext());
   }
 
+
+  @Test
+  public void peekIfThenRead() {
+    var s = lexer();
+    s.withText("ababab");
+
+    assertTrue(s.peekIf(0,1,0));
+    assertTrue(s.token().id(0));
+    assertTrue(s.token().id(1));
+    assertTrue(s.token().id(0));
+
+    assertTrue(s.readIf(0,1,0));
+
+    assertTrue(s.peekIf(1,0,1));
+    // Look at, without consuming them
+    assertTrue(s.token(0).id(1));
+    assertTrue(s.token(1).id(0));
+    assertTrue(s.token(2).id(1));
+
+    // Consume them
+    assertTrue(s.token( ).id(1));
+    assertTrue(s.token( ).id(0));
+    assertTrue(s.token( ).id(1));
+
+    assertTrue(s.readIf(1,0,1));
+    // Look at, without consuming them
+    assertTrue(s.token(0).id(1));
+    assertTrue(s.token(1).id(0));
+    assertTrue(s.token(2).id(1));
+
+    assertFalse(s.hasNext());
+  }
   @Test
   public void simple() {
     script("aabba");
@@ -237,7 +258,6 @@ public class LexerTest extends MyTestCase {
     noSkip();
     var s = lexer();
     s.withText(text);
-    s.start();
 
     var sb = new StringBuilder();
 
@@ -258,7 +278,6 @@ public class LexerTest extends MyTestCase {
     noSkip();
     var s = lexer();
     s.withText(text);
-    s.start();
 
     List<Lexeme> y = arrayList();
     while (s.hasNext()) {
@@ -374,7 +393,6 @@ public class LexerTest extends MyTestCase {
       lexer().withSkipId(mSkip);
 
     var s = lexer();
-    s.start();
     var sb = new StringBuilder();
     while (s.hasNext()) {
       var t = s.read();
@@ -437,7 +455,6 @@ public class LexerTest extends MyTestCase {
         s.withAcceptUnknownTokens();
       s.withSkipId(mSkipId);
       s.setVerbose(verbose());
-      s.start();
 
       List<Lexeme> tok = arrayList();
       while (s.hasNext()) {

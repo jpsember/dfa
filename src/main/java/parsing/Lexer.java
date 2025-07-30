@@ -34,14 +34,12 @@ public class Lexer extends BaseObject {
   }
 
   public Lexer withText(CharSequence text) {
-    todo("do we want to trigger a reset if already started?");
-    var s = text.toString();
-    withBytes(s.getBytes(StandardCharsets.UTF_8));
-    return this;
+    return withBytes(text.toString().getBytes(StandardCharsets.UTF_8));
   }
 
   public Lexer withBytes(byte[] sourceBytes) {
     mBytes = normalizeNewlines(sourceBytes);
+    mStarted = false;
     return this;
   }
 
@@ -87,8 +85,9 @@ public class Lexer extends BaseObject {
 
   public static int TOKEN_INFO_REC_LEN = F_TOTAL;
 
-  private int filteredIndexToAddress(int index) {
-    return mFilteredOffsets[index];
+  public boolean hasNext() {
+    start();
+    return mReadIndex < mTokenCount;
   }
 
   /**
@@ -98,24 +97,15 @@ public class Lexer extends BaseObject {
    * @return Lexeme
    */
   public Lexeme peek(int distance) {
-    assertStarted();
+    start();
     resetAction();
     int i = distance + mReadIndex;
-    Lexeme result;
     if (i < 0 || i >= mTokenCount) {
       return Lexeme.END_OF_INPUT;
     } else {
       var j = filteredIndexToAddress(i);
       return constructLexeme(j);
     }
-  }
-
-  private Lexeme constructLexeme(int infoIndex) {
-    return Lexeme.construct(this, infoIndex);
-  }
-
-  public int[] tokenInfo() {
-    return mTokenInfo;
   }
 
   /**
@@ -153,33 +143,13 @@ public class Lexer extends BaseObject {
     return x;
   }
 
-  private void resetAction() {
-    mActionLength = 0;
-    mActionCursor = 0;
-    mActionCursorStart = mReadIndex;
-  }
-
-  public Lexer start() {
-    assertNotStarted();
-    extractTokens();
-    resetAction();
-    return this;
-  }
-
-  private void assertNotStarted() {
-    checkState(mTokenInfo == null, "already started");
-  }
-
-  private void assertStarted() {
-    checkState(mTokenInfo != null, "not started");
-  }
 
   /**
    * Determine if the next n tokens exist and match the specified ids
    */
   public boolean peekIf(int... tokenIds) {
     p2("peekIs, tokenIds:", tokenIds);
-    assertStarted();
+    start();
 
     resetAction();
 
@@ -220,10 +190,10 @@ public class Lexer extends BaseObject {
   }
 
   /**
-   * Return the next token read or matched via call to peekIf() or readIf()
+   * Consume the next token read or matched via call to peekIf() or readIf()
    */
   public Lexeme token() {
-    assertStarted();
+    start();
     if (mActionLength == 0)
       throw badState("no previous action");
     if (mActionCursor == mActionLength)
@@ -233,9 +203,39 @@ public class Lexer extends BaseObject {
     return x;
   }
 
-  public boolean hasNext() {
-    assertStarted();
-    return mReadIndex < mTokenCount;
+  /**
+   * Return a particular token read or matched via call to peekIf() or readIf(),
+   * of those that haven't already been consumed by a call to token()
+   */
+  public Lexeme token(int position) {
+    start();
+    if (mActionLength == 0)
+      throw badState("no previous action");
+    if (mActionCursor + position >= mActionLength)
+      throw badState("no token at position");
+    return constructLexeme(filteredIndexToAddress(mActionCursorStart + mActionCursor + position));
+  }
+
+  private void resetAction() {
+    mActionCursor = 0;
+    mActionLength = 0;
+    mActionCursorStart = mReadIndex;
+  }
+
+  private Lexeme constructLexeme(int infoIndex) {
+    return Lexeme.construct(this, infoIndex);
+  }
+
+  int[] tokenInfo() {
+    return mTokenInfo;
+  }
+
+  void start() {
+    if (!mStarted) {
+      extractTokens();
+      resetAction();
+      mStarted = true;
+    }
   }
 
   private void extractTokens() {
@@ -400,17 +400,17 @@ public class Lexer extends BaseObject {
   private int[] mTokenInfo;
   private int[] mFilteredOffsets;
   private int mTokenCount;
+  private boolean mStarted;
 
-
-  public int tokenStartLineNumber(int address) {
+  int tokenStartLineNumber(int address) {
     return mTokenInfo[address + F_LINE_NUMBER];
   }
 
-  public int tokenId(int address) {
+  int tokenId(int address) {
     return mTokenInfo[address + F_TOKEN_ID];
   }
 
-  public int tokenLength(int address) {
+  int tokenLength(int address) {
     var r0 = address;
     var r1 = address + F_TOTAL;
     var result = tokenTextStart(r1) - tokenTextStart(r0);
@@ -504,6 +504,9 @@ public class Lexer extends BaseObject {
     return tokenIndexToAddress(searchMin);
   }
 
+  private int filteredIndexToAddress(int index) {
+    return mFilteredOffsets[index];
+  }
 
   private static int tokenAddressToIndex(int address) {
     return address / F_TOTAL;
