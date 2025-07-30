@@ -56,11 +56,10 @@ public class Lexer extends BaseObject {
   }
 
   private static final byte LF = 0x0a;
+  private static final byte CR = 0x0d;
 
   public static byte[] normalizeNewlines(byte[] sourceBytes) {
     var output = ByteArray.newBuilder();
-    todo("use constants for CR, TAB, etc");
-    final byte CR = 0x0d;
     var srcLen = sourceBytes.length;
     var srcCursor = 0;
     while (srcCursor < srcLen) {
@@ -88,7 +87,7 @@ public class Lexer extends BaseObject {
 
   public static int TOKEN_INFO_REC_LEN = F_TOTAL;
 
-  private int filteredIndexToInfoPtr(int index) {
+  private int filteredIndexToAddress(int index) {
     return mFilteredOffsets[index];
   }
 
@@ -106,7 +105,7 @@ public class Lexer extends BaseObject {
     if (i < 0 || i >= mTokenCount) {
       return Lexeme.END_OF_INPUT;
     } else {
-      var j = filteredIndexToInfoPtr(i);
+      var j = filteredIndexToAddress(i);
       return constructLexeme(j);
     }
   }
@@ -194,7 +193,7 @@ public class Lexer extends BaseObject {
         success = false;
         break;
       }
-      var ii = filteredIndexToInfoPtr(i);
+      var ii = filteredIndexToAddress(i);
       if (!idMatch(tokenId(ii), seekId)) {
         success = false;
         break;
@@ -229,7 +228,7 @@ public class Lexer extends BaseObject {
       throw badState("no previous action");
     if (mActionCursor == mActionLength)
       throw badState("no tokens remain in action");
-    var x = constructLexeme(filteredIndexToInfoPtr(mActionCursor + mActionCursorStart));
+    var x = constructLexeme(filteredIndexToAddress(mActionCursor + mActionCursorStart));
     mActionCursor++;
     return x;
   }
@@ -383,13 +382,13 @@ public class Lexer extends BaseObject {
   private int mActionCursorStart;
 
 
-  public int tokenTextStart(int infoPtr) {
-    return mTokenInfo[infoPtr + F_TOKEN_OFFSET];
+  public int tokenTextStart(int infoAddress) {
+    return mTokenInfo[infoAddress + F_TOKEN_OFFSET];
   }
 
-  String getText(int infoPtr) {
-    var startOffset = tokenTextStart(infoPtr);
-    var len = tokenLength(infoPtr);
+  String getText(int address) {
+    var startOffset = tokenTextStart(address);
+    var len = tokenLength(address);
     return new String(mBytes, startOffset, len, StandardCharsets.UTF_8);
   }
 
@@ -403,37 +402,23 @@ public class Lexer extends BaseObject {
   private int mTokenCount;
 
 
-  public int tokenStartLineNumber(int infoPtr) {
-    return mTokenInfo[infoPtr + F_LINE_NUMBER];
+  public int tokenStartLineNumber(int address) {
+    return mTokenInfo[address + F_LINE_NUMBER];
   }
 
-  public int tokenId(int infoPtr) {
-    return mTokenInfo[infoPtr + F_TOKEN_ID];
+  public int tokenId(int address) {
+    return mTokenInfo[address + F_TOKEN_ID];
   }
 
-  private static void assertValidInfoPtr(int infoPtr) {
-    if (infoPtr < 0 || (infoPtr % F_TOTAL) != 0) {
-      die("bad infoptr:",infoPtr);
-    }
-  }
-  public int tokenLength(int infoPtr) {
-    assertValidInfoPtr(infoPtr);
-    var r0 = infoPtr;
-    var r1 = infoPtr + F_TOTAL;
-    checkArgument(r1 < mTokenInfo.length);
+  public int tokenLength(int address) {
+    var r0 = address;
+    var r1 = address + F_TOTAL;
     var result = tokenTextStart(r1) - tokenTextStart(r0);
-    if (result <= 0) {
-      pr("textStart",r0,"is",tokenTextStart(r0));
-      pr("textStart",r1,"is",tokenTextStart(r1));
-    pr(DataUtil.hexDump(mTokenInfo, 0,mTokenInfo.length));
-    }
-    checkArgument(result > 0, "token length <= 0! Ptr:",infoPtr);
+    checkArgument(result > 0, "token length <= 0! Address:", address);
     return result;
   }
 
-
   String plotContext(LexemePlotContext context) {
-
     // Try to keep the start of the token within view.
     // Later we might get fancy and try to center the entire token
     // (if it doesn't contain linefeeds)...
@@ -488,23 +473,10 @@ public class Lexer extends BaseObject {
     return reqDigits;
   }
 
-  public static final boolean ISSUE_BINSEARCH = false && alert("ISSUE_BINSEARCH is in effect");
-
-  public static void pb(Object... messages) {
-    if (ISSUE_BINSEARCH)
-      pr(insertStringToFront("ISSUE_BINSEARCH --->", messages));
-  }
-
-
-  private String tk(int recNo) {
-    return recNo + " #" + tokenStartLineNumber(recNo * F_TOTAL);
-  }
-
   /**
    * Find last info pointer that has a line number <= n
    */
   private int findLastTokenAtLine(int n) {
-
     // A good place to use invariants.
     //
     // Invariant:
@@ -513,39 +485,75 @@ public class Lexer extends BaseObject {
     //    window gets smaller with each iteration
     //
 
-    pb("searchForLineNumber:", n);
-    checkArgument(n >= 0);
-
     // We will refer to the window start and size as a record count (i.e. / F_TOTAL),
-    // to simplify the halving calculations
+    // to simplify the calculations
     //
     int searchMin = 0;
-    int windowSize = (mTokenInfo.length / F_TOTAL);
+    int windowSize = tokenAddressToIndex(mTokenInfo.length);
     while (windowSize > 1) {
-
-      pb("searchLoop, window size: " + windowSize, TAB(60), tk(searchMin) + " ... " + tk(searchMin + windowSize - 1));
-
       var mid = searchMin + windowSize / 2;
-
-      var midPtr = mid * F_TOTAL;
+      var midPtr = tokenIndexToAddress(mid);
       var midLineNumber = tokenStartLineNumber(midPtr);
-      pb("...mid:", tk(mid));
-
-
       if (midLineNumber > n) {
         windowSize = mid - searchMin;
       } else {
         windowSize -= (mid - searchMin);
         searchMin = mid;
       }
-      checkState(windowSize >= 1);
     }
-    pb("...returning:", tk(searchMin));
-    return searchMin * F_TOTAL;
+    return tokenIndexToAddress(searchMin);
   }
 
+
+  private static int tokenAddressToIndex(int address) {
+    return address / F_TOTAL;
+  }
+
+  private static int tokenIndexToAddress(int index) {
+    return index * F_TOTAL;
+  }
+
+  int calculateColumnNumber(int lexemeInfoAddress) {
+    var targetLineNumber = tokenStartLineNumber(lexemeInfoAddress);
+
+    // Look for last token that appears on line n-1, then
+    // march forward
+    var seekLine = targetLineNumber - 1;
+    int currentTokenAddress;
+    if (seekLine < 0) {
+      currentTokenAddress = 0;
+    } else {
+      currentTokenAddress = findLastTokenAtLine(seekLine);
+    }
+
+    int column = 0;
+    var textBytes = mBytes;
+
+    final int TAB_WIDTH = 4;
+
+    while (currentTokenAddress != lexemeInfoAddress) {
+      var charIndex = tokenTextStart(currentTokenAddress);
+      var tokLength = tokenLength(currentTokenAddress);
+
+      for (int j = 0; j < tokLength; j++) {
+        var ch = textBytes[charIndex + j];
+        if (ch == '\n') {
+          column = 0;
+        } else if (ch == '\t') {
+          int tabMod = column % TAB_WIDTH;
+          if (tabMod == 0) tabMod = TAB_WIDTH;
+          column += tabMod;
+        } else if (ch >= ' ') {
+          column++;
+        }
+      }
+      currentTokenAddress += Lexer.TOKEN_INFO_REC_LEN;
+    }
+    return column;
+  }
+
+
   LexemePlotContext buildPlotContext(Lexeme lexeme, int width) {
-    todo("refactor terminology for info ptr");
     var ret = new LexemePlotContext();
     ret.maxLineNumberDigits = determineMaxDigits();
     ret.token = lexeme;
@@ -553,18 +561,18 @@ public class Lexer extends BaseObject {
     ret.tokenRow = -1;
 
     // Determine line number for the target lexeme
-    var targetLineNumber = tokenStartLineNumber(lexeme.mInfoPtr);
+    var targetLineNumber = tokenStartLineNumber(lexeme.mInfoAddress);
 
     // Look for last token that appears on line n-c-1, then
     // march forward, plotting tokens intersecting lines n-c through n+c
-
-    var seekLine = Math.max(0, targetLineNumber - width - 1);
-    var startInfoPtr = findLastTokenAtLine(seekLine);
+    var seekLine = targetLineNumber - width - 1;
+    int startAddress = 0;
+    if (seekLine >= 0)
+      startAddress = findLastTokenAtLine(seekLine);
 
     var textBytes = mBytes;
     int currentCursorPos = 0;
-    var currentTokenInfo = startInfoPtr;
-    assertValidInfoPtr(currentTokenInfo);
+    var currentTokenAddress = startAddress;
     StringBuilder destSb = null;
 
     final int TAB_WIDTH = 4;
@@ -574,14 +582,14 @@ public class Lexer extends BaseObject {
     while (true) {
 
       // If no more tokens, stop
-      if (tokenId(currentTokenInfo) == Lexeme.ID_END_OF_INPUT)
+      if (tokenId(currentTokenAddress) == Lexeme.ID_END_OF_INPUT)
         break;
 
-      if (currentTokenInfo == lexeme.infoPtr()) {
+      if (currentTokenAddress == lexeme.infoAddress()) {
         ret.tokenColumn = currentCursorPos;
       }
 
-      var currentLineNum = tokenStartLineNumber(currentTokenInfo);
+      var currentLineNum = tokenStartLineNumber(currentTokenAddress);
 
       // If beyond context window, stop
       if (currentLineNum > targetLineNumber + width) {
@@ -596,8 +604,8 @@ public class Lexer extends BaseObject {
         if (currentLineNum == targetLineNumber)
           ret.tokenRow = ret.rows.size();
       }
-      var charIndex = tokenTextStart(currentTokenInfo);
-      var tokLength = tokenLength(currentTokenInfo);
+      var charIndex = tokenTextStart(currentTokenAddress);
+      var tokLength = tokenLength(currentTokenAddress);
 
       for (int j = 0; j < tokLength; j++) {
         var ch = textBytes[charIndex + j];
@@ -633,9 +641,7 @@ public class Lexer extends BaseObject {
 
       // We've plotted a single token
 
-      currentTokenInfo += Lexer.TOKEN_INFO_REC_LEN;
-      assertValidInfoPtr(currentTokenInfo);
-
+      currentTokenAddress += Lexer.TOKEN_INFO_REC_LEN;
     }
     if (destSb != null)
       ret.rows.add(destSb.toString());

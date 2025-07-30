@@ -1,8 +1,6 @@
 package parsing;
 
 
-import java.util.List;
-
 import static js.base.Tools.*;
 
 public final class Lexeme {
@@ -20,7 +18,7 @@ public final class Lexeme {
   static Lexeme construct(Lexer lexer, int infoPointer) {
     var info = lexer.tokenInfo();
     var x = new Lexeme(info[infoPointer + Lexer.F_TOKEN_ID]);
-    x.mInfoPtr = infoPointer;
+    x.mInfoAddress = infoPointer;
     x.mLexer = lexer;
     return x;
   }
@@ -89,8 +87,8 @@ public final class Lexeme {
   }
 
   // Not sure this needs to be public; for testing?
-  public int infoPtr() {
-    return mInfoPtr;
+  public int infoAddress() {
+    return mInfoAddress;
   }
 
   public String locInfo() {
@@ -100,13 +98,11 @@ public final class Lexeme {
 
 
   public int row() {
-    todo("Lexme text");
-    return -1;
+    return mLexer.tokenStartLineNumber(mInfoAddress);
   }
 
   public int column() {
-    todo("Lexme col");
-    return -1;
+    return mLexer.calculateColumnNumber(mInfoAddress);
   }
 
   public String name() {
@@ -145,13 +141,13 @@ public final class Lexeme {
   public String text() {
     if (mText != null)
       return mText;
-    mText = mLexer.getText(mInfoPtr);
+    mText = mLexer.getText(mInfoAddress);
     return mText;
   }
 
   private final int mId;
   Lexer mLexer;
-  int mInfoPtr;
+  int mInfoAddress;
   private String mText;
 
   static {

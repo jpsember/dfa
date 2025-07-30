@@ -64,10 +64,6 @@ public class LexerTest extends MyTestCase {
     }
     var srcBytes = b.array();
     var cvtBytes = Lexer.normalizeNewlines(srcBytes);
-    if (false) {
-      pr("srcBytes:", INDENT, JSList.with(srcBytes));
-      pr("cvtBytes:", INDENT, JSList.with(cvtBytes));
-    }
     var result = DataUtil.hexDump(cvtBytes, 0, cvtBytes.length, true);
     assertMessage(result);
   }
@@ -213,7 +209,6 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void unknownSimple() {
-    rv();
     mAllowUnknown = true;
     script("c");
   }
@@ -226,7 +221,6 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void code() {
-    rv();
     proc();
   }
 
@@ -237,28 +231,39 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
-  public void codeb2() {
-    proc();
+  public void rowsAndColumns() {
+    tokens(JSON_DFA);
+    var text = Files.readString(this.getClass(), testName() + ".txt");
+    noSkip();
+    var s = lexer();
+    s.withText(text);
+    s.start();
+
+    var sb = new StringBuilder();
+
+    while (s.hasNext()) {
+      var t = s.read();
+      sb.append(String.format("%5d %5d : %s\n", t.row() + 1, t.column() + 1, t.text()));
+    }
+    String result = sb.toString();
+    assertMessage(result);
   }
+
 
   @Test
   public void context() {
-    rv();
     tokens("{\"graph\":[0,5,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,1,120,1,108,0,1,47,1,39,0,0,1,1,42,1,46,0,0,3,2,1,41,43,85,46,0,2,1,41,43,85,46,0,1,42,1,67,0,0,5,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,1,42,1,67,0,1,47,1,106,0,3,0,2,1,1,120,1,108,0,1,3,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0],\"token_names\":\"WS CODE COMMENT\",\"version\":\"$2\"}");
     var text =
-        //"x /* alpha\nbravo\ncharlie\ndelta */  x x x /* echo\n   fox\n   golf\n    hotel   */";
         "x\n\t x\n\t\t  x\n\t\t\t  x\n\t\t\t\t   x";
     noSkip();
     var s = lexer();
     s.withText(text);
     s.start();
 
-
     List<Lexeme> y = arrayList();
     while (s.hasNext()) {
       y.add(s.read());
     }
-
 
     var sb = new StringBuilder();
     for (var z : y) {
@@ -268,7 +273,6 @@ public class LexerTest extends MyTestCase {
     }
 
     String result = sb.toString();
-    pr(result);
     assertMessage(result);
   }
 
@@ -283,11 +287,9 @@ public class LexerTest extends MyTestCase {
       ls.add(0);
       var vals = MyMath.permute(ls, random());
       vals.sort(null);
-//      pr("sorted:", INDENT, vals);
       for (int k = 0; k < 10; k++) {
         var seek = random().nextInt(size + 1);
         var slot = slowSlot(vals, seek);
-        // pr("target:",seek,"slot:",slot);
         var slot2 = binarySearch(vals, seek);
         checkState(slot == slot2);
       }
@@ -402,8 +404,20 @@ public class LexerTest extends MyTestCase {
     mDisallowUnknown = true;
   }
 
-  private void proc(String sampleText) {
+  private static final String JSON_DFA = "{\"graph\":[0,16,1,125,1,-114,1,1,123,1,-116,1,1,116,1,117,1,1,110,1,94,1,1," +
+      "102,1,64,1,1,93,1,62,1,1,91,1,60,1,1,58,1,58,1,1,49,9,39,1,1,48,1,-24,0,1,47,1,-73,0,1,45,1,-85,0,1,44," +
+      "1,-87,0,1,35,1,-94,0,1,34,1,97,0,3,9,2,12,2,32,1,86,0,1,1,3,9,2,12,2,32,1,86,0,0,3,3,32,2,35,57,93,35,97," +
+      "0,1,92,1,120,0,1,34,1,118,0,11,0,0,3,3,32,2,35,57,93,35,97,0,1,92,1,120,0,1,34,1,-115,0,11,3,3,32,2," +
+      "35,57,93,35,97,0,1,92,1,120,0,1,34,1,118,0,1,1,1,32,96,-94,0,9,0,0,2,1,49,9,39,1,1,48,1,-24,0,0,2,1," +
+      "42,1,-61,0,1,47,1,-94,0,0,2,2,1,41,43,85,-61,0,1,42,1,-47,0,0,3,3,1,41,43,4,48,80,-61,0,1,42,1,-47," +
+      "0,1,47,1,-26,0,1,0,12,2,2,69,1,101,1,11,1,1,46,1,-10,0,0,1,1,48,10,-3,0,12,2,2,69,1,101,1,11,1,1,48," +
+      "10,-3,0,0,2,1,48,10,32,1,2,43,1,45,1,25,1,0,1,1,48,10,32,1,12,1,1,48,10,32,1,12,3,1,48,10,39,1,2," +
+      "69,1,101,1,11,1,1,46,1,-10,0,10,0,2,0,3,0,0,1,1,97,1,71,1,0,1,1,108,1,78,1,0,1,1,115,1,85,1,0,1,1," +
+      "101,1,92,1,5,0,0,1,1,117,1,101,1,0,1,1,108,1,108,1,0,1,1,108,1,115,1,6,0,0,1,1,114,1,124,1,0,1,1," +
+      "117,1,-125,1,0,1,1,101,1,-118,1,4,0,7,0,8,0],\"token_names\":\"WS BROP BRCL TRUE FALSE NULL CBROP" +
+      " CBRCL COMMA COLON STRING NUMBER\",\"version\":\"$2\"}";
 
+  private void proc(String sampleText) {
     if (sampleText == null) {
       String resourceName = testName() + ".txt";
       sampleText = Files.readString(this.getClass(), resourceName);
@@ -412,18 +426,7 @@ public class LexerTest extends MyTestCase {
 
     DFACompiler c = new DFACompiler();
     c.setVerbose(verbose());
-    var jsonDFA = DFA.parse("{\"graph\":[0,16,1,125,1,-114,1,1,123,1,-116,1,1,116,1,117,1,1,110,1,94,1,1," +
-        "102,1,64,1,1,93,1,62,1,1,91,1,60,1,1,58,1,58,1,1,49,9,39,1,1,48,1,-24,0,1,47,1,-73,0,1,45,1,-85,0,1,44," +
-        "1,-87,0,1,35,1,-94,0,1,34,1,97,0,3,9,2,12,2,32,1,86,0,1,1,3,9,2,12,2,32,1,86,0,0,3,3,32,2,35,57,93,35,97," +
-        "0,1,92,1,120,0,1,34,1,118,0,11,0,0,3,3,32,2,35,57,93,35,97,0,1,92,1,120,0,1,34,1,-115,0,11,3,3,32,2," +
-        "35,57,93,35,97,0,1,92,1,120,0,1,34,1,118,0,1,1,1,32,96,-94,0,9,0,0,2,1,49,9,39,1,1,48,1,-24,0,0,2,1," +
-        "42,1,-61,0,1,47,1,-94,0,0,2,2,1,41,43,85,-61,0,1,42,1,-47,0,0,3,3,1,41,43,4,48,80,-61,0,1,42,1,-47," +
-        "0,1,47,1,-26,0,1,0,12,2,2,69,1,101,1,11,1,1,46,1,-10,0,0,1,1,48,10,-3,0,12,2,2,69,1,101,1,11,1,1,48," +
-        "10,-3,0,0,2,1,48,10,32,1,2,43,1,45,1,25,1,0,1,1,48,10,32,1,12,1,1,48,10,32,1,12,3,1,48,10,39,1,2," +
-        "69,1,101,1,11,1,1,46,1,-10,0,10,0,2,0,3,0,0,1,1,97,1,71,1,0,1,1,108,1,78,1,0,1,1,115,1,85,1,0,1,1," +
-        "101,1,92,1,5,0,0,1,1,117,1,101,1,0,1,1,108,1,108,1,0,1,1,108,1,115,1,6,0,0,1,1,114,1,124,1,0,1,1," +
-        "117,1,-125,1,0,1,1,101,1,-118,1,4,0,7,0,8,0],\"token_names\":\"WS BROP BRCL TRUE FALSE NULL CBROP" +
-        " CBRCL COMMA COLON STRING NUMBER\",\"version\":\"$2\"}");
+    var jsonDFA = DFA.parse(JSON_DFA);
 
 
     {

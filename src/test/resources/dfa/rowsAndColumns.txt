@@ -1,0 +1,8 @@
+123  /* this is a c-style comment */    456 123
+
+  /* Comment
+       spanning
+          multiple
+            lines  */
+
+ 12 , 45
