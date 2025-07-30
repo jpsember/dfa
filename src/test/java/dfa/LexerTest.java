@@ -1,12 +1,10 @@
 package dfa;
 
-import js.base.Pair;
 import js.data.ByteArray;
 import js.data.DataUtil;
-import js.file.FileException;
 import js.file.Files;
+import js.geometry.MyMath;
 import js.json.JSList;
-import js.parsing.Scanner;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
@@ -234,7 +232,6 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void codeb() {
-    rv();
     noSkip();
     proc();
   }
@@ -270,6 +267,65 @@ public class LexerTest extends MyTestCase {
     assertMessage(result);
   }
 
+  @Test
+  public void binarySearchTest() {
+    resetSeed(123456);
+    for (int j = 0; j < 100; j++) {
+      var size = random().nextInt(20) + 1;
+      List<Integer> ls = arrayList();
+      for (int i = 0; i < size; i++)
+        ls.add(random().nextInt(size + 1));
+      ls.add(0);
+      var vals = MyMath.permute(ls, random());
+      vals.sort(null);
+//      pr("sorted:", INDENT, vals);
+      for (int k = 0; k < 10; k++) {
+        var seek = random().nextInt(size + 1);
+        var slot = slowSlot(vals, seek);
+        // pr("target:",seek,"slot:",slot);
+        var slot2 = binarySearch(vals, seek);
+        checkState(slot == slot2);
+      }
+    }
+  }
+
+  private static int slowSlot(List<Integer> vals, int target) {
+    int result = 0;
+    int i = INIT_INDEX;
+    for (var x : vals) {
+      i++;
+      if (x <= target)
+        result = i;
+    }
+    return result;
+  }
+
+  private static int binarySearch(List<Integer> vals, int target) {
+    checkArgument(!vals.isEmpty() && target >= vals.get(0));
+
+    // We will refer to the window start and size as a record count (i.e. / F_TOTAL),
+    // to simplify the halving calculations
+    //
+    int searchMin = 0;
+    int windowSize = vals.size();
+
+    while (windowSize > 1) {
+
+      var mid = searchMin + windowSize / 2;
+
+      var midLineNumber = vals.get(mid);
+
+
+      if (midLineNumber > target) {
+        windowSize = mid - searchMin;
+      } else {
+        windowSize -= (mid - searchMin);
+        searchMin = mid;
+      }
+      checkState(windowSize >= 1);
+    }
+    return searchMin;
+  }
 
   private String tokenDefs() {
     if (mTokenDefs == null)
@@ -341,7 +397,6 @@ public class LexerTest extends MyTestCase {
     mDisallowUnknown = true;
   }
 
-
   private void proc(String sampleText) {
 
     if (sampleText == null) {
@@ -381,8 +436,6 @@ public class LexerTest extends MyTestCase {
         var t = s.read();
         tok.add(t);
       }
-
-      pr("# tokens:",tok.size());
 
       for (var tk : tok) {
         var cts = tk.plotWithinContext();
@@ -436,5 +489,5 @@ public class LexerTest extends MyTestCase {
 
   private String mTestName;
   private int mVersion = -1;
-  private int mSkipId ;
+  private int mSkipId;
 }

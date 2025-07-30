@@ -476,7 +476,65 @@ public class Lexer extends BaseObject {
     return reqDigits;
   }
 
+  public static final boolean ISSUE_BINSEARCH = true && alert("ISSUE_BINSEARCH is in effect");
+
+  public static void pb(Object... messages) {
+    if (ISSUE_BINSEARCH)
+      pr(insertStringToFront("ISSUE_BINSEARCH --->", messages));
+  }
+
+
+  private String tk(int recNo) {
+    return recNo + " #" + tokenStartLineNumber(recNo * F_TOTAL);
+  }
+
+  /**
+   * Find last info pointer that has a line number <= n
+   */
+  private int searchForLineNumber(int n) {
+
+    // A good place to use invariants.
+    //
+    // Invariant:
+    //    window is a start index and a size, where size >= 1
+    //    window always contains search result
+    //    window gets smaller with each iteration
+    //
+
+    pb("searchForLineNumber:", n);
+    checkArgument(n >= 0);
+
+    // We will refer to the window start and size as a record count (i.e. / F_TOTAL),
+    // to simplify the halving calculations
+    //
+    int searchMin = 0;
+    int windowSize = (mTokenInfo.length / F_TOTAL);
+    while (windowSize > 1) {
+
+      pb("searchLoop, window size: "+ windowSize, TAB(60),tk(searchMin) + " ... " + tk(searchMin + windowSize - 1));
+
+      var mid = searchMin + windowSize/2;
+
+      var midPtr = mid * F_TOTAL;
+      var midLineNumber = tokenStartLineNumber(midPtr);
+      pb("...mid:",tk(mid));
+
+
+      if (midLineNumber > n) {
+        windowSize = mid - searchMin;
+      } else {
+        windowSize -= (mid - searchMin);
+        searchMin = mid;
+      }
+      checkState(windowSize >= 1);
+    }
+    pb("...returning:",tk(searchMin));
+    return searchMin;
+  }
+
   LexemePlotContext buildPlotContext(Lexeme lexeme, int width) {
+
+    todo("refactor terminology for info ptr");
 
     var ret = new LexemePlotContext();
     ret.maxLineNumberDigits = determineMaxDigits();
@@ -490,27 +548,15 @@ public class Lexer extends BaseObject {
     // Look for last token that appears on line n-c-1, then
     // march forward, plotting tokens intersecting lines n-c through n+c
 
-    todo("use binary search here");
+    var seekLine = Math.max(0,targetLineNumber - width - 1);
 
-    pr("seeking for targetLine", targetLineNumber, "-width", width, "-1", targetLineNumber - width - 1);
-    var seek = 0;
-    var bestSeek = -1;
-    while (true) {
-      if (tokenId(seek) == Lexeme.ID_END_OF_INPUT) {
-        break;
-      }
-      var ln = tokenStartLineNumber(seek);
-      if (bestSeek < 0 || ln <= targetLineNumber - width - 1) {
-        bestSeek = seek;
-        pr("bestSeek:", bestSeek);
-      } else break;
-      seek += Lexer.TOKEN_INFO_REC_LEN;
-    }
-    checkState(bestSeek >= 0);
+    pr("seeking for targetLine", targetLineNumber, "-width", width, "-1", seekLine);
+
+    var startInfoPtr = searchForLineNumber(seekLine);
 
     var textBytes = mBytes;
     int currentCursorPos = 0;
-    var currentTokenInfo = bestSeek;
+    var currentTokenInfo = startInfoPtr;
     StringBuilder destSb = null;
 
     final int TAB_WIDTH = 4;
