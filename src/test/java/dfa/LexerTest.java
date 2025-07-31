@@ -12,9 +12,9 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import js.parsing.DFA;
-import parsing.Lexeme;
-import parsing.Lexer;
-import parsing.LexerException;
+import js.parsing.Lexeme;
+import js.parsing.Lexer;
+import js.parsing.LexerException;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -46,7 +46,6 @@ public class LexerTest extends MyTestCase {
     newlineTest("CL");
   }
 
-
   @Test
   public void newlinesCRLFWithOrphanCR() {
     newlineTest("123CL4L56CCL");
@@ -72,10 +71,8 @@ public class LexerTest extends MyTestCase {
   public void peekEndOfInput() {
     var x = lexer();
     x.withText("");
-    assertTrue(
-        x.peek().isEndOfInput());
+    assertTrue(x.peek().isEndOfInput());
   }
-
 
   @Test
   public void noInput() {
@@ -90,7 +87,6 @@ public class LexerTest extends MyTestCase {
   @Test
   public void medium() {
     tokens("{\"graph\":[0,3,1,98,1,28,0,1,97,1,19,0,1,32,1,17,0,1,0,2,1,1,98,1,26,0,4,0,3,1,1,97,1,35,0,5,1,1,98,1,35,0],\"token_names\":\"SP A B PAIR PREF\",\"version\":\"$2\"}");
-    skip(0);
     script("a b ab bab baa bab baba babb");
   }
 
@@ -100,7 +96,6 @@ public class LexerTest extends MyTestCase {
     s.withText("");
     assertFalse(s.hasNext());
   }
-
 
   @Test
   public void hasNext2() {
@@ -122,17 +117,17 @@ public class LexerTest extends MyTestCase {
   public void peekIf() {
     var s = lexer();
     s.withText("abab");
-    assertTrue(s.peekIf(0, 1));
-    assertFalse(s.peekIf(0, 1, 1));
+    assertTrue(s.peekIf(1, 2));
+    assertFalse(s.peekIf(1, 2, 2));
     assertTrue(s.peekIf());
-    assertTrue(s.peekIf(0, 1, 0, 1));
+    assertTrue(s.peekIf(1, 2, 1, 2));
   }
 
   @Test(expected = IllegalStateException.class)
   public void attemptLexIfPeekIfFailed() {
     var s = lexer();
     s.withText("abab");
-    s.peekIf(1, 0);
+    s.peekIf(2, 1);
     s.token();
   }
 
@@ -140,7 +135,7 @@ public class LexerTest extends MyTestCase {
   public void attemptLexIfReadIfFailed() {
     var s = lexer();
     s.withText("abab");
-    s.readIf(1, 0);
+    s.readIf(2, 1);
     s.token();
   }
 
@@ -149,22 +144,22 @@ public class LexerTest extends MyTestCase {
     var s = lexer();
     s.withText("abba");
 
-    assertTrue(s.readIf(0, 1));
-    assertEquals(0, s.token().id());
+    assertTrue(s.readIf(1, 2));
     assertEquals(1, s.token().id());
+    assertEquals(2, s.token().id());
 
-    assertFalse(s.readIf(0, 1));
+    assertFalse(s.readIf(1, 2));
 
-    assertTrue(s.readIf(1, 0));
+    assertTrue(s.readIf(2, 1));
+    assertEquals(2, s.token().id());
     assertEquals(1, s.token().id());
-    assertEquals(0, s.token().id());
   }
 
   @Test
   public void readIfAny() {
     var s = lexer();
     s.withText("abba");
-    assertTrue(s.readIf(0, Lexeme.ID_UNKNOWN));
+    assertTrue(s.readIf(1, Lexeme.ID_UNKNOWN));
   }
 
   @Test
@@ -179,41 +174,40 @@ public class LexerTest extends MyTestCase {
     var s = lexer();
     s.withText("abba");
 
-    assertTrue(s.readIf(0, 1));
-    assertFalse(s.readIf(0, 1));
-    assertTrue(s.readIf(1, 0));
+    assertTrue(s.readIf(1, 2));
+    assertFalse(s.readIf(1, 2));
+    assertTrue(s.readIf(2, 1));
     assertFalse(s.hasNext());
   }
-
 
   @Test
   public void peekIfThenRead() {
     var s = lexer();
     s.withText("ababab");
 
-    assertTrue(s.peekIf(0, 1, 0));
-    assertTrue(s.token().id(0));
+    assertTrue(s.peekIf(1, 2, 1));
     assertTrue(s.token().id(1));
-    assertTrue(s.token().id(0));
+    assertTrue(s.token().id(2));
+    assertTrue(s.token().id(1));
 
-    assertTrue(s.readIf(0, 1, 0));
+    assertTrue(s.readIf(1, 2, 1));
 
-    assertTrue(s.peekIf(1, 0, 1));
+    assertTrue(s.peekIf(2, 1, 2));
     // Look at, without consuming them
-    assertTrue(s.token(0).id(1));
-    assertTrue(s.token(1).id(0));
-    assertTrue(s.token(2).id(1));
+    assertTrue(s.token(0).id(2));
+    assertTrue(s.token(1).id(1));
+    assertTrue(s.token(2).id(2));
 
     // Consume them
+    assertTrue(s.token().id(2));
     assertTrue(s.token().id(1));
-    assertTrue(s.token().id(0));
-    assertTrue(s.token().id(1));
+    assertTrue(s.token().id(2));
 
-    assertTrue(s.readIf(1, 0, 1));
+    assertTrue(s.readIf(2, 1, 2));
     // Look at, without consuming them
-    assertTrue(s.token(0).id(1));
-    assertTrue(s.token(1).id(0));
-    assertTrue(s.token(2).id(1));
+    assertTrue(s.token(0).id(2));
+    assertTrue(s.token(1).id(1));
+    assertTrue(s.token(2).id(2));
 
     assertFalse(s.hasNext());
   }
@@ -231,6 +225,7 @@ public class LexerTest extends MyTestCase {
   @Test
   public void unknownTokenDisplay() {
     var s = lexer();
+    s.setVerbose();
     var sb = new StringBuilder();
     s.withText("ab\nba\naab?ba");
     while (s.hasNext()) {
@@ -253,24 +248,25 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void simpleSkipB() {
-    lexer().withSkipId(1);
+    skip(1);
     script("aabba");
   }
 
   @Test
   public void unknownSimple() {
-    mAllowUnknown = true;
+    acceptUnknown();
     script("c");
   }
 
   @Test
   public void unknown() {
-    mAllowUnknown = true;
+    acceptUnknown();
     script("aabbac");
   }
 
   @Test
   public void code() {
+    acceptUnknown();
     proc();
   }
 
@@ -297,7 +293,6 @@ public class LexerTest extends MyTestCase {
     String result = sb.toString();
     assertMessage(result);
   }
-
 
   @Test
   public void context() {
@@ -384,7 +379,7 @@ public class LexerTest extends MyTestCase {
 
   private String tokenDefs() {
     if (mTokenDefs == null)
-      mTokenDefs = "{\"graph\":[0,2,1,98,1,14,0,1,97,1,12,0,1,0,2,0],\"token_names\":\"A B\",\"version\":\"$2\"}";
+      mTokenDefs = "{\"graph\":[0,3,2,10,1,32,1,23,0,1,98,1,21,0,1,97,1,19,0,2,0,3,0,1,1,2,10,1,32,1,23,0],\"token_names\":\"WS A B\",\"version\":\"$2\"}";
     return mTokenDefs;
   }
 
@@ -394,20 +389,29 @@ public class LexerTest extends MyTestCase {
     mTokenDefs = s;
   }
 
+  private void withDFA(DFA x) {
+    mDfa = x;
+  }
+
   private DFA dfa() {
     if (mDfa == null) {
-      mDfa = DFA.parse(tokenDefs());
+      withDFA(DFA.parse(tokenDefs()));
     }
     return mDfa;
   }
-
 
   private DFA mDfa;
 
   private Lexer lexer() {
     if (mLexer == null) {
       var m = new Lexer(dfa());
+
+      if (mAcceptUnknown)
+        m.withAcceptUnknownTokens();
+      m.withSkipId(mSkipId);
+
       mLexer = m;
+
     }
     return mLexer;
   }
@@ -416,10 +420,6 @@ public class LexerTest extends MyTestCase {
 
   private void script(String text) {
     lexer().withText(text);
-    if (mAllowUnknown)
-      lexer().withAcceptUnknownTokens();
-    if (mSkip != null)
-      lexer().withSkipId(mSkip);
 
     var s = lexer();
     var sb = new StringBuilder();
@@ -434,21 +434,17 @@ public class LexerTest extends MyTestCase {
   }
 
   private void skip(int skipIndex) {
-    mSkip = skipIndex;
+    mSkipId = skipIndex;
   }
 
-  private Integer mSkip;
-  private boolean mAllowUnknown;
+  private void acceptUnknown() {
+    mAcceptUnknown = true;
+  }
 
+  private boolean mAcceptUnknown;
 
   private void proc() {
     proc(null);
-  }
-
-  private boolean mDisallowUnknown;
-
-  private void disallowUnknown() {
-    mDisallowUnknown = true;
   }
 
   private static final String JSON_DFA = "{\"graph\":[0,16,1,125,1,-114,1,1,123,1,-116,1,1,116,1,117,1,1,110,1,94,1,1," +
@@ -475,14 +471,11 @@ public class LexerTest extends MyTestCase {
     c.setVerbose(verbose());
     var jsonDFA = DFA.parse(JSON_DFA);
 
-
     {
       StringBuilder sb = new StringBuilder();
-      var s = new Lexer(jsonDFA);
+      withDFA(jsonDFA);
+      var s = lexer();
       s.withText(source);
-      if (!mDisallowUnknown)
-        s.withAcceptUnknownTokens();
-      s.withSkipId(mSkipId);
       s.setVerbose(verbose());
 
       List<Lexeme> tok = arrayList();
@@ -491,15 +484,16 @@ public class LexerTest extends MyTestCase {
         tok.add(t);
       }
 
+      final var dash = "-----------------------------------------------------------------------------------\n";
       for (var tk : tok) {
-        var cts = tk.plotWithinContext();
-        sb.append("-----------------------------------------------------------------------------------\n");
-        sb.append(cts);
-        sb.append('\n')        ;
+        sb.append(dash);
         sb.append(tk);
+        sb.append("\n \n");
+        var cts = tk.plotWithinContext();
+        sb.append(cts);
         addLF(sb);
       }
-      sb.append("-----------------------------------------------------------------------------------\n");
+      sb.append(dash);
 
       String result = sb.toString();
       log("Parsed tokens:", INDENT, result);
@@ -509,15 +503,9 @@ public class LexerTest extends MyTestCase {
     assertGenerated();
   }
 
-
   private String testName() {
     parseName();
     return mTestName;
-  }
-
-  private int testVersion() {
-    parseName();
-    return mVersion;
   }
 
   private void parseName() {
@@ -533,7 +521,6 @@ public class LexerTest extends MyTestCase {
         j--;
       }
       if (j < nm.length()) {
-        mVersion = Integer.parseInt(nm.substring(j));
         testName = nm.substring(0, j);
       }
       mTestName = testName;
@@ -541,10 +528,15 @@ public class LexerTest extends MyTestCase {
   }
 
   private void noSkip() {
+    assertNotBuilt();
     mSkipId = Lexeme.ID_SKIP_NONE;
   }
 
+  private void assertNotBuilt() {
+    if (mLexer != null)
+      badState("lexer already built");
+  }
+
   private String mTestName;
-  private int mVersion = -1;
   private int mSkipId;
 }
