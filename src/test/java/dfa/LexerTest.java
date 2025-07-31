@@ -295,7 +295,17 @@ public class LexerTest extends MyTestCase {
   }
 
   @Test
+  public void sourceDescription() {
+    mSourceDescription ="a/b/c/sample.java:";
+    auxContent();
+  }
+
+  @Test
   public void context() {
+    auxContent();
+  }
+
+  void auxContent() {
     tokens("{\"graph\":[0,5,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,1,120,1,108,0,1,47,1,39,0,0,1,1,42,1,46,0,0,3,2,1,41,43,85,46,0,2,1,41,43,85,46,0,1,42,1,67,0,0,5,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,3,1,41,43,4,48,80,46,0,1,42,1,67,0,1,47,1,106,0,3,0,2,1,1,120,1,108,0,1,3,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0,3,9,2,12,2,32,1,115,0],\"token_names\":\"WS CODE COMMENT\",\"version\":\"$2\"}");
     var text =
         "x\n\t x\n\t\t  x\n\t\t\t  x\n\t\t\t\t   x";
@@ -412,6 +422,8 @@ public class LexerTest extends MyTestCase {
         m.withNoSkip();
       else
         m.withSkipId(mSkipId);
+      if (mSourceDescription != null)
+        m.withSourceDescription(mSourceDescription);
 
       mLexer = m;
     }
@@ -541,4 +553,5 @@ public class LexerTest extends MyTestCase {
 
   private String mTestName;
   private int mSkipId;
+  private String mSourceDescription;
 }
