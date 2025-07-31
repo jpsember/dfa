@@ -1,6 +1,6 @@
 package dfa;
 
-import js.parsing.Scanner;
+import js.parsing.Lexer;
 
 import static js.base.Tools.*;
 
@@ -28,7 +28,7 @@ public final class TokenDefinition {
    * @param tokenDefMap a map of previously parsed regular expressions (mapping names to
    *                    ids) to be consulted when regular expression references are found
    */
-  public void parse(Scanner scanner, Map<String, TokenDefinition> tokenDefMap) {
+  public void parse(Lexer scanner, Map<String, TokenDefinition> tokenDefMap) {
     var p = new TokenDefinitionParser();
     var states = p.parse(scanner, tokenDefMap);
     checkArgument(states[0] != null && states[1] != null);

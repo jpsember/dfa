@@ -7,7 +7,7 @@ import java.util.Set;
 import js.base.BaseObject;
 import js.file.Files;
 import js.parsing.DFA;
-import js.parsing.Scanner;
+import js.parsing.Lexer;
 
 import static js.base.Tools.*;
 import static dfa.Util.*;
@@ -51,8 +51,7 @@ public final class DFACompiler extends BaseObject {
   static boolean sVerbosity;
 
   private void parseExpressions(String script) {
-    var scanner = new Scanner(getDfa(), script);
-
+    var scanner = new Lexer(getDfa()).withText(script);
     if (sVerbosity) {
       scanner.setVerbose();
     }

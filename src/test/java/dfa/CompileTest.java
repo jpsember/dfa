@@ -26,15 +26,12 @@ package dfa;
 import static js.base.Tools.*;
 import static org.junit.Assert.*;
 
-import js.parsing.DFA;
-import js.parsing.ScanException;
-import js.parsing.Scanner;
+import js.parsing.*;
 import org.junit.Test;
 
 import js.base.BasePrinter;
 import js.file.FileException;
 import js.file.Files;
-import js.parsing.RegExp;
 import js.testutil.MyTestCase;
 
 import static dfa.Util.*;
@@ -103,7 +100,7 @@ public class CompileTest extends MyTestCase {
     proc("// comment\n1234\n  'hello'  ");
   }
 
-  @Test(expected = ScanException.class)
+  @Test(expected = LexerException.class)
   public void zerolen() {
     proc("hello");
   }
@@ -114,10 +111,7 @@ public class CompileTest extends MyTestCase {
 //    B:   b
 //    PAIR: ab
 //    PREF: bab*
-
-
         proc("a b ab bab baa bab baba babb");
-
   }
 
   @Test
