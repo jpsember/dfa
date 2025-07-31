@@ -278,7 +278,6 @@ public class Lexer extends BaseObject {
       //
       // <char_range> ::= <start of range (1..127)> <size of range>
       //
-      //
 
 
       // The first state is always the start state
@@ -320,7 +319,7 @@ public class Lexer extends BaseObject {
         statePtr += 2;
 
         // Iterate over the edges
-        for (var _edgeCounter = 0; _edgeCounter < edgeCount; _edgeCounter++) {
+        for (var edgeIndex = 0; edgeIndex < edgeCount; edgeIndex++) {
 
           // <edge>  ::= <char_range count> <char_range>* <dest_state_offset, low byte first>
           //
@@ -333,32 +332,35 @@ public class Lexer extends BaseObject {
           var rangeCount = graph[statePtr++];
           p("......ranges:", rangeCount);
 
-          for (var _rangeCounter = 0; _rangeCounter < rangeCount; _rangeCounter++) {
-            var sp = statePtr + _rangeCounter * 2;
+          for (var rangeIndex = 0; rangeIndex < rangeCount; rangeIndex++) {
+            var sp = statePtr + rangeIndex * 2;
             int first = graph[sp];
-            int rangeSize = graph[sp+1];
+            int rangeSize = graph[sp + 1];
             int posWithinRange = cursorByte - first;
 
-            p("......range #", _rangeCounter, " [", first, "...", first + rangeSize, "]");
+            p("......range #", rangeIndex, " [", first, "...", first + rangeSize, "]");
             if (posWithinRange >= 0 && posWithinRange < rangeSize) {
               followEdge = true;
               p("......contains char, following edge");
               break;
             }
           }
-          statePtr += rangeCount*2;
-          
-          var edgeDest = (graph[statePtr++] & 0xff) | ((graph[statePtr++] & 0xff) << 8);
+          statePtr += rangeCount * 2;
+
           if (followEdge) {
+            var edgeDest = (graph[statePtr] & 0xff) | ((graph[statePtr + 1] & 0xff) << 8);
             p("...following edge to:", edgeDest);
             nextState = edgeDest;
           }
+          statePtr += 2;
         }
+
+        if (nextState < 0)
+          break;
+
         statePtr = nextState;
         p("...advanced to next state:", statePtr);
-        if (statePtr < 0) {
-          break;
-        }
+
         tokLenCurr++;
       }
 
@@ -376,15 +378,14 @@ public class Lexer extends BaseObject {
         if (inputBytes[j] == LF)
           lineNumber++;
 
-      tokenStartOffset += tokLenBest; // = bestOffset;
+      tokenStartOffset += tokLenBest;
     }
 
     // Add a final entry so we can calculate the length of the last token
-    {
-      ti.add(tokenStartOffset);
-      ti.add(Lexeme.ID_END_OF_INPUT);
-      ti.add(lineNumber);
-    }
+    ti.add(tokenStartOffset);
+    ti.add(Lexeme.ID_END_OF_INPUT);
+    ti.add(lineNumber);
+
     mTokenInfo = ti.array();
     mFilteredOffsets = filteredPtrs.array();
     mTokenCount = mFilteredOffsets.length;
@@ -393,12 +394,6 @@ public class Lexer extends BaseObject {
   private static boolean idMatch(int tokenId, int matchExpr) {
     return matchExpr == Lexeme.ID_UNKNOWN || matchExpr == tokenId;
   }
-
-  // Action info
-  private int mActionLength;
-  private int mActionCursor;
-  private int mActionCursorStart;
-
 
   public int tokenTextStart(int infoAddress) {
     return mTokenInfo[infoAddress + F_TOKEN_OFFSET];
@@ -414,15 +409,6 @@ public class Lexer extends BaseObject {
     return mDfa;
   }
 
-  private DFA mDfa;
-  private byte[] mBytes;
-  private int mSkipId = Lexeme.ID_SKIP_NONE;
-  private boolean mAcceptUnknownTokens;
-  private int mReadIndex;
-  private int[] mTokenInfo;
-  private int[] mFilteredOffsets;
-  private int mTokenCount;
-  private boolean mStarted;
 
   int tokenStartLineNumber(int address) {
     return mTokenInfo[address + F_LINE_NUMBER];
@@ -694,5 +680,18 @@ public class Lexer extends BaseObject {
     }
   }
 
+  private DFA mDfa;
+  private byte[] mBytes;
+  private int mSkipId = Lexeme.ID_SKIP_NONE;
+  private boolean mAcceptUnknownTokens;
+  private int mReadIndex;
+  private int[] mTokenInfo;
+  private int[] mFilteredOffsets;
+  private int mTokenCount;
+  private boolean mStarted;
+  // Action info
+  private int mActionLength;
+  private int mActionCursor;
+  private int mActionCursorStart;
 
 }
