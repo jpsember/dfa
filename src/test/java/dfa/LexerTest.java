@@ -408,10 +408,12 @@ public class LexerTest extends MyTestCase {
 
       if (mAcceptUnknown)
         m.withAcceptUnknownTokens();
-      m.withSkipId(mSkipId);
+      if (mSkipId < 0)
+        m.withNoSkip();
+      else
+        m.withSkipId(mSkipId);
 
       mLexer = m;
-
     }
     return mLexer;
   }
@@ -529,7 +531,7 @@ public class LexerTest extends MyTestCase {
 
   private void noSkip() {
     assertNotBuilt();
-    mSkipId = Lexeme.ID_SKIP_NONE;
+    mSkipId = -999;
   }
 
   private void assertNotBuilt() {
