@@ -97,11 +97,21 @@ public class Lexer extends BaseObject {
    * @return Lexeme
    */
   public Lexeme peek(int distance) {
+    return checkUnknownAllowed(auxPeek(0));
+  }
+
+  /**
+   * Look at an upcoming token, without reading it
+   *
+   * @param distance number of tokens to look ahead (0 is next token, 1 is the one after that, ...)
+   * @return Lexeme
+   */
+  private Lexeme auxPeek(int distance) {
     start();
     resetAction();
     int i = distance + mReadIndex;
     if (i < 0 || i >= mTokenCount) {
-      return Lexeme.END_OF_INPUT;
+      return new Lexeme(Lexeme.ID_END_OF_INPUT);
     } else {
       var j = filteredIndexToAddress(i);
       return constructLexeme(j);
@@ -132,17 +142,15 @@ public class Lexer extends BaseObject {
    * @return the read token (as a scalar value, instead of being within a List)
    */
   public Lexeme read(int expectedId) {
-    var x = peek();
+    var x = auxPeek(0);
     if (x.isEndOfInput())
-      throw new LexerException(x, "end of input");
-    if (expectedId != Lexeme.ID_SKIP_NONE) {
-      if (expectedId != x.id())
-        throw new LexerException(x, "expected id:", expectedId);
-    }
+      x.failWith("end of input");
     mReadIndex++;
+    checkUnknownAllowed(x);
+    if (expectedId != Lexeme.ID_SKIP_NONE && expectedId != x.id())
+      x.failWith("expected id:", expectedId);
     return x;
   }
-
 
   /**
    * Determine if the next n tokens exist and match the specified ids
@@ -200,7 +208,7 @@ public class Lexer extends BaseObject {
       throw badState("no tokens remain in action");
     var x = constructLexeme(filteredIndexToAddress(mActionCursor + mActionCursorStart));
     mActionCursor++;
-    return x;
+    return checkUnknownAllowed(x);
   }
 
   /**
@@ -213,7 +221,13 @@ public class Lexer extends BaseObject {
       throw badState("no previous action");
     if (mActionCursor + position >= mActionLength)
       throw badState("no token at position");
-    return constructLexeme(filteredIndexToAddress(mActionCursorStart + mActionCursor + position));
+    return checkUnknownAllowed(constructLexeme(filteredIndexToAddress(mActionCursorStart + mActionCursor + position)));
+  }
+
+  private Lexeme checkUnknownAllowed(Lexeme x) {
+    if (!mAcceptUnknownTokens && x.isUnknown())
+      x.failWith("unknown token");
+    return x;
   }
 
   private void resetAction() {
@@ -243,22 +257,18 @@ public class Lexer extends BaseObject {
     checkState(inputBytes != null, "no input bytes yet");
 
     var ti = IntArray.newBuilder();
-
     var filteredPtrs = IntArray.newBuilder();
-
     var lineNumber = 0;
     var tokenStartOffset = 0;
-
-    var infCount = 5000;
+    var graph = mDfa.graph();
 
     while (inputBytes[tokenStartOffset] != 0) {
-      checkState(infCount-- != 0);
 
+      // Id of best lexeme found so far
       int bestId = Lexeme.ID_UNKNOWN;
 
-      var graph = mDfa.graph();
-      var byteOffset = tokenStartOffset;
-      int bestOffset = tokenStartOffset + 1;
+      var tokLenCurr = 0;
+      var tokLenBest = 1;
 
       // <graph> ::= <state>*
       //
@@ -269,67 +279,75 @@ public class Lexer extends BaseObject {
       // <char_range> ::= <start of range (1..127)> <size of range>
       //
       //
+
+
       // The first state is always the start state
       int statePtr = 0;
 
-      p(VERT_SP, "extracting next token", DASHES, CR, "best offset:", bestOffset, "best id:", bestId);
+      p(VERT_SP, "extracting next token", DASHES, CR, "best length:", tokLenBest, "best id:", bestId);
+
       while (true) {
         if (DEBUG) {
-          p(VERT_SP, "byte offset:", byteOffset);
+          p(VERT_SP, "token length:", tokLenCurr);
           if (inputBytes.length < 20) {
-            p("inp:", JSList.with(Arrays.copyOfRange(inputBytes, byteOffset, inputBytes.length)));
+            p("inp:", JSList.with(Arrays.copyOfRange(inputBytes, tokenStartOffset + tokLenCurr, inputBytes.length)));
           }
         }
-        byte ch = inputBytes[byteOffset];
+        byte cursorByte = inputBytes[tokenStartOffset + tokLenCurr];
 
         // If the byte is -128...-1, set it to 127.
         // The convention is that any range that includes 127 will also include these bytes.
-        if (ch < 0)
-          ch = 127;
+        if (cursorByte < 0)
+          cursorByte = 127;
 
-        p("nextByte:", ch, "state_ptr:", statePtr);
+        p("cursor byte:", cursorByte, "state_ptr:", statePtr);
         int nextState = -1;
 
-        var tokenCode = graph[statePtr++];
+        var tokenCode = graph[statePtr + 0];
         if (tokenCode != 0) {
           int newTokenId = (tokenCode & 0xff) - 1;
-          p("..........token:", newTokenId, "offset:", byteOffset, "best:", bestOffset);
-          if (newTokenId >= bestId || byteOffset > bestOffset) {
-            bestOffset = byteOffset;
+          p("..........token:", newTokenId, "current length:", tokLenCurr, "best length:", tokLenBest);
+          if (newTokenId >= bestId || tokLenCurr > tokLenBest) {
+            tokLenBest = tokLenCurr;
             bestId = newTokenId;
             p("...........setting bestId:", mDfa.tokenName(bestId));
           }
         }
 
-        int edgeCount = graph[statePtr++];
+        int edgeCount = graph[statePtr + 1];
         p("...edge count:", edgeCount);
 
-        // Iterate over the edges
-        for (var en = 0; en < edgeCount; en++) {
+        statePtr += 2;
 
-          //
+        // Iterate over the edges
+        for (var _edgeCounter = 0; _edgeCounter < edgeCount; _edgeCounter++) {
+
           // <edge>  ::= <char_range count> <char_range>* <dest_state_offset, low byte first>
           //
           // <char_range> ::= <start of range (1..127)> <size of range>
           //
-          p("...edge #:", en);
           boolean followEdge = false;
 
           // Iterate over the char_ranges
           //
           var rangeCount = graph[statePtr++];
           p("......ranges:", rangeCount);
-          for (var rn = 0; rn < rangeCount; rn++) {
-            int first = graph[statePtr++];
-            int rangeSize = graph[statePtr++];
-            int posWithinRange = ch - first;
 
-            p("......range #", rn, " [", first, "...", first + rangeSize, "]");
+          for (var _rangeCounter = 0; _rangeCounter < rangeCount; _rangeCounter++) {
+            var sp = statePtr + _rangeCounter * 2;
+            int first = graph[sp];
+            int rangeSize = graph[sp+1];
+            int posWithinRange = cursorByte - first;
+
+            p("......range #", _rangeCounter, " [", first, "...", first + rangeSize, "]");
             if (posWithinRange >= 0 && posWithinRange < rangeSize) {
               followEdge = true;
               p("......contains char, following edge");
+              break;
             }
           }
+          statePtr += rangeCount*2;
+          
           var edgeDest = (graph[statePtr++] & 0xff) | ((graph[statePtr++] & 0xff) << 8);
           if (followEdge) {
             p("...following edge to:", edgeDest);
@@ -341,7 +359,7 @@ public class Lexer extends BaseObject {
         if (statePtr < 0) {
           break;
         }
-        byteOffset++;
+        tokLenCurr++;
       }
 
       p("bestId:", bestId, "skip:", mSkipId, "filteredPtrs size:", filteredPtrs.size());
@@ -354,11 +372,11 @@ public class Lexer extends BaseObject {
       ti.add(lineNumber);
 
       // increment line number for each linefeed encountered
-      for (var j = tokenStartOffset; j < bestOffset; j++)
+      for (var j = tokenStartOffset; j < tokenStartOffset + tokLenBest; j++)
         if (inputBytes[j] == LF)
           lineNumber++;
 
-      tokenStartOffset = bestOffset;
+      tokenStartOffset += tokLenBest; // = bestOffset;
     }
 
     // Add a final entry so we can calculate the length of the last token
@@ -392,9 +410,13 @@ public class Lexer extends BaseObject {
     return new String(mBytes, startOffset, len, StandardCharsets.UTF_8);
   }
 
+  DFA dfa() {
+    return mDfa;
+  }
+
   private DFA mDfa;
   private byte[] mBytes;
-  /*private*/ public int mSkipId = Lexeme.ID_SKIP_NONE;
+  private int mSkipId = Lexeme.ID_SKIP_NONE;
   private boolean mAcceptUnknownTokens;
   private int mReadIndex;
   private int[] mTokenInfo;
@@ -564,7 +586,7 @@ public class Lexer extends BaseObject {
     ret.tokenRow = -1;
 
     // Determine line number for the target lexeme
-    var targetLineNumber = tokenStartLineNumber(lexeme.mInfoAddress);
+    var targetLineNumber = tokenStartLineNumber(lexeme.infoAddress());
 
     // Look for last token that appears on line n-c-1, then
     // march forward, plotting tokens intersecting lines n-c through n+c

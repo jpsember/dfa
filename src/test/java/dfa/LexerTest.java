@@ -4,7 +4,6 @@ import js.data.ByteArray;
 import js.data.DataUtil;
 import js.file.Files;
 import js.geometry.MyMath;
-import js.json.JSList;
 import js.testutil.MyTestCase;
 
 import static js.base.Tools.*;
@@ -15,6 +14,7 @@ import org.junit.Test;
 import js.parsing.DFA;
 import parsing.Lexeme;
 import parsing.Lexer;
+import parsing.LexerException;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -191,25 +191,25 @@ public class LexerTest extends MyTestCase {
     var s = lexer();
     s.withText("ababab");
 
-    assertTrue(s.peekIf(0,1,0));
+    assertTrue(s.peekIf(0, 1, 0));
     assertTrue(s.token().id(0));
     assertTrue(s.token().id(1));
     assertTrue(s.token().id(0));
 
-    assertTrue(s.readIf(0,1,0));
+    assertTrue(s.readIf(0, 1, 0));
 
-    assertTrue(s.peekIf(1,0,1));
+    assertTrue(s.peekIf(1, 0, 1));
     // Look at, without consuming them
     assertTrue(s.token(0).id(1));
     assertTrue(s.token(1).id(0));
     assertTrue(s.token(2).id(1));
 
     // Consume them
-    assertTrue(s.token( ).id(1));
-    assertTrue(s.token( ).id(0));
-    assertTrue(s.token( ).id(1));
+    assertTrue(s.token().id(1));
+    assertTrue(s.token().id(0));
+    assertTrue(s.token().id(1));
 
-    assertTrue(s.readIf(1,0,1));
+    assertTrue(s.readIf(1, 0, 1));
     // Look at, without consuming them
     assertTrue(s.token(0).id(1));
     assertTrue(s.token(1).id(0));
@@ -217,6 +217,35 @@ public class LexerTest extends MyTestCase {
 
     assertFalse(s.hasNext());
   }
+
+  @Test(expected = LexerException.class)
+  public void unknownToken() {
+    var s = lexer();
+    s.withText("aab^ba");
+    s.read();
+    s.read();
+    s.read();
+    s.read();
+  }
+
+  @Test
+  public void unknownTokenDisplay() {
+    var s = lexer();
+    var sb = new StringBuilder();
+    s.withText("ab\nba\naab?ba");
+    while (s.hasNext()) {
+      try {
+        var tk = s.read();
+        sb.append(tk.text());
+        sb.append("\n");
+      } catch (LexerException e) {
+        sb.append(e.getMessage());
+        sb.append('\n');
+      }
+    }
+    assertMessage(sb);
+  }
+
   @Test
   public void simple() {
     script("aabba");
@@ -396,7 +425,7 @@ public class LexerTest extends MyTestCase {
     var sb = new StringBuilder();
     while (s.hasNext()) {
       var t = s.read();
-      sb.append(String.format("%9s ", mDfa.tokenName(t.id())) + " '" + t.text() + "'");
+      sb.append(t); //String.format("%9s ", mDfa.tokenName(t.id())) + " '" + t.text() + "'");
       addLF(sb);
     }
 
@@ -466,6 +495,9 @@ public class LexerTest extends MyTestCase {
         var cts = tk.plotWithinContext();
         sb.append("-----------------------------------------------------------------------------------\n");
         sb.append(cts);
+        sb.append('\n')        ;
+        sb.append(tk);
+        addLF(sb);
       }
       sb.append("-----------------------------------------------------------------------------------\n");
 
