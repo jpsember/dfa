@@ -15,13 +15,6 @@ import js.parsing.DFA;
 
 public class Lexer extends BaseObject {
 
-  private static final boolean DEBUG = false && alert("DEBUG in effect");
-
-  private static void p(Object... messages) {
-    if (DEBUG)
-      pr(insertStringToFront("Scanner>>>", messages));
-  }
-
   private static final boolean DEBUG2 = false && alert("DEBUG in effect");
 
   private static void p2(Object... messages) {
@@ -253,16 +246,17 @@ public class Lexer extends BaseObject {
   }
 
   private void extractTokens() {
+    checkState(mBytes != null, "no input bytes yet");
+
     var inputBytes = mBytes;
-    checkState(inputBytes != null, "no input bytes yet");
 
     var ti = IntArray.newBuilder();
     var filteredPtrs = IntArray.newBuilder();
     var lineNumber = 0;
-    var tokenStartOffset = 0;
+    var tokenOffset = 0;
     var graph = mDfa.graph();
 
-    while (inputBytes[tokenStartOffset] != 0) {
+    while (inputBytes[tokenOffset] != 0) {
 
       // Id of best lexeme found so far
       int bestId = Lexeme.ID_UNKNOWN;
@@ -279,44 +273,31 @@ public class Lexer extends BaseObject {
       // <char_range> ::= <start of range (1..127)> <size of range>
       //
 
-
       // The first state is always the start state
       int statePtr = 0;
 
-      p(VERT_SP, "extracting next token", DASHES, CR, "best length:", tokLenBest, "best id:", bestId);
-
       while (true) {
-        if (DEBUG) {
-          p(VERT_SP, "token length:", tokLenCurr);
-          if (inputBytes.length < 20) {
-            p("inp:", JSList.with(Arrays.copyOfRange(inputBytes, tokenStartOffset + tokLenCurr, inputBytes.length)));
-          }
-        }
-        byte cursorByte = inputBytes[tokenStartOffset + tokLenCurr];
+        byte cursorByte = inputBytes[tokenOffset + tokLenCurr];
 
         // If the byte is -128...-1, set it to 127.
         // The convention is that any range that includes 127 will also include these bytes.
         if (cursorByte < 0)
           cursorByte = 127;
 
-        p("cursor byte:", cursorByte, "state_ptr:", statePtr);
+        // Initially, we have no next state
         int nextState = -1;
 
-        var tokenCode = graph[statePtr + 0];
+        var tokenCode = graph[statePtr];
+        int edgeCount = graph[statePtr + 1];
+        statePtr += 2;
+
         if (tokenCode != 0) {
           int newTokenId = (tokenCode & 0xff) - 1;
-          p("..........token:", newTokenId, "current length:", tokLenCurr, "best length:", tokLenBest);
           if (newTokenId >= bestId || tokLenCurr > tokLenBest) {
             tokLenBest = tokLenCurr;
             bestId = newTokenId;
-            p("...........setting bestId:", mDfa.tokenName(bestId));
           }
         }
-
-        int edgeCount = graph[statePtr + 1];
-        p("...edge count:", edgeCount);
-
-        statePtr += 2;
 
         // Iterate over the edges
         for (var edgeIndex = 0; edgeIndex < edgeCount; edgeIndex++) {
@@ -329,8 +310,8 @@ public class Lexer extends BaseObject {
 
           // Iterate over the char_ranges
           //
-          var rangeCount = graph[statePtr++];
-          p("......ranges:", rangeCount);
+          var rangeCount = graph[statePtr];
+          statePtr += 1;
 
           for (var rangeIndex = 0; rangeIndex < rangeCount; rangeIndex++) {
             var sp = statePtr + rangeIndex * 2;
@@ -338,19 +319,15 @@ public class Lexer extends BaseObject {
             int rangeSize = graph[sp + 1];
             int posWithinRange = cursorByte - first;
 
-            p("......range #", rangeIndex, " [", first, "...", first + rangeSize, "]");
             if (posWithinRange >= 0 && posWithinRange < rangeSize) {
               followEdge = true;
-              p("......contains char, following edge");
               break;
             }
           }
           statePtr += rangeCount * 2;
 
           if (followEdge) {
-            var edgeDest = (graph[statePtr] & 0xff) | ((graph[statePtr + 1] & 0xff) << 8);
-            p("...following edge to:", edgeDest);
-            nextState = edgeDest;
+            nextState = (graph[statePtr] & 0xff) | ((graph[statePtr + 1] & 0xff) << 8);
           }
           statePtr += 2;
         }
@@ -359,30 +336,27 @@ public class Lexer extends BaseObject {
           break;
 
         statePtr = nextState;
-        p("...advanced to next state:", statePtr);
-
         tokLenCurr++;
       }
 
-      p("bestId:", bestId, "skip:", mSkipId, "filteredPtrs size:", filteredPtrs.size());
       if (bestId != mSkipId) {
-        p("........adding offset to token info array:", ti.size());
         filteredPtrs.add(ti.size());
       }
-      ti.add(tokenStartOffset);
+
+      ti.add(tokenOffset);
       ti.add(bestId);
       ti.add(lineNumber);
 
       // increment line number for each linefeed encountered
-      for (var j = tokenStartOffset; j < tokenStartOffset + tokLenBest; j++)
+      for (var j = tokenOffset; j < tokenOffset + tokLenBest; j++)
         if (inputBytes[j] == LF)
           lineNumber++;
 
-      tokenStartOffset += tokLenBest;
+      tokenOffset += tokLenBest;
     }
 
     // Add a final entry so we can calculate the length of the last token
-    ti.add(tokenStartOffset);
+    ti.add(tokenOffset);
     ti.add(Lexeme.ID_END_OF_INPUT);
     ti.add(lineNumber);
 
