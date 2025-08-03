@@ -261,7 +261,7 @@ public class LexerTest extends MyTestCase {
   @Test
   public void unknown() {
     acceptUnknown();
-    script("aabbac");
+    script("aabbacaccaccc");
   }
 
   @Test
@@ -296,7 +296,7 @@ public class LexerTest extends MyTestCase {
 
   @Test
   public void sourceDescription() {
-    mSourceDescription ="a/b/c/sample.java:";
+    mSourceDescription = "a/b/c/sample.java:";
     auxContent();
   }
 

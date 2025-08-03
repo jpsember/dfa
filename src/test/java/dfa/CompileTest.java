@@ -61,7 +61,6 @@ public class CompileTest extends MyTestCase {
     proc();
   }
 
-
   @Test
   public void and1() {
     disallowUnknown();
