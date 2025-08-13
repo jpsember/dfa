@@ -1,0 +1,4 @@
+WS:  \s+
+OKESC: \x0a+
+BADESC: \0x0d+
+ID:  [_a-zA-Z]+\d*

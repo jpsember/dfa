@@ -7,10 +7,10 @@ BRAVO: bravo
 # This is copied from rexp_parser.rxp:
 #
 
-_HT: (\t)   // \0x09
-_LF:   (\n) // \0x0a
+_HT: (\t)   // \x09
+_LF:   (\n) // \x0a
 _FF:   (\f)
-_CR:   (\r) // \0x0d
+_CR:   (\r) // \x0d
 _NL: ($_CR? $_LF)
 _SP: (\s)
 _COLON: (\:)

@@ -155,6 +155,11 @@ public class CompileTest extends MyTestCase {
   }
 
 
+  @Test(expected = LexerException.class)
+  public void illegalseq() {
+    proc();
+  }
+
   @Test
   public void subsumeb() {
     try {

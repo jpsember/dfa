@@ -60,3 +60,7 @@ ASCII: [_a-zA-Z0-9\x21\x22\x25\x26\x27\x2c\x2f\x3a\x3b\x3c\x3d\x3e\x3e\x40\x5f\x
 # \x7e ~
 
 AND: \&\&
+
+# I find myself typing the wrong prefix for ASCII codes, e.g. \0x21 instead of \x21; so make \0 illegal
+ILLEGAL: \\ 0
+
