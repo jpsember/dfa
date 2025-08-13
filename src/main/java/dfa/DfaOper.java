@@ -246,9 +246,10 @@ public class DfaOper extends AppOper {
     // var dfa = new DFA(dfaJson);
     var firstToken = dfa.tokenName(0);
     int skip = -1;
-    if (firstToken.equals("WS"))
-      skip = 0;
+//    if (firstToken.equals("WS"))
+//      skip = 0;
     var s = new Scanner(dfa, text, skip);
+    s.setAcceptUnknownTokens();
 
     var sb = new BasePrinter();
     while (s.hasNext()) {
