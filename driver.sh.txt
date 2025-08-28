@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 set -eu
-java -Dfile.encoding=UTF-8 -classpath /usr/local/bin/jpsember_jars/dfa-1.0-jar-with-dependencies.jar dfa.Dfa "$@"
+java -Dfile.encoding=UTF-8 -classpath ~/bin/dfa-1.0-jar-with-dependencies.jar dfa.Dfa "$@"

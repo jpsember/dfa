@@ -127,6 +127,8 @@ public class DfaOper extends AppOper {
     String beforeText;
     String afterText;
 
+    String preamble = null;
+
     String symbolPrefix = "T_";
     int indent = 4;
     int m0 = content.indexOf(marker0);
@@ -153,6 +155,7 @@ public class DfaOper extends AppOper {
       do {
         // Look to existing first symbol to infer prefix
         existingText = content.substring(m0 + marker0.length(), m1);
+        //pr("existingText:", quote(existingText));
         String tag;
         switch (ftype) {
           case FTYPE_JAVA: {
@@ -168,10 +171,11 @@ public class DfaOper extends AppOper {
             throw badArg("Unsupported file type");
         }
 
-        //String tag = "static final int";
         int j = existingText.indexOf(tag);
         if (j < 0)
           break;
+         preamble = existingText.substring(0, j).stripLeading();
+
         tag = existingText.substring(j + tag.length()).trim();
         j = tag.indexOf('\n');
         if (j > 0)
@@ -203,7 +207,9 @@ public class DfaOper extends AppOper {
 
       switch (ftype) {
         case FTYPE_JAVA:
-          sb.append("public static final int ");
+          preamble = nullTo(preamble, "public static final ");
+          sb.append(preamble);
+          sb.append("int ");
           sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(" = ");
@@ -211,7 +217,9 @@ public class DfaOper extends AppOper {
           sb.append(";\n");
           break;
         case FTYPE_RUST:
-          sb.append("pub(crate) const ");
+          preamble = nullTo(preamble, "pub(crate) ");
+          sb.append(preamble);
+          sb.append("const ");
           sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(": i32 = ");
