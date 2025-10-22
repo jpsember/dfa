@@ -29,4 +29,6 @@ class {
 
   // Describe the generated DFA
   bool describe;
+
+  bool embedded;
 }

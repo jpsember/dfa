@@ -1,0 +1,13 @@
+
+_OPENEX: \{ \~
+_CLOSEEX: \~ \}
+_ANY: .*
+_NOLF: [^\n]*
+_OPTLF: \n?
+
+
+OPEN: ( $_ANY -- (  $_ANY ( \n  | $_OPENEX ) $_ANY ) ) \
+        $_OPENEX   \
+        $_NOLF $_OPTLF
+
+CLOSE: ( $_ANY -- (  $_ANY ( \n  | $_CLOSEEX ) $_ANY ) ) $_CLOSEEX $_NOLF $_OPTLF

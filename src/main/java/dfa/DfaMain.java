@@ -8,7 +8,7 @@ public class DfaMain extends App {
 
   public static void main(String[] args) {
     loadTools();
-     DfaMain app = new DfaMain();
+    DfaMain app = new DfaMain();
     //app.setCustomArgs("-v ascii");
     app.startApplication(args);
     app.exitWithReturnCode();

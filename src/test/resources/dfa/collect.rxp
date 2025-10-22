@@ -1,0 +1,12 @@
+# Whitespace is skipped (EXCEPT newlines)
+SPACES: [\f\s\t]+
+CR: \n
+COMMENT: ($_HASH | //)  [^\n]* \n?
+#EQUALS:   $_EQUALS | (   usize SPACES? $_EQUALS )
+
+# Unknown tokens have lowest priority
+#UNKNOWN: [\x21-\x7f]+
+
+INT: $_UNSIGNEDINT
+
+ERRCODE: ERROR \_ $_ID

@@ -46,6 +46,17 @@ public class CompileTest extends MyTestCase {
     DFACompiler.sVerbosity = false;
   }
 
+
+  @Test
+  public void embeddedRust() {
+    // Copy the input files from the unit test data directory to the generated directory
+    var tg = generatedDir();
+    files().copyDirectory(testDataDir(), tg);
+    if (!alert("skipping"))
+      procEmbedded();
+  }
+
+
   @Test
   public void jsona1() {
     proc();
@@ -90,6 +101,11 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
+  public void strip1() {
+    proc();
+  }
+
+  @Test
   public void string() {
     proc(" \"hello\" ");
   }
@@ -105,12 +121,12 @@ public class CompileTest extends MyTestCase {
   }
 
   @Test
-  public void bravo () {
+  public void bravo() {
 //    A:   a
 //    B:   b
 //    PAIR: ab
 //    PREF: bab*
-        proc("a b ab bab baa bab baba babb");
+    proc("a b ab bab baa bab baba babb");
   }
 
   @Test
@@ -351,6 +367,16 @@ public class CompileTest extends MyTestCase {
     decomp();
   }
 
+
+  @Test
+  public void collect() {
+    var s = "// Lorem ipsum\n" +
+        "public static final int ERROR_DFA_UNSUPPORTED_VERSION = 7902;\n";
+    s = " 7902; ";
+    proc(s);
+  }
+
+
   /**
    * Look for an .rxp file in the resource directory derived from the test name.
    *
@@ -482,9 +508,9 @@ public class CompileTest extends MyTestCase {
       StringBuilder sb = new StringBuilder();
 
       // Don't skip any tokens
-      var s = new Scanner(dfa(), sampleText, -1);
+      var s = new Lexer(dfa()).withText( sampleText).withNoSkip();
       if (!mDisallowUnknown)
-        s.setAcceptUnknownTokens();
+        s.withAcceptUnknownTokens();
       s.setVerbose(verbose());
       while (s.hasNext()) {
         var t = s.read();
@@ -502,6 +528,12 @@ public class CompileTest extends MyTestCase {
 
     assertGenerated();
   }
+
+  private void procEmbedded() {
+    halt("embedded, add unit test support");
+    assertGenerated();
+  }
+
 
   private boolean mSuppressWhitespace;
 

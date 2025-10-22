@@ -43,6 +43,10 @@ public class DfaConfig implements AbstractData {
     return mDescribe;
   }
 
+  public boolean embedded() {
+    return mEmbedded;
+  }
+
   @Override
   public Builder toBuilder() {
     return new Builder(this);
@@ -57,6 +61,7 @@ public class DfaConfig implements AbstractData {
   protected static final String _6 = "version";
   protected static final String _7 = "ascii";
   protected static final String _8 = "describe";
+  protected static final String _9 = "embedded";
 
   @Override
   public String toString() {
@@ -75,6 +80,7 @@ public class DfaConfig implements AbstractData {
     m.putUnsafe(_6, mVersion);
     m.putUnsafe(_7, mAscii);
     m.putUnsafe(_8, mDescribe);
+    m.putUnsafe(_9, mEmbedded);
     return m;
   }
 
@@ -122,6 +128,7 @@ public class DfaConfig implements AbstractData {
     mVersion = m.opt(_6, 5.1f);
     mAscii = m.opt(_7, false);
     mDescribe = m.opt(_8, false);
+    mEmbedded = m.opt(_9, false);
   }
 
   public static Builder newBuilder() {
@@ -155,6 +162,8 @@ public class DfaConfig implements AbstractData {
       return false;
     if (!(mDescribe == other.mDescribe))
       return false;
+    if (!(mEmbedded == other.mEmbedded))
+      return false;
     return true;
   }
 
@@ -172,6 +181,7 @@ public class DfaConfig implements AbstractData {
       r = r * 37 + (int)mVersion;
       r = r * 37 + (mAscii ? 1 : 0);
       r = r * 37 + (mDescribe ? 1 : 0);
+      r = r * 37 + (mEmbedded ? 1 : 0);
       m__hashcode = r;
     }
     return r;
@@ -186,6 +196,7 @@ public class DfaConfig implements AbstractData {
   protected float mVersion;
   protected boolean mAscii;
   protected boolean mDescribe;
+  protected boolean mEmbedded;
   protected int m__hashcode;
 
   public static final class Builder extends DfaConfig {
@@ -200,6 +211,7 @@ public class DfaConfig implements AbstractData {
       mVersion = m.mVersion;
       mAscii = m.mAscii;
       mDescribe = m.mDescribe;
+      mEmbedded = m.mEmbedded;
     }
 
     @Override
@@ -225,6 +237,7 @@ public class DfaConfig implements AbstractData {
       r.mVersion = mVersion;
       r.mAscii = mAscii;
       r.mDescribe = mDescribe;
+      r.mEmbedded = mEmbedded;
       return r;
     }
 
@@ -270,6 +283,11 @@ public class DfaConfig implements AbstractData {
 
     public Builder describe(boolean x) {
       mDescribe = x;
+      return this;
+    }
+
+    public Builder embedded(boolean x) {
+      mEmbedded = x;
       return this;
     }
 

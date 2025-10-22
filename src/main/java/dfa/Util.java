@@ -307,7 +307,12 @@ public final class Util {
 
   public static final int FTYPE_JAVA = 0 //
       , FTYPE_RUST = 1 //
+      , FTYPE_PYTHON = 2 //
       ;
+
+  public static final String[] FTYPE_EXTENSIONS = {
+      "java","rs","py"
+  };
 
   public static final double DFA_VERSION_5 = 5.1;
 
