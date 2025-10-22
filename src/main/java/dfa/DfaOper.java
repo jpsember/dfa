@@ -13,6 +13,7 @@ import js.base.SystemCall;
 import js.data.AbstractData;
 import js.file.Files;
 import js.parsing.DFA;
+import js.parsing.Lexer;
 import js.parsing.Scanner;
 
 import static dfa.Util.*;
@@ -132,118 +133,84 @@ public class DfaOper extends AppOper {
       }
     }
 
+    int m0 = content.indexOf(marker0);
+    int m1 = content.indexOf(marker1);
+    // Make marker1 include any preceding whitespace on its line
+    if (m1 >= 0) {
+      var origM1 = m1;
+      while (true) {
+        if (m1 == 0) break;
+        char c = content.charAt(m1 - 1);
+        if (c == '\n' || c > ' ')
+          break;
+        m1--;
+      }
+      marker1 = content.substring(m1, origM1) + marker1;
+    }
+    boolean markersValid = (m0 >= 0 && m1 > m0);
+
+    String afterText = "";
+
     // Look for an existing definition for the first token.
     // If it exists, use the existing 'preamble' for each token; otherwise,
     // generate a fresh preamble
-
-    String beforeText;
-    String afterText;
-
     String preamble = null;
 
-    int m0 = content.indexOf(marker0);
-    int m1 = content.indexOf(marker1);
-    boolean markersValid =    (m0 >= 0 && m1 > m0);
-
-      String symbolPrefix = "T_";
-    int indent = 4;
-
+    // Buffer for storing modified contents
+    StringBuilder sb = new StringBuilder();
 
     if (!markersValid) {
-      beforeText = content;
-      afterText = "";
+      sb.append(content);
     } else {
-
-      {
-        // Use the number of spaces that the first marker is indented to determine the indentation
-        int j;
-        for (j = 0; ; j++) {
-          int i = m0 - j - 1;
-          if (i < 0 || content.charAt(i) == '\n')
-            break;
-        }
-        indent = j;
-      }
-
-      String existingText;
-      boolean success = false;
-      do {
-        // Look to existing first symbol to infer prefix
-        existingText = content.substring(m0 + marker0.length(), m1);
-        pr("existingText:", "m1:", m1, quote(existingText));
-        String tag;
-        switch (ftype) {
-          case FTYPE_JAVA:
-            tag = "static final int ";
-            break;
-          case FTYPE_RUST:
-            tag = "const";
-            break;
-          case FTYPE_PYTHON:
-            tag = "";
-            break;
-          default:
-            throw badArg("Unsupported file type");
-        }
-
-        int j = existingText.indexOf(tag);
-        if (j < 0)
-          break;
-        preamble = existingText.substring(0, j + tag.length()).stripLeading();
-
-        tag = existingText.substring(j + tag.length()).trim();
-        j = tag.indexOf('\n');
-        if (j > 0)
-          tag = tag.substring(0, j);
-        j = tag.indexOf('_');
-        if (j < 0)
-          symbolPrefix = "";
-        else
-          symbolPrefix = tag.substring(0, j + 1).trim();
-        success = true;
-      } while (false);
-      if (!success)
-        log("Can't infer prefix from:", existingText);
-
-      beforeText = content.substring(0, m0);
+      sb.append(content, 0, m0);
       afterText = content.substring(m1 + marker1.length());
+      checkState(dfa.tokenNames().length != 0, "no tokens defined");
+      String firstTokenName = dfa.tokenNames()[0];
+      var oldText = content.substring(m0 + marker0.length(), m1);
+      var endPreamble = oldText.indexOf(firstTokenName);
+      if (endPreamble >= 0) {
+        preamble = oldText.substring(0, endPreamble);
+      }
     }
 
-    StringBuilder sb = new StringBuilder();
-    sb.append(beforeText);
     sb.append(marker0);
 
-    String tab = spaces(indent);
+    if (preamble == null) {
+      // Determine preamble
+      switch (ftype) {
+        case FTYPE_JAVA:
+          preamble = "    public static final int T_";
+          break;
+        case FTYPE_RUST:
+          preamble = "pub(crate) const T_";
+          break;
+        case FTYPE_PYTHON:
+          preamble = "T_";
+          break;
+        default:
+          throw notSupported();
+      }
+    }
 
     int index = INIT_INDEX;
     for (String tokenName : dfa.tokenNames()) {
       index++;
-      sb.append(tab);
+      sb.append(preamble);
 
       switch (ftype) {
         case FTYPE_JAVA:
-          preamble = nullTo(preamble, "public static final int ");
-          sb.append(preamble);
-          sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(" = ");
           sb.append(index);
           sb.append(";\n");
           break;
         case FTYPE_RUST:
-          preamble = nullTo(preamble, "pub(crate) ");
-          sb.append(preamble);
-          sb.append("const ");
-          sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(": i32 = ");
           sb.append(index);
           sb.append(";\n");
           break;
         case FTYPE_PYTHON:
-          preamble = nullTo(preamble, "");
-          sb.append(preamble);
-          sb.append(symbolPrefix);
           sb.append(tokenName);
           sb.append(" = ");
           sb.append(index);
@@ -253,7 +220,6 @@ public class DfaOper extends AppOper {
           throw notSupported();
       }
     }
-    sb.append(tab);
     sb.append(marker1);
     sb.append(afterText);
 
@@ -274,13 +240,8 @@ public class DfaOper extends AppOper {
     sampleTextFile = sampleTextFile.getAbsoluteFile();
 
     var text = Files.readString(Files.assertExists(sampleTextFile, "example_text"));
-    // var dfa = new DFA(dfaJson);
-    var firstToken = dfa.tokenName(0);
     int skip = -1;
-//    if (firstToken.equals("WS"))
-//      skip = 0;
-    var s = new Scanner(dfa, text, skip);
-    s.setAcceptUnknownTokens();
+    var s = new Lexer(dfa).withText(text).withSkipId(skip).withAcceptUnknownTokens();
 
     var sb = new BasePrinter();
     while (s.hasNext()) {
@@ -295,8 +256,6 @@ public class DfaOper extends AppOper {
 
     if (sampleResultsValidFile.exists())
       expectedResults = Files.readString(sampleResultsValidFile).trim();
-
-    boolean resultsChanged = !expectedResults.isEmpty() && !results.equals(expectedResults);
 
     if (expectedResults.isEmpty()) {
       files().writeString(sampleResultsValidFile, results);
